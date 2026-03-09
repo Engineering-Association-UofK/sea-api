@@ -58,26 +58,26 @@ func (r *EventRepository) MassCreateComponent(components []models.EventComponent
 	return err
 }
 
-func (r *EventRepository) CreateParticipation(participation *models.EventParticipationModel) (int64, error) {
+func (r *EventRepository) CreateParticipant(participant *models.EventParticipantModel) (int64, error) {
 	query := `
 	INSERT INTO event_participant
 	(event_id, user_id, grade, status, joined_at, completed)
 	VALUES (:event_id, :user_id, :grade, :status, :joined_at, :completed)
 	`
-	res, err := r.db.NamedExec(query, &participation)
+	res, err := r.db.NamedExec(query, &participant)
 	if err != nil {
 		return 0, err
 	}
 	return res.LastInsertId()
 }
 
-func (r *EventRepository) MassCreateParticipation(participations []models.EventParticipationModel) error {
+func (r *EventRepository) MassCreateParticipant(participants []models.EventParticipantModel) error {
 	query := `
 	INSERT INTO event_participant
 	(event_id, user_id, grade, status, joined_at, completed)
 	VALUES (:event_id, :user_id, :grade, :status, :joined_at, :completed)
 	`
-	query, args, err := sqlx.Named(query, participations)
+	query, args, err := sqlx.Named(query, participants)
 	if err != nil {
 		return err
 	}
@@ -89,9 +89,9 @@ func (r *EventRepository) MassCreateParticipation(participations []models.EventP
 
 func (r *EventRepository) CreateScore(score *models.ComponentScoreModel) (int64, error) {
 	query := `
-	INSERT INTO component_scores
-	(participation_id, component_id, score)
-	VALUES (:participation_id, :component_id, :score)
+	INSERT INTO component_score
+	(participant_id, component_id, score)
+	VALUES (:participant_id, :component_id, :score)
 	`
 	res, err := r.db.NamedExec(query, &score)
 	if err != nil {
@@ -102,9 +102,9 @@ func (r *EventRepository) CreateScore(score *models.ComponentScoreModel) (int64,
 
 func (r *EventRepository) MassCreateScore(scores []models.ComponentScoreModel) error {
 	query := `
-	INSERT INTO component_scores
-	(participation_id, component_id, score)
-	VALUES (:participation_id, :component_id, :score)
+	INSERT INTO component_score
+	(participant_id, component_id, score)
+	VALUES (:participant_id, :component_id, :score)
 	`
 	query, args, err := sqlx.Named(query, scores)
 	if err != nil {
@@ -132,7 +132,7 @@ func (r *EventRepository) UpdateEvent(event *models.EventModel) error {
 func (r *EventRepository) UpdateComponent(component *models.EventComponentModel) error {
 	query := `
 	UPDATE event_component
-	SET event_id = :event_id, name = :name, description = :description, max_score = :max_score
+	SET name = :name, description = :description, max_score = :max_score
 	WHERE id = :id
 	`
 	_, err := r.db.NamedExec(query, &component)
@@ -140,39 +140,92 @@ func (r *EventRepository) UpdateComponent(component *models.EventComponentModel)
 }
 
 func (r *EventRepository) MassUpdateComponent(components []models.EventComponentModel) error {
+	if len(components) == 0 {
+		return nil
+	}
+
 	query := `
 	UPDATE event_component
-	SET event_id = :event_id, name = :name, description = :description, max_score = :max_score
+	SET name = :name,
+	    description = :description,
+	    max_score = :max_score
 	WHERE id = :id
 	`
-	_, err := r.db.NamedExec(query, components)
-	return err
+
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.PrepareNamed(query)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	defer stmt.Close()
+
+	for _, c := range components {
+		if _, err := stmt.Exec(c); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
-func (r *EventRepository) UpdateParticipation(participation *models.EventParticipationModel) error {
+func (r *EventRepository) UpdateParticipant(participant *models.EventParticipantModel) error {
 	query := `
 	UPDATE event_participant
 	SET event_id = :event_id, user_id = :user_id, grade = :grade, status = :status, joined_at = :joined_at, completed = :completed
 	WHERE id = :id
 	`
-	_, err := r.db.NamedExec(query, &participation)
+	_, err := r.db.NamedExec(query, &participant)
 	return err
 }
 
-func (r *EventRepository) MassUpdateParticipation(participations []models.EventParticipationModel) error {
+func (r *EventRepository) MassUpdateParticipant(participants []models.EventParticipantModel) error {
+	if len(participants) == 0 {
+		return nil
+	}
+
 	query := `
 	UPDATE event_participant
-	SET event_id = :event_id, user_id = :user_id, grade = :grade, status = :status, joined_at = :joined_at, completed = :completed
+	SET event_id = :event_id,
+	    user_id = :user_id,
+	    grade = :grade,
+	    status = :status,
+	    joined_at = :joined_at,
+	    completed = :completed
 	WHERE id = :id
 	`
-	_, err := r.db.NamedExec(query, participations)
-	return err
+
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.PrepareNamed(query)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	defer stmt.Close()
+
+	for _, p := range participants {
+		if _, err := stmt.Exec(p); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (r *EventRepository) UpdateScore(score *models.ComponentScoreModel) error {
 	query := `
-	UPDATE component_scores
-	SET participation_id = :participation_id, component_id = :component_id, score = :score
+	UPDATE component_score
+	SET participant_id = :participant_id, component_id = :component_id, score = :score
 	WHERE id = :id
 	`
 	_, err := r.db.NamedExec(query, &score)
@@ -180,13 +233,38 @@ func (r *EventRepository) UpdateScore(score *models.ComponentScoreModel) error {
 }
 
 func (r *EventRepository) MassUpdateScore(scores []models.ComponentScoreModel) error {
+	if len(scores) == 0 {
+		return nil
+	}
+
 	query := `
-	UPDATE component_scores
-	SET participation_id = :participation_id, component_id = :component_id, score = :score
+	UPDATE component_score
+	SET participant_id = :participant_id,
+	    component_id = :component_id,
+	    score = :score
 	WHERE id = :id
 	`
-	_, err := r.db.NamedExec(query, scores)
-	return err
+
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.PrepareNamed(query)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	defer stmt.Close()
+
+	for _, s := range scores {
+		if _, err := stmt.Exec(s); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 // ======== GET BY ID ========
@@ -209,18 +287,18 @@ func (r *EventRepository) GetComponentByID(id int64) (*models.EventComponentMode
 	return &component, nil
 }
 
-func (r *EventRepository) GetParticipationByID(id int64) (*models.EventParticipationModel, error) {
-	var participation models.EventParticipationModel
-	err := r.db.Get(&participation, `SELECT * FROM event_participant WHERE id = ?`, id)
+func (r *EventRepository) GetParticipantByID(id int64) (*models.EventParticipantModel, error) {
+	var participant models.EventParticipantModel
+	err := r.db.Get(&participant, `SELECT * FROM event_participant WHERE id = ?`, id)
 	if err != nil {
 		return nil, err
 	}
-	return &participation, nil
+	return &participant, nil
 }
 
 func (r *EventRepository) GetScoreByID(id int64) (*models.ComponentScoreModel, error) {
 	var score models.ComponentScoreModel
-	err := r.db.Get(&score, `SELECT * FROM component_scores WHERE id = ?`, id)
+	err := r.db.Get(&score, `SELECT * FROM component_score WHERE id = ?`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -238,40 +316,68 @@ func (r *EventRepository) GetComponentsByEventID(eventID int64) ([]models.EventC
 	return components, nil
 }
 
-func (r *EventRepository) GetParticipationByEventID(eventID int64) ([]models.EventParticipationModel, error) {
-	var participation []models.EventParticipationModel
-	err := r.db.Select(&participation, `SELECT * FROM event_participant WHERE event_id = ?`, eventID)
+func (r *EventRepository) GetParticipantByEventID(eventID int64) ([]models.EventParticipantModel, error) {
+	var participant []models.EventParticipantModel
+	err := r.db.Select(&participant, `SELECT * FROM event_participant WHERE event_id = ?`, eventID)
 	if err != nil {
 		return nil, err
 	}
-	return participation, nil
+	return participant, nil
 }
 
-func (r *EventRepository) GetScoresByParticipationID(participationID int64) ([]models.ComponentScoreModel, error) {
+func (r *EventRepository) GetScoresByParticipantID(participantID int64) ([]models.ComponentScoreModel, error) {
 	var scores []models.ComponentScoreModel
-	err := r.db.Select(&scores, `SELECT * FROM component_scores WHERE participation_id = ?`, participationID)
+	err := r.db.Select(&scores, `SELECT * FROM component_score WHERE participant_id = ?`, participantID)
 	if err != nil {
 		return nil, err
 	}
 	return scores, nil
 }
 
-func (r *EventRepository) GetParticipationByUserID(userID int) ([]models.EventParticipationModel, error) {
-	var participation []models.EventParticipationModel
-	err := r.db.Select(&participation, `SELECT * FROM event_participant WHERE user_id = ?`, userID)
+func (r *EventRepository) GetParticipantsByEventAndUserIDs(eventID int64, userIDs []int64) ([]models.EventParticipantModel, error) {
+	if len(userIDs) == 0 {
+		return []models.EventParticipantModel{}, nil
+	}
+	query, args, err := sqlx.In(`SELECT * FROM event_participant WHERE event_id = ? AND user_id IN (?)`, eventID, userIDs)
 	if err != nil {
 		return nil, err
 	}
-	return participation, nil
+	query = r.db.Rebind(query)
+	var participants []models.EventParticipantModel
+	err = r.db.Select(&participants, query, args...)
+	return participants, err
 }
 
-func (r *EventRepository) GetParticipationByUserAndEventIDs(userID int, eventID int64) (*models.EventParticipationModel, error) {
-	var participation models.EventParticipationModel
-	err := r.db.Select(&participation, `SELECT * FROM event_participant WHERE user_id = ? AND event_id = ?`, userID, eventID)
+func (r *EventRepository) GetScoresByParticipantIDs(participantIDs []int64) ([]models.ComponentScoreModel, error) {
+	if len(participantIDs) == 0 {
+		return []models.ComponentScoreModel{}, nil
+	}
+	query, args, err := sqlx.In(`SELECT * FROM component_score WHERE participant_id IN (?)`, participantIDs)
 	if err != nil {
 		return nil, err
 	}
-	return &participation, nil
+	query = r.db.Rebind(query)
+	var scores []models.ComponentScoreModel
+	err = r.db.Select(&scores, query, args...)
+	return scores, err
+}
+
+func (r *EventRepository) GetParticipantByUserID(userID int) ([]models.EventParticipantModel, error) {
+	var participant []models.EventParticipantModel
+	err := r.db.Select(&participant, `SELECT * FROM event_participant WHERE user_id = ?`, userID)
+	if err != nil {
+		return nil, err
+	}
+	return participant, nil
+}
+
+func (r *EventRepository) GetParticipantByUserAndEventIDs(userID int, eventID int64) (*models.EventParticipantModel, error) {
+	var participant models.EventParticipantModel
+	err := r.db.Select(&participant, `SELECT * FROM event_participant WHERE user_id = ? AND event_id = ?`, userID, eventID)
+	if err != nil {
+		return nil, err
+	}
+	return &participant, nil
 }
 
 // ======== GET ALL ========
@@ -307,12 +413,12 @@ func (r *EventRepository) MassDeleteComponent(ids []int64) error {
 	return err
 }
 
-func (r *EventRepository) DeleteParticipation(id int64) error {
+func (r *EventRepository) DeleteParticipant(id int64) error {
 	_, err := r.db.Exec(`DELETE FROM event_participant WHERE id = ?`, id)
 	return err
 }
 
-func (r *EventRepository) MassDeleteParticipation(ids []int64) error {
+func (r *EventRepository) MassDeleteParticipant(ids []int64) error {
 	query, args, err := sqlx.In(`DELETE FROM event_participant WHERE id IN (?)`, ids)
 	if err != nil {
 		return err
@@ -323,12 +429,12 @@ func (r *EventRepository) MassDeleteParticipation(ids []int64) error {
 }
 
 func (r *EventRepository) DeleteScore(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM component_scores WHERE id = ?`, id)
+	_, err := r.db.Exec(`DELETE FROM component_score WHERE id = ?`, id)
 	return err
 }
 
 func (r *EventRepository) MassDeleteScore(ids []int64) error {
-	query, args, err := sqlx.In(`DELETE FROM component_scores WHERE id IN (?)`, ids)
+	query, args, err := sqlx.In(`DELETE FROM component_score WHERE id IN (?)`, ids)
 	if err != nil {
 		return err
 	}
