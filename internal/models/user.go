@@ -3,8 +3,8 @@ package models
 import "github.com/golang-jwt/jwt/v5"
 
 type UserModel struct {
-	Index    int    `db:"idx"`
-	UniID    int    `db:"uni_id"`
+	Index    int64  `db:"idx"`
+	UniID    int64  `db:"uni_id"`
 	Username string `db:"username"`
 
 	NameAr string `db:"name_ar"`
@@ -18,13 +18,13 @@ type UserModel struct {
 }
 
 type UserRole struct {
-	Index int    `db:"user_id"`
+	Index int64  `db:"user_id"`
 	Role  string `db:"role"`
 }
 
 type UserResponse struct {
-	Index    int    `json:"index"`
-	UniID    int    `json:"uni_id"`
+	Index    int64  `json:"index"`
+	UniID    int64  `json:"uni_id"`
 	Username string `json:"username"`
 
 	NameAr string `json:"name_ar"`
@@ -38,7 +38,7 @@ type UserResponse struct {
 }
 
 type UserClaims struct {
-	Index    int      `json:"index"`
+	Index    int64    `json:"index"`
 	Username string   `json:"username"`
 	Email    string   `json:"email"`
 	Roles    []string `json:"roles"`

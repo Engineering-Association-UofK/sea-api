@@ -28,3 +28,27 @@ func InternalServerError(c *gin.Context) {
 		Timestamp: time.Now(),
 	})
 }
+
+func NotFound(c *gin.Context) {
+	c.JSON(http.StatusNotFound, BaseError{
+		Status:    404,
+		Message:   "Not Found",
+		Timestamp: time.Now(),
+	})
+}
+
+func Unauthorized(c *gin.Context) {
+	c.JSON(http.StatusUnauthorized, BaseError{
+		Status:    401,
+		Message:   "Unauthorized",
+		Timestamp: time.Now(),
+	})
+}
+
+func BadRequest(c *gin.Context) {
+	c.JSON(http.StatusBadRequest, BaseError{
+		Status:    400,
+		Message:   "Bad Request",
+		Timestamp: time.Now(),
+	})
+}
