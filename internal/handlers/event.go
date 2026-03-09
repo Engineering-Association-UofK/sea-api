@@ -24,7 +24,8 @@ func NewEventHandler(db *sqlx.DB) *EventHandler {
 func (h *EventHandler) GetAllEvents(ctx *gin.Context) {
 	events, err := h.EventService.GetAllEvents()
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		slog.Error("error getting events", "error", err)
+		exception.InternalServerError(ctx)
 		return
 	}
 	ctx.JSON(200, events)
@@ -34,13 +35,18 @@ func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		exception.BadRequest(ctx)
 		return
 	}
 
 	event, err := h.EventService.GetEventByID(int64(intId))
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		if err.Error() == "event not found" {
+			exception.NotFound(ctx)
+			return
+		}
+		slog.Error("error getting event", "error", err)
+		exception.InternalServerError(ctx)
 		return
 	}
 	ctx.JSON(200, event)
@@ -49,7 +55,7 @@ func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 	var event models.EventDTO
 	if err := ctx.ShouldBindJSON(&event); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		exception.BadRequest(ctx)
 		return
 	}
 
@@ -70,7 +76,7 @@ func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
 	var event models.EventDTO
 	if err := ctx.ShouldBindJSON(&event); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		exception.BadRequest(ctx)
 		return
 	}
 
@@ -87,7 +93,7 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		exception.BadRequest(ctx)
 		return
 	}
 	if err := h.EventService.DeleteEvent(int64(intId)); err != nil {

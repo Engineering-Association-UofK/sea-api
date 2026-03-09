@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"log/slog"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
@@ -27,7 +28,7 @@ func NewEventService(db *sqlx.DB) *EventService {
 func (s *EventService) GetEventByID(id int64) (*models.EventDTO, error) {
 	event, err := s.EventRepo.GetEventByID(id)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("event not found")
 	}
 
 	components, err := s.EventRepo.GetComponentsByEventID(id)
