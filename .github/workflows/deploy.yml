@@ -1,0 +1,62 @@
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
+
+    - name: Build
+      run: go build -o api cmd/api/main.go
+
+    # - name: Test
+    #   run: go test -v ./...
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: sea-api
+        path: api
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sea-api
+          path: .
+
+      - name: Copy to Cloud Machine
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_HOST_USERNAME }}
+          key: ${{ secrets.PRODUCTION_HOST_SSH_PRIVATE_KEY }}
+          source: "api"
+          target: "~"
+
+      - name: Restart Application on Cloud Machine
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_HOST_USERNAME }}
+          key: ${{ secrets.PRODUCTION_HOST_SSH_PRIVATE_KEY }}
+          script: |
+            sudo systemctl stop api
+            sudo mv ~/api /opt/api/api
+            sudo chown backend:backend /opt/api/api
+            sudo chmod +x /opt/api/api
+            sudo systemctl start api
