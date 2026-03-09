@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
     FOREIGN KEY (user_id) REFERENCES users(idx)
 );
 
-CREATE TABLE IF NOT EXISTS events (
+CREATE TABLE IF NOT EXISTS event (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
@@ -31,17 +31,17 @@ CREATE TABLE IF NOT EXISTS events (
     end_date DATE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS event_components (
+CREATE TABLE IF NOT EXISTS event_component (
     id INT PRIMARY KEY AUTO_INCREMENT,
     event_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     max_score DECIMAL(10, 2) NOT NULL,
 
-    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+    FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS event_participation (
+CREATE TABLE IF NOT EXISTS event_participant (
     id INT PRIMARY KEY AUTO_INCREMENT,
     event_id INT NOT NULL,
     user_id INT NOT NULL,
@@ -52,11 +52,11 @@ CREATE TABLE IF NOT EXISTS event_participation (
 
     UNIQUE (event_id, user_id),
 
-    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(idx) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS component_scores (
+CREATE TABLE IF NOT EXISTS component_score (
     id INT PRIMARY KEY AUTO_INCREMENT,
     participant_id INT NOT NULL,
     component_id INT NOT NULL,
@@ -64,6 +64,6 @@ CREATE TABLE IF NOT EXISTS component_scores (
 
     UNIQUE (participant_id, component_id),
 
-    FOREIGN KEY (participant_id) REFERENCES event_participation(id) ON DELETE CASCADE,
-    FOREIGN KEY (component_id) REFERENCES event_components(id) ON DELETE CASCADE
+    FOREIGN KEY (participant_id) REFERENCES event_participant(id) ON DELETE CASCADE,
+    FOREIGN KEY (component_id) REFERENCES event_component(id) ON DELETE CASCADE
 );

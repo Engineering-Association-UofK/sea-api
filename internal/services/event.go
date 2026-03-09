@@ -1,6 +1,7 @@
 package services
 
 import (
+	"log/slog"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
@@ -17,6 +18,7 @@ type EventService struct {
 func NewEventService(db *sqlx.DB) *EventService {
 	return &EventService{
 		EventRepo: repositories.NewEventRepository(db),
+		UserRepo:  repositories.NewUserRepository(db),
 	}
 }
 
@@ -57,7 +59,7 @@ func (s *EventService) GetAllEvents() ([]models.EventListResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	var eventList []models.EventListResponse
+	eventList := make([]models.EventListResponse, 0)
 	for _, event := range events {
 		eventList = append(eventList, models.EventListResponse{
 			ID:              event.ID,
@@ -115,6 +117,10 @@ func (s *EventService) CreateEvent(event *models.EventDTO) (int64, error) {
 // ======== UPDATE ========
 
 func (s *EventService) UpdateEvent(event *models.EventDTO) error {
+	if _, err := s.EventRepo.GetEventByID(event.ID); err != nil {
+		return errors.New("event not found")
+	}
+
 	outcomes := strings.Join(event.Outcomes, ",")
 	err := s.EventRepo.UpdateEvent(&models.EventModel{
 		ID:              event.ID,
@@ -192,20 +198,22 @@ func (s *EventService) participantFromDtoToModel(dto []models.ParticipantDTO, ev
 }
 
 func (s *EventService) participantFromModelToDto(model []models.EventParticipationModel) []models.ParticipantDTO {
-	indices := make([]int, len(model))
+	indices := make([]int64, len(model))
 	for i, p := range model {
 		indices[i] = p.UserID
 	}
 
 	if len(indices) == 0 {
+		slog.Error("no users found")
 		return []models.ParticipantDTO{}
 	}
 
 	users, err := s.UserRepo.GetAllByIndices(indices)
 	if err != nil {
-		return nil
+		slog.Error("error getting users", "error", err)
+		return []models.ParticipantDTO{}
 	}
-	usersMap := utils.NewMpp[int, models.UserModel]()
+	usersMap := utils.NewMpp[int64, models.UserModel]()
 	for _, u := range users {
 		usersMap.Add(u.Index, u)
 	}
@@ -270,7 +278,7 @@ func syncEntities[ID comparable, Model any, DTO any](
 
 	var toCreate, toUpdate []Model
 	for _, dto := range newDTOs {
-		id := getID(dtoToModel([]DTO{dto}, 0)[0]) // temporary conversion to get ID
+		id := getID(dtoToModel([]DTO{dto}, 0)[0])
 		if m.Exists(id) {
 			toUpdate = append(toUpdate, dtoToModel([]DTO{dto}, eventId)...)
 			_ = m.Delete(id)

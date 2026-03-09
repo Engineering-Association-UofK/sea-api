@@ -43,7 +43,7 @@ type EventComponentModel struct {
 type EventParticipationModel struct {
 	ID        int64             `db:"id"`
 	EventID   int64             `db:"event_id"`
-	UserID    int               `db:"user_id"`
+	UserID    int64             `db:"user_id"`
 	Grade     float64           `db:"grade"`
 	Status    ParticipantStatus `db:"status"`
 	JoinedAt  time.Time         `db:"joined_at"`
@@ -81,7 +81,7 @@ type ComponentDTO struct {
 
 type ParticipantDTO struct {
 	ID        int64             `json:"id"`
-	UserID    int               `json:"user_id"`
+	UserID    int64             `json:"user_id"`
 	NameAr    string            `json:"name_ar"`
 	NameEn    string            `json:"name_en"`
 	Grade     float64           `json:"grade"`
@@ -100,7 +100,7 @@ type EventListResponse struct {
 }
 
 type MassApplyEventRequest struct {
-	UserIDs []int `json:"user_ids"`
+	UserIDs []int64 `json:"user_ids"`
 }
 
 type ComponentScoreRequest struct {

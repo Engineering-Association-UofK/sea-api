@@ -52,7 +52,7 @@ func (s *UserService) GetAll() ([]models.UserResponse, error) {
 	return userResponse, nil
 }
 
-func (s *UserService) GetByIndex(index int) (*models.UserResponse, error) {
+func (s *UserService) GetByIndex(index int64) (*models.UserResponse, error) {
 	user, err := s.repo.GetByIndex(index)
 	if err != nil {
 		return nil, err
@@ -84,12 +84,12 @@ func (s *UserService) Update(user *models.UserModel) error {
 	return s.repo.Update(user)
 }
 
-func (s *UserService) Delete(index int) error {
+func (s *UserService) Delete(index int64) error {
 	return s.repo.Delete(index)
 }
 
-func extractRoles(roles []models.UserRole) map[int][]string {
-	rolesMap := make(map[int][]string)
+func extractRoles(roles []models.UserRole) map[int64][]string {
+	rolesMap := make(map[int64][]string)
 	for _, r := range roles {
 		if _, ok := rolesMap[r.Index]; !ok {
 			rolesMap[r.Index] = []string{}
