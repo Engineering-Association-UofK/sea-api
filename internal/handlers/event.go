@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"log/slog"
-	"sea-api/internal/exception"
 	"sea-api/internal/models"
+	"sea-api/internal/response"
 	"sea-api/internal/services"
 	"strconv"
 
@@ -25,7 +25,7 @@ func (h *EventHandler) GetAllEvents(ctx *gin.Context) {
 	events, err := h.EventService.GetAllEvents()
 	if err != nil {
 		slog.Error("error getting events", "error", err)
-		exception.InternalServerError(ctx)
+		response.InternalServerError(ctx)
 		return
 	}
 	ctx.JSON(200, events)
@@ -35,18 +35,18 @@ func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		exception.BadRequest(ctx)
+		response.BadRequest(ctx)
 		return
 	}
 
 	event, err := h.EventService.GetEventByID(int64(intId))
 	if err != nil {
 		if err.Error() == "event not found" {
-			exception.NotFound(ctx)
+			response.NotFound(ctx)
 			return
 		}
 		slog.Error("error getting event", "error", err)
-		exception.InternalServerError(ctx)
+		response.InternalServerError(ctx)
 		return
 	}
 	ctx.JSON(200, event)
@@ -55,18 +55,18 @@ func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 	var event models.EventDTO
 	if err := ctx.ShouldBindJSON(&event); err != nil {
-		exception.BadRequest(ctx)
+		response.BadRequest(ctx)
 		return
 	}
 
 	id, err := h.EventService.CreateEvent(&event)
 	if err != nil {
 		if err.Error() == "event not found" {
-			exception.NotFound(ctx)
+			response.NotFound(ctx)
 			return
 		}
 		slog.Error("error creating event", "error", err)
-		exception.InternalServerError(ctx)
+		response.InternalServerError(ctx)
 		return
 	}
 	event.ID = id
@@ -76,13 +76,13 @@ func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
 	var event models.EventDTO
 	if err := ctx.ShouldBindJSON(&event); err != nil {
-		exception.BadRequest(ctx)
+		response.BadRequest(ctx)
 		return
 	}
 
 	if err := h.EventService.UpdateEvent(&event); err != nil {
 		slog.Error("error updating event", "error", err)
-		exception.InternalServerError(ctx)
+		response.InternalServerError(ctx)
 		return
 	}
 
@@ -93,12 +93,12 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		exception.BadRequest(ctx)
+		response.BadRequest(ctx)
 		return
 	}
 	if err := h.EventService.DeleteEvent(int64(intId)); err != nil {
 		slog.Error("error deleting event", "error", err)
-		exception.InternalServerError(ctx)
+		response.InternalServerError(ctx)
 		return
 	}
 	ctx.JSON(200, gin.H{"message": "Event deleted successfully"})

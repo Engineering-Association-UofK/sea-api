@@ -24,6 +24,8 @@ func main() {
 	routes.UserHandler = handlers.NewUserHandler(db)
 	routes.EventHandler = handlers.NewEventHandler(db)
 
+	routes.MailHandler = handlers.NewMailHandler(db)
+
 	r := routes.SetupRouter()
 	err := r.Run(":8000")
 	if err != nil {

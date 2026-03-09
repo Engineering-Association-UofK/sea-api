@@ -2,6 +2,7 @@ package routes
 
 import (
 	"sea-api/internal/handlers"
+	"sea-api/internal/response"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -11,11 +12,15 @@ import (
 var (
 	UserHandler  *handlers.UserHandler
 	EventHandler *handlers.EventHandler
+	MailHandler  *handlers.MailHandler
 )
 
 func SetupRouter() *gin.Engine {
 	r := gin.New()
-	r.Use(handlers.LoggingMiddleware())
+	r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
+		response.InternalServerError(c)
+		c.Abort()
+	}), gin.Logger())
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
@@ -30,9 +35,15 @@ func SetupRouter() *gin.Engine {
 
 	api := r.Group("/api")
 
+	// ==== Mail ====
+	mail := api.Group("/mail")
+	mail.POST("", MailHandler.SendMail)
+
+	// ==== Users ====
 	user := api.Group("/user")
 	user.GET("/all", handlers.RequireRole("ROLE_SUPER_ADMIN"), UserHandler.GetAll)
 
+	// ==== Events ====
 	event := api.Group("/event")
 	event.Use(handlers.AuthMiddleware())
 	event.GET("", EventHandler.GetAllEvents)
