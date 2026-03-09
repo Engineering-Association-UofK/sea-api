@@ -81,7 +81,7 @@ func checkEmailType(m *MailService, e models.UserEmails, user *models.UserRespon
 			return err
 		}
 
-	case models.EmailType(models.CERTIFICATE):
+	case models.CERTIFICATE:
 		var data models.CertificateEmailData
 		if err := json.Unmarshal(e.Data, &data); err != nil {
 			return err

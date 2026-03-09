@@ -11,6 +11,7 @@ const (
 	WELCOME      EmailType = "WELCOME"
 	RESET_PASS   EmailType = "RESET_PASS"
 	TECHNICAL    EmailType = "TECHNICAL"
+	CERTIFICATE  EmailType = "CERTIFICATE"
 )
 
 type Email struct {
