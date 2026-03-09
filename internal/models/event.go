@@ -40,10 +40,10 @@ type EventComponentModel struct {
 	MaxScore    float64 `db:"max_score"`
 }
 
-type EventParticipationModel struct {
+type EventParticipantModel struct {
 	ID        int64             `db:"id"`
 	EventID   int64             `db:"event_id"`
-	UserID    int               `db:"user_id"`
+	UserID    int64             `db:"user_id"`
 	Grade     float64           `db:"grade"`
 	Status    ParticipantStatus `db:"status"`
 	JoinedAt  time.Time         `db:"joined_at"`
@@ -51,10 +51,10 @@ type EventParticipationModel struct {
 }
 
 type ComponentScoreModel struct {
-	ID              int64   `db:"id"`
-	ParticipationID int64   `db:"participation_id"`
-	ComponentID     int64   `db:"component_id"`
-	Score           float64 `db:"score"`
+	ID            int64   `db:"id"`
+	ParticipantID int64   `db:"participant_id"`
+	ComponentID   int64   `db:"component_id"`
+	Score         float64 `db:"score"`
 }
 
 // ====== DTOs ======
@@ -81,13 +81,20 @@ type ComponentDTO struct {
 
 type ParticipantDTO struct {
 	ID        int64             `json:"id"`
-	UserID    int               `json:"user_id"`
+	UserID    int64             `json:"user_id"`
 	NameAr    string            `json:"name_ar"`
 	NameEn    string            `json:"name_en"`
-	Grade     float64           `json:"grade"`
+	Grade     []ComScoreDTO     `json:"grade"`
 	Status    ParticipantStatus `json:"status"`
 	JoinedAt  time.Time         `json:"joined_at"`
 	Completed bool              `json:"completed"`
+}
+
+type ComScoreDTO struct {
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	ComponentId int64   `json:"component_id"`
+	Score       float64 `json:"score"`
 }
 
 type EventListResponse struct {
@@ -100,7 +107,7 @@ type EventListResponse struct {
 }
 
 type MassApplyEventRequest struct {
-	UserIDs []int `json:"user_ids"`
+	UserIDs []int64 `json:"user_ids"`
 }
 
 type ComponentScoreRequest struct {

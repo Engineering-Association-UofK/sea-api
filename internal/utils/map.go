@@ -63,8 +63,8 @@ func (mpp Mpp[K, V]) ForEach(fn func(K, V)) {
 	}
 }
 
-func MapValues[K comparable, V any, T any](m *Mpp[K, V], fn func(V) T) map[K]T {
-	result := make(map[K]T)
+func MapValues[K comparable, V any, T any](m *Mpp[K, V], fn func(V) T) Mpp[K, T] {
+	result := NewMpp[K, T]()
 
 	for k, v := range *m {
 		result[k] = fn(v)
@@ -149,6 +149,14 @@ func (mpp Mpp[K, V]) ToMap() map[K]V {
 		result[k] = v
 	}
 	return result
+}
+
+func FromSlice[K comparable, V any](slice []V, getKey func(V) K) Mpp[K, V] {
+	m := NewMpp[K, V]()
+	for _, item := range slice {
+		m[getKey(item)] = item
+	}
+	return m
 }
 
 // Lists

@@ -42,18 +42,18 @@ jobs:
       - name: Copy to Cloud Machine
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_HOST_USERNAME }}
-          key: ${{ secrets.PRODUCTION_HOST_SSH_PRIVATE_KEY }}
+          host: ${{ secrets.DEVELOPMENT_HOST }}
+          username: ${{ secrets.DEVELOPMENT_HOST_USERNAME }}
+          key: ${{ secrets.DEVELOPMENT_HOST_SSH_PRIVATE_KEY }}
           source: "api"
           target: "~"
 
       - name: Restart Application on Cloud Machine
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_HOST_USERNAME }}
-          key: ${{ secrets.PRODUCTION_HOST_SSH_PRIVATE_KEY }}
+          host: ${{ secrets.DEVELOPMENT_HOST }}
+          username: ${{ secrets.DEVELOPMENT_HOST_USERNAME }}
+          key: ${{ secrets.DEVELOPMENT_HOST_SSH_PRIVATE_KEY }}
           script: |
             sudo systemctl stop api
             sudo mv ~/api /opt/api/api

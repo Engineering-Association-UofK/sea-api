@@ -2,7 +2,9 @@ package routes
 
 import (
 	"sea-api/internal/handlers"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +16,15 @@ var (
 func SetupRouter() *gin.Engine {
 	r := gin.New()
 	r.Use(handlers.LoggingMiddleware())
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"working": "yes"}) })
 
