@@ -34,19 +34,8 @@ func (s *UserService) GetAll() ([]models.UserResponse, error) {
 
 	var userResponse []models.UserResponse
 	for _, u := range users {
-		user := models.UserResponse{
-			Index:    u.Index,
-			UniID:    u.UniID,
-			Username: u.Username,
-			NameAr:   u.NameAr,
-			NameEn:   u.NameEn,
-			Email:    u.Email,
-			Phone:    u.Phone,
-			Verified: u.Verified,
-			Status:   u.Status,
-			Roles:    rolesMap[u.Index],
-		}
-		userResponse = append(userResponse, user)
+		user := parseUserResponse(&u, rolesMap[u.Index])
+		userResponse = append(userResponse, *user)
 	}
 
 	return userResponse, nil
@@ -62,18 +51,44 @@ func (s *UserService) GetByIndex(index int64) (*models.UserResponse, error) {
 		return nil, err
 	}
 
-	return &models.UserResponse{
-		Index:    user.Index,
-		UniID:    user.UniID,
-		Username: user.Username,
-		NameAr:   user.NameAr,
-		NameEn:   user.NameEn,
-		Email:    user.Email,
-		Phone:    user.Phone,
-		Verified: user.Verified,
-		Status:   user.Status,
-		Roles:    roles,
-	}, nil
+	return parseUserResponse(user, roles), nil
+}
+
+func (s *UserService) GetAllByIndices(indices []int64) ([]models.UserResponse, error) {
+	users, err := s.repo.GetAllByIndices(indices)
+	if err != nil {
+		return nil, err
+	}
+	roles, err := s.repo.GetAllRolesByIndices(indices)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(users) == 0 {
+		return []models.UserResponse{}, nil
+	}
+
+	rolesMap := extractRoles(roles)
+
+	var userResponse []models.UserResponse
+	for _, u := range users {
+		user := parseUserResponse(&u, rolesMap[u.Index])
+		userResponse = append(userResponse, *user)
+	}
+
+	return userResponse, nil
+}
+
+func (s *UserService) GetByUsername(username string) (*models.UserResponse, error) {
+	user, err := s.repo.GetByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	roles, err := s.repo.GetRolesByUserID(user.Index)
+	if err != nil {
+		return nil, err
+	}
+	return parseUserResponse(user, roles), nil
 }
 
 func (s *UserService) Create(user *models.UserModel) error {
@@ -88,6 +103,8 @@ func (s *UserService) Delete(index int64) error {
 	return s.repo.Delete(index)
 }
 
+// ====== Helpers ======
+
 func extractRoles(roles []models.UserRole) map[int64][]string {
 	rolesMap := make(map[int64][]string)
 	for _, r := range roles {
@@ -97,4 +114,19 @@ func extractRoles(roles []models.UserRole) map[int64][]string {
 		rolesMap[r.Index] = append(rolesMap[r.Index], r.Role)
 	}
 	return rolesMap
+}
+
+func parseUserResponse(user *models.UserModel, roles []string) *models.UserResponse {
+	return &models.UserResponse{
+		Index:    user.Index,
+		UniID:    user.UniID,
+		Username: user.Username,
+		NameAr:   user.NameAr,
+		NameEn:   user.NameEn,
+		Email:    user.Email,
+		Phone:    user.Phone,
+		Verified: user.Verified,
+		Status:   user.Status,
+		Roles:    roles,
+	}
 }
