@@ -66,9 +66,32 @@ func (r *UserRepository) GetRolesByUserID(userID int64) ([]string, error) {
 	return roles, nil
 }
 
+func (r *UserRepository) GetAllRolesByIndices(indices []int64) ([]models.UserRole, error) {
+	var roles []models.UserRole
+	if len(indices) == 0 {
+		return roles, nil
+	}
+	query, args, err := sqlx.In(
+		`SELECT * FROM user_roles WHERE user_id IN (?)`,
+		indices,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	query = r.db.Rebind(query)
+
+	err = r.db.Select(&roles, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return roles, nil
+}
+
 func (r *UserRepository) GetByIndex(index int64) (*models.UserModel, error) {
 	var user models.UserModel
-	err := r.db.Get(&user, `SELECT * FROM users WHERE id = ?`, index)
+	err := r.db.Get(&user, `SELECT * FROM users WHERE idx = ?`, index)
 	if err != nil {
 		return nil, err
 	}
@@ -109,12 +132,12 @@ func (r *UserRepository) Create(user *models.UserModel) error {
 }
 
 func (r *UserRepository) Update(user *models.UserModel) error {
-	_, err := r.db.Exec(`UPDATE users SET uni_id = ?, username = ?, name_ar = ?, name_en = ?, email = ?, phone = ?, password = ?, verified = ?, status = ? WHERE id = ?`,
+	_, err := r.db.Exec(`UPDATE users SET uni_id = ?, username = ?, name_ar = ?, name_en = ?, email = ?, phone = ?, password = ?, verified = ?, status = ? WHERE idx = ?`,
 		user.UniID, user.Username, user.NameAr, user.NameEn, user.Email, user.Phone, user.Password, user.Verified, user.Status, user.Index)
 	return err
 }
 
 func (r *UserRepository) Delete(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM users WHERE id = ?`, id)
+	_, err := r.db.Exec(`DELETE FROM users WHERE idx = ?`, id)
 	return err
 }

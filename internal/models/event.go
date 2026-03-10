@@ -5,18 +5,18 @@ import "time"
 type EventType string
 
 const (
-	Workshop EventType = "WORKSHOP"
-	Course   EventType = "COURSE"
-	Seminar  EventType = "SEMINAR"
+	WORKSHOP EventType = "WORKSHOP"
+	COURSE   EventType = "COURSE"
+	SEMINAR  EventType = "SEMINAR"
 )
 
 type ParticipantStatus string
 
 const (
-	Pending   ParticipantStatus = "PENDING"
-	Accepted  ParticipantStatus = "ACCEPTED"
-	Rejected  ParticipantStatus = "REJECTED"
-	Completed ParticipantStatus = "COMPLETED"
+	PENDING   ParticipantStatus = "PENDING"
+	ACCEPTED  ParticipantStatus = "ACCEPTED"
+	REJECTED  ParticipantStatus = "REJECTED"
+	COMPLETED ParticipantStatus = "COMPLETED"
 )
 
 // ====== DataBase Models ======
