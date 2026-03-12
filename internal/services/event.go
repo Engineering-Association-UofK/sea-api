@@ -9,8 +9,7 @@ import (
 	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
 	"strings"
-
-	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 type EventService struct {
@@ -18,10 +17,10 @@ type EventService struct {
 	UserRepo  *repositories.UserRepository
 }
 
-func NewEventService(db *sqlx.DB) *EventService {
+func NewEventService(EventRepo *repositories.EventRepository, UserRepo *repositories.UserRepository) *EventService {
 	return &EventService{
-		EventRepo: repositories.NewEventRepository(db),
-		UserRepo:  repositories.NewUserRepository(db),
+		EventRepo: EventRepo,
+		UserRepo:  UserRepo,
 	}
 }
 
@@ -30,14 +29,13 @@ func NewEventService(db *sqlx.DB) *EventService {
 func (s *EventService) GetEventByID(id int64) (*models.EventDTO, error) {
 	event, err := s.EventRepo.GetEventByID(id)
 	if err != nil {
-		return nil, errors.New("event not found")
+		return nil, err
 	}
 
 	components, err := s.EventRepo.GetComponentsByEventID(id)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(components[len(components)-1].ID)
 
 	participants, err := s.EventRepo.GetParticipantByEventID(id)
 	if err != nil {
@@ -239,30 +237,57 @@ func (s *EventService) participantFromDtoToModel(dto []models.ParticipantDTO, ev
 	if len(dto) == 0 {
 		return []models.EventParticipantModel{}, []models.ComponentScoreModel{}
 	}
+	components, err := s.EventRepo.GetComponentsByEventID(eventID)
+	if err != nil {
+		slog.Error("error getting components", "error", err)
+		return []models.EventParticipantModel{}, []models.ComponentScoreModel{}
+	}
 
 	participants := make([]models.EventParticipantModel, len(dto))
 	var ScoreModels []models.ComponentScoreModel
 	for i, p := range dto {
+		gradeMap := utils.FromSlice(p.Grade, func(dto models.ComScoreDTO) int64 { return dto.ComponentId })
 		grade := 0.0
-		for _, ScoreDTO := range p.Grade {
+		maxGrade := 0.0
+		for _, Component := range components {
+			score := gradeMap.GetOrCreate(Component.ID, func() models.ComScoreDTO {
+				return models.ComScoreDTO{
+					ID:          0,
+					Name:        Component.Name,
+					ComponentId: Component.ID,
+					Score:       0,
+				}
+			})
+			if score.Score > Component.MaxScore {
+				score.Score = Component.MaxScore
+			}
 			ScoreModels = append(ScoreModels, models.ComponentScoreModel{
 				ParticipantID: p.ID,
-				ID:            ScoreDTO.ID,
-				ComponentID:   ScoreDTO.ComponentId,
-				Score:         ScoreDTO.Score,
+				ID:            score.ID,
+				ComponentID:   score.ComponentId,
+				Score:         score.Score,
 			})
-			grade += ScoreDTO.Score
+			maxGrade += Component.MaxScore
+			grade += score.Score
 		}
 		if len(p.Grade) != 0 {
-			grade /= float64(len(p.Grade))
+			grade = grade / maxGrade * 100
+		}
+		t := time.Now()
+		if !p.JoinedAt.IsZero() {
+			t = p.JoinedAt
+		}
+		s := models.ACCEPTED
+		if p.Status != "" {
+			s = p.Status
 		}
 		participants[i] = models.EventParticipantModel{
 			ID:        p.ID,
 			EventID:   eventID,
 			UserID:    p.UserID,
 			Grade:     grade,
-			Status:    p.Status,
-			JoinedAt:  p.JoinedAt,
+			Status:    s,
+			JoinedAt:  t,
 			Completed: p.Completed,
 		}
 	}
@@ -426,59 +451,4 @@ func syncEntities[ID comparable, Model any, DTO any](
 		}
 	}
 	return nil
-}
-
-func (s *EventService) GetGrades(userMap utils.Mpp[int64, models.UserModel], eventId int64) (utils.Mpp[int64, float64], error) {
-	components, err := s.EventRepo.GetComponentsByEventID(eventId)
-	if err != nil {
-		return utils.NewMpp[int64, float64](), err
-	}
-
-	divisor := float64(len(components))
-	if divisor == 0 {
-		divisor = 1
-	}
-
-	userIDs := userMap.Keys()
-	participants, err := s.EventRepo.GetParticipantsByEventAndUserIDs(eventId, userIDs)
-	if err != nil {
-		return utils.NewMpp[int64, float64](), err
-	}
-
-	partMap := make(map[int64]models.EventParticipantModel)
-	for _, p := range participants {
-		partMap[p.UserID] = p
-	}
-
-	participantIDs := make([]int64, 0, len(participants))
-	for _, uid := range userIDs {
-		if p, ok := partMap[uid]; ok {
-			participantIDs = append(participantIDs, p.ID)
-		} else {
-			user, _ := userMap.Value(uid)
-			return utils.NewMpp[int64, float64](), fmt.Errorf("user %s is not a participant", user.Username)
-		}
-	}
-
-	scores, err := s.EventRepo.GetScoresByParticipantIDs(participantIDs)
-	if err != nil {
-		return utils.NewMpp[int64, float64](), err
-	}
-
-	scoresMap := make(map[int64][]float64)
-	for _, s := range scores {
-		scoresMap[s.ParticipantID] = append(scoresMap[s.ParticipantID], s.Score)
-	}
-
-	result := utils.NewMpp[int64, float64]()
-	for _, p := range participants {
-		pScores := scoresMap[p.ID]
-		var sum float64
-		for _, val := range pScores {
-			sum += val
-		}
-		result.Add(p.UserID, sum/divisor)
-	}
-
-	return result, nil
 }

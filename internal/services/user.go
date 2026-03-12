@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
-
-	"github.com/jmoiron/sqlx"
 )
 
 type UserService struct {
 	repo *repositories.UserRepository
 }
 
-func NewUserService(db *sqlx.DB) *UserService {
-	return &UserService{repo: repositories.NewUserRepository(db)}
+func NewUserService(repo *repositories.UserRepository) *UserService {
+	return &UserService{repo: repo}
 }
 
 func (s *UserService) GetAll() ([]models.UserResponse, error) {
