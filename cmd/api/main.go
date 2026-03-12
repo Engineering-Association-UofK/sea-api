@@ -4,30 +4,23 @@ import (
 	"sea-api/cmd/routes"
 	"sea-api/internal/config"
 	"sea-api/internal/handlers"
+	"sea-api/internal/repositories"
+	"sea-api/internal/services"
 	"sea-api/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-var db = make(map[string]string)
-
-type User struct {
-	Name  string `json:"name" binding:"required"`
-	Value string `json:"value" binding:"required"`
-}
-
 func main() {
+	err := config.Load()
+	if err != nil {
+		panic(err)
+	}
+
 	Init()
 
-	db := storage.NewMySQLConnection()
-
-	routes.UserHandler = handlers.NewUserHandler(db)
-	routes.EventHandler = handlers.NewEventHandler(db)
-
-	routes.MailHandler = handlers.NewMailHandler(db)
-
 	r := routes.SetupRouter()
-	err := r.Run(":8000")
+	err = r.Run(":" + config.App.Port)
 	if err != nil {
 		panic(err)
 	}
@@ -35,8 +28,25 @@ func main() {
 
 func Init() {
 	gin.SetMode(gin.ReleaseMode)
-	err := config.Load()
-	if err != nil {
-		panic(err)
-	}
+	db := storage.NewMySQLConnection()
+
+	// Initialize repositories
+	userRepository := repositories.NewUserRepository(db)
+	eventRepository := repositories.NewEventRepository(db)
+	storeRepository := repositories.NewStoreRepository(db)
+	certificateRepository := repositories.NewCertificateRepository(db)
+
+	// Initialize services
+	userService := services.NewUserService(userRepository)
+	eventService := services.NewEventService(eventRepository, userRepository)
+	storageService := services.NewSeaweedService(storeRepository)
+	pdfService := services.NewPDFService(10)
+	mailService := services.NewMailService(userService)
+	certificateService := services.NewCertificateService(userRepository, eventService, storageService, pdfService, mailService, certificateRepository)
+
+	// Initialize handlers
+	routes.UserHandler = handlers.NewUserHandler(userService)
+	routes.EventHandler = handlers.NewEventHandler(eventService)
+	routes.MailHandler = handlers.NewMailHandler(mailService)
+	routes.CertificateHandler = handlers.NewCertificateHandler(certificateService)
 }
