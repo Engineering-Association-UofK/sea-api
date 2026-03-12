@@ -33,8 +33,12 @@ type Config struct {
 	JwtSecret        string `env:"JWT_SECRET" required:"true"`
 	SecretSalt       string `env:"SECRET_SALT" required:"true"`
 	KeystorePassword string `env:"KEYSTORE_PASSWORD" required:"true"`
+	keystorePath     string `env:"KEYSTORE_PATH" envDefault:"/app/certs/sea_key.p12"`
 
-	keystorePath string `env:"KEYSTORE_PATH" envDefault:"/app/certs/sea_key.p12"`
+	StoreMasterURL string `env:"STORE_MASTER_URL" envDefault:"http://localhost:9333"`
+	StorePublicURL string `env:"STORE_PUBLIC_URL" envDefault:"http://localhost:8080"`
+	StoreFilerUrl  string `env:"STORE_FILER_URL" envDefault:"http://localhost:8888"`
+	StoreS3ApiUrl  string `env:"STORE_S3API_URL" envDefault:"http://localhost:8333"`
 }
 
 func Load() error {

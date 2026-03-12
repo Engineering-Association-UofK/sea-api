@@ -1,0 +1,108 @@
+package repositories
+
+import (
+	"sea-api/internal/models"
+
+	"github.com/jmoiron/sqlx"
+)
+
+type CertificateRepository struct {
+	DB *sqlx.DB
+}
+
+func NewCertificateRepository(db *sqlx.DB) *CertificateRepository {
+	return &CertificateRepository{DB: db}
+}
+
+func (r *CertificateRepository) Create(item models.CertificateModel) (int64, error) {
+	query := `
+	INSERT INTO certificates (cert_hash, user_id, event_id, grade, issue_date, status)
+	VALUES (:cert_hash, :user_id, :event_id, :grade, :issue_date, :status)
+	`
+	res, err := r.DB.NamedExec(query, &item)
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
+func (r *CertificateRepository) CreateFile(item models.CertificateFileModel) (int64, error) {
+	query := `
+	INSERT INTO certificate_file (certificate_id, store_id, lang)
+	VALUES (:certificate_id, :store_id, :lang)
+	`
+	res, err := r.DB.NamedExec(query, &item)
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
+func (r *CertificateRepository) GetByID(id int64) (*models.CertificateModel, error) {
+	var model models.CertificateModel
+	err := r.DB.Get(&model, `SELECT * FROM certificates WHERE id = ?`, id)
+	if err != nil {
+		return nil, err
+	}
+	return &model, nil
+}
+
+func (r *CertificateRepository) GetByHash(hash string) (*models.CertificateModel, error) {
+	var item models.CertificateModel
+	err := r.DB.Get(&item, `SELECT * FROM certificates WHERE cert_hash = ?`, hash)
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (r *CertificateRepository) GetByUserIDAndEventID(userID, eventID int64) (*models.CertificateModel, error) {
+	var item models.CertificateModel
+	err := r.DB.Get(&item, `SELECT * FROM certificates WHERE user_id = ? AND event_id = ?`, userID, eventID)
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (r *CertificateRepository) GetFileById(id int64) (*models.CertificateFileModel, error) {
+	var item models.CertificateFileModel
+	err := r.DB.Get(&item, `SELECT * FROM certificate_file WHERE id = ?`, id)
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (r *CertificateRepository) GetFilesByCertificateID(certificateID int64) ([]models.CertificateFileModel, error) {
+	var items []models.CertificateFileModel
+	err := r.DB.Select(&items, `SELECT * FROM certificate_file WHERE certificate_id = ?`, certificateID)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (r *CertificateRepository) GetFileByCertificateIDAndLang(certificateID int64, lang string) (*models.CertificateFileModel, error) {
+	var item models.CertificateFileModel
+	err := r.DB.Get(&item, `SELECT * FROM certificate_file WHERE certificate_id = ? AND lang = ?`, certificateID, lang)
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (r *CertificateRepository) Update(item *models.CertificateModel) error {
+	query := `
+	UPDATE certificates
+	SET cert_hash = :cert_hash, user_id = :user_id, event_id = :event_id, issue_date = :issue_date, status = :status
+	WHERE id = :id
+	`
+	_, err := r.DB.NamedExec(query, &item)
+	return err
+}
+
+func (r *CertificateRepository) Delete(id int64) error {
+	_, err := r.DB.Exec(`DELETE FROM certificates WHERE id = ?`, id)
+	return err
+}
