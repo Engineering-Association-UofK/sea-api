@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'seaweedfs'
+    static_configs:
+      - targets:
+          - master:9324
+          - volume:9325
+          - filer:9326
+          - s3:9327
