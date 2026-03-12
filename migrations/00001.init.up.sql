@@ -67,3 +67,37 @@ CREATE TABLE IF NOT EXISTS component_score (
     FOREIGN KEY (participant_id) REFERENCES event_participant(id) ON DELETE CASCADE,
     FOREIGN KEY (component_id) REFERENCES event_component(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS store (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    fid VARCHAR(255) UNIQUE NOT NULL,
+    mime VARCHAR(255) NOT NULL,
+    size INT
+);
+
+CREATE TABLE IF NOT EXISTS certificates (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    cert_hash VARCHAR(255) UNIQUE NOT NULL,
+    user_id INT NOT NULL,
+    event_id INT NOT NULL,
+    grade DECIMAL(5, 2) NOT NULL,
+    issue_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20) NOT NULL,
+
+    UNIQUE (user_id, event_id),
+
+    FOREIGN KEY (user_id) REFERENCES users(idx),
+    FOREIGN KEY (event_id) REFERENCES event(id)
+);
+
+CREATE TABLE IF NOT EXISTS certificate_file (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    certificate_id INT NOT NULL,
+    store_id INT NOT NULL UNIQUE,
+    lang VARCHAR(10) NOT NULL,
+
+    UNIQUE (certificate_id, lang),
+
+    FOREIGN KEY (certificate_id) REFERENCES certificates(id),
+    FOREIGN KEY (store_id) REFERENCES store(id) ON DELETE CASCADE
+);

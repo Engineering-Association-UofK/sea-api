@@ -296,6 +296,15 @@ func (r *EventRepository) GetParticipantByID(id int64) (*models.EventParticipant
 	return &participant, nil
 }
 
+func (r *EventRepository) GetParticipantByEventAndUserIDs(eventID int64, userID int64) (*models.EventParticipantModel, error) {
+	var participant models.EventParticipantModel
+	err := r.db.Get(&participant, `SELECT * FROM event_participant WHERE event_id = ? AND user_id = ?`, eventID, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &participant, nil
+}
+
 func (r *EventRepository) GetScoreByID(id int64) (*models.ComponentScoreModel, error) {
 	var score models.ComponentScoreModel
 	err := r.db.Get(&score, `SELECT * FROM component_score WHERE id = ?`, id)
