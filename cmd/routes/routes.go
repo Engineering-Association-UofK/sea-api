@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	UserHandler  *handlers.UserHandler
-	EventHandler *handlers.EventHandler
-	MailHandler  *handlers.MailHandler
+	UserHandler        *handlers.UserHandler
+	EventHandler       *handlers.EventHandler
+	MailHandler        *handlers.MailHandler
+	CertificateHandler *handlers.CertificateHandler
 )
 
 func SetupRouter() *gin.Engine {
@@ -30,6 +31,8 @@ func SetupRouter() *gin.Engine {
 		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	r.Use(handlers.ErrorHandlerMiddleware())
 
 	r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"working": "yes"}) })
 
@@ -51,6 +54,14 @@ func SetupRouter() *gin.Engine {
 	event.POST("", EventHandler.CreateEvent)
 	event.PUT("", EventHandler.UpdateEvent)
 	event.DELETE("/:id", EventHandler.DeleteEvent)
+
+	// ==== Certificates ====
+	certificate := api.Group("/certificate")
+	certificate.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
+	certificate.GET("/download/:id", CertificateHandler.GetCertificates)
+	certificate.Use(handlers.AuthMiddleware())
+	certificate.POST("/workshop", CertificateHandler.CreateWorkshopCertificate)
+	certificate.GET("/generate-all", CertificateHandler.MakeCertificatesForEvent)
 
 	return r
 }

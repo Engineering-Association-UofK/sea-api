@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sea-api/internal/config"
 	"sea-api/internal/models"
+	"sea-api/internal/response"
 	"slices"
 	"strings"
 	"time"
@@ -60,7 +61,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		secretBytes, err := base64.RawStdEncoding.DecodeString(config.App.JwtSecret)
 		if err != nil {
 			slog.Error("Failed to decode JWT secret from Base64", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+			c.Error(err)
+			response.InternalServerError(c)
 			c.Abort()
 			return
 		}
@@ -83,5 +85,33 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		c.Set("user", claims)
 		c.Next()
+	}
+}
+
+func ErrorHandlerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+		errs := c.Errors
+
+		if len(errs) > 0 {
+			err := errs[0].Err
+			if strings.Contains(err.Error(), "sql: no rows in result set") {
+				response.NotFound(c)
+				return
+			} else if strings.Contains(err.Error(), "is not a participant") {
+				response.NewBaseError(http.StatusBadRequest, "Student is not a participant in this event", c)
+				return
+			} else if strings.Contains(err.Error(), "event not found") {
+				response.NewBaseError(http.StatusBadRequest, "Event not found", c)
+				return
+			} else if strings.Contains(err.Error(), "did not complete the event yet") {
+				response.NewBaseError(http.StatusBadRequest, "Student did not complete the event yet", c)
+				return
+			} else {
+				response.InternalServerError(c)
+				return
+			}
+		}
+
 	}
 }
