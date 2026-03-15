@@ -17,13 +17,13 @@ func NewMailHandler(mailService *services.MailService) *MailHandler {
 }
 
 func (h *MailHandler) SendMail(ctx *gin.Context) {
-	var email models.UserEmails
+	var email models.UsersEmails
 	if err := ctx.ShouldBindJSON(&email); err != nil {
 		response.BadRequest(ctx)
 		return
 	}
 
-	if err := h.MailService.SendUserEmails(email); err != nil {
+	if err := h.MailService.SendUsersEmails(email); err != nil {
 		ctx.Error(err)
 		return
 	}

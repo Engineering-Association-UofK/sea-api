@@ -82,6 +82,35 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 	})
 }
 
+func (h *CertificateHandler) SendCertificatesEmailsForEvent(ctx *gin.Context) {
+	var req struct {
+		EventID int64 `json:"event_id" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(ctx)
+		return
+	}
+
+	ctx.Writer.Header().Set("Content-Type", "text/event-stream")
+	ctx.Writer.Header().Set("Cache-Control", "no-cache")
+	ctx.Writer.Header().Set("Connection", "keep-alive")
+
+	progressChan := make(chan string)
+
+	go h.service.SendCertificatesEmailsForEvent(req.EventID, progressChan)
+
+	ctx.Stream(func(w io.Writer) bool {
+		msg, ok := <-progressChan
+		if !ok {
+			return false
+		}
+
+		ctx.SSEvent("message", msg)
+		return true
+	})
+}
+
 func (h *CertificateHandler) GetCertificates(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)

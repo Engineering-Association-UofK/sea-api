@@ -65,6 +65,21 @@ func (r *CertificateRepository) GetByUserIDAndEventID(userID, eventID int64) (*m
 	return &item, nil
 }
 
+func (r *CertificateRepository) GetByEventIDAndUserIDs(eventID int64, userIDs []int64) ([]models.CertificateModel, error) {
+	if len(userIDs) == 0 {
+		return []models.CertificateModel{}, nil
+	}
+
+	query, args, err := sqlx.In(`SELECT * FROM certificate WHERE event_id = ? AND user_id IN (?)`, eventID, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	query = r.DB.Rebind(query)
+	var items []models.CertificateModel
+	err = r.DB.Select(&items, query, args...)
+	return items, err
+}
+
 func (r *CertificateRepository) GetFileById(id int64) (*models.CertificateFileModel, error) {
 	var item models.CertificateFileModel
 	err := r.DB.Get(&item, `SELECT * FROM certificate_file WHERE id = ?`, id)

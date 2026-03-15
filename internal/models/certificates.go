@@ -50,3 +50,11 @@ type CertificateVerify struct {
 	EndDate   time.Time  `json:"end_date"`
 	IssueDate time.Time  `json:"issue_date"`
 }
+
+type Progress struct {
+	Total   int    `json:"total"`
+	Current int    `json:"current"`
+	ID      int64  `json:"id"`
+	Success bool   `json:"success"`
+	Name    string `json:"name"`
+}

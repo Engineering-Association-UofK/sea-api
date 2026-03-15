@@ -35,14 +35,23 @@ func (m *MailService) Send(e models.Email) error {
 	return m.sendEmail(e)
 }
 
-func (m *MailService) SendUserEmails(e models.UserEmails) error {
+func (m *MailService) SendUsersEmails(e models.UsersEmails) error {
 	if e.Preview {
 		user, err := m.UserService.GetByIndex(0)
 		if err != nil {
 			return err
 		}
 		slog.Info("Sending preview email")
-		return checkEmailType(m, e, user)
+		template, err := checkEmailType(m, e, user)
+		if err != nil {
+			return err
+		}
+		m.sendEmail(models.Email{
+			To:      []string{user.Email},
+			Subject: e.Subject,
+			HTML:    template,
+		})
+		return nil
 	}
 	users, err := m.UserService.GetAllByIndices(e.UserIDs)
 	if err != nil {
@@ -53,23 +62,29 @@ func (m *MailService) SendUserEmails(e models.UserEmails) error {
 	}
 
 	for _, user := range users {
-		if err := checkEmailType(m, e, &user); err != nil {
+		template, err := checkEmailType(m, e, &user)
+		if err != nil {
 			return err
 		}
+		m.sendEmail(models.Email{
+			To:      []string{user.Email},
+			Subject: e.Subject,
+			HTML:    template,
+		})
 	}
 	return nil
 }
 
 // ======== HELPERS ========
 
-func checkEmailType(m *MailService, e models.UserEmails, user *models.UserResponse) error {
+func checkEmailType(m *MailService, e models.UsersEmails, user *models.UserResponse) (string, error) {
 	var template string
 	var err error
 	switch e.Type {
 	case models.TECHNICAL:
 		var data models.TechnicalEmail
 		if err := json.Unmarshal(e.Data, &data); err != nil {
-			return err
+			return "", err
 		}
 		data.Message = strings.ReplaceAll(data.Message, "\n", "<br>")
 		template, err = utils.GetEmailTechnicalTemplate(models.TechnicalEmailTemplate{
@@ -78,28 +93,24 @@ func checkEmailType(m *MailService, e models.UserEmails, user *models.UserRespon
 			Year:           time.Now().Year(),
 		})
 		if err != nil {
-			return err
+			return "", err
 		}
 
 	case models.CERTIFICATE:
 		var data models.CertificateEmailData
 		if err := json.Unmarshal(e.Data, &data); err != nil {
-			return err
+			return "", err
 		}
 		template, err = utils.GetEnglishCertificateTemplate(data)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 	default:
-		return fmt.Errorf("invalid email type")
+		return "", fmt.Errorf("invalid email type")
 	}
 
-	return m.sendEmail(models.Email{
-		To:      []string{user.Email},
-		Subject: e.Subject,
-		HTML:    template,
-	})
+	return template, nil
 }
 
 func (m *MailService) sendEmail(e models.Email) error {

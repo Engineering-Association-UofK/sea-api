@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"sea-api/internal/models"
 
 	"github.com/jmoiron/sqlx"
@@ -332,6 +333,22 @@ func (r *EventRepository) GetParticipantByEventID(eventID int64) ([]models.Event
 		return nil, err
 	}
 	return participant, nil
+}
+
+func (r *EventRepository) GetEligibleParticipantByEventID(eventID int64) ([]models.EventParticipantModel, error) {
+	query := fmt.Sprintf(`
+	SELECT * FROM event_participant
+		WHERE event_id = ? 
+		AND grade >= 40
+		AND completed = true
+		AND status = %s
+	`, models.COMPLETED)
+	var participants []models.EventParticipantModel
+	err := r.db.Select(&participants, query, eventID)
+	if err != nil {
+		return nil, err
+	}
+	return participants, nil
 }
 
 func (r *EventRepository) GetScoresByParticipantID(participantID int64) ([]models.ComponentScoreModel, error) {

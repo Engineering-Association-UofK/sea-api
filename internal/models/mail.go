@@ -24,7 +24,7 @@ type Email struct {
 	Text    string   `json:"text"`
 }
 
-type UserEmails struct {
+type UsersEmails struct {
 	UserIDs []int64         `json:"user_ids" binding:"required"`
 	Subject string          `json:"subject" binding:"required"`
 	Type    EmailType       `json:"type" binding:"required"`

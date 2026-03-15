@@ -8,23 +8,30 @@ import (
 	"text/template"
 )
 
-func GetEmailTechnicalTemplate(data any) (string, error) {
-	return readFile("email-technical-"+data.(models.TechnicalEmailTemplate).Lang, data)
-}
+type Templates string
 
-func GetCertificateEmailTemplate(data any) (string, error) {
-	return readFile("email-technical", data)
+const (
+	EmailCertificateAr Templates = "email-certificate-ar"
+	EmailCertificateEn Templates = "email-certificate-en"
+	EmailTechnicalAr   Templates = "email-technical-ar"
+	EmailTechnicalEn   Templates = "email-technical-en"
+	EventCertificateAr Templates = "event-certificate-ar"
+	EventCertificateEn Templates = "event-certificate-en"
+)
+
+func GetEmailTechnicalTemplate(data any) (string, error) {
+	return ReadFile("email-technical-"+data.(models.TechnicalEmailTemplate).Lang, data)
 }
 
 func GetArabicCertificateTemplate(data any) (string, error) {
-	return readFile("cert-ar", data)
+	return ReadFile("cert-ar", data)
 }
 
 func GetEnglishCertificateTemplate(data any) (string, error) {
-	return readFile("cert-en", data)
+	return ReadFile("cert-en", data)
 }
 
-func readFile(name string, data any) (string, error) {
+func ReadFile(name string, data any) (string, error) {
 	content, err := os.ReadFile(config.App.ResourcesDir + "/templates/" + name + ".html")
 	if err != nil {
 		return "", err

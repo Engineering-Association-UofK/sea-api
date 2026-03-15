@@ -62,6 +62,7 @@ func SetupRouter() *gin.Engine {
 	certificate.Use(handlers.AuthMiddleware())
 	certificate.POST("/workshop", CertificateHandler.CreateWorkshopCertificate)
 	certificate.GET("/generate-all", CertificateHandler.MakeCertificatesForEvent)
+	certificate.GET("/send-all", CertificateHandler.SendCertificatesEmailsForEvent)
 
 	return r
 }

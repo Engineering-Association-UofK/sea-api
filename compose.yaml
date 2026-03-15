@@ -8,11 +8,18 @@ services:
     volumes:
       - ./.keys/sea_key.p12:/app/keys/sea_key.p12:ro
       - ./resources:/app/resources
+      - ./db/migrations:/app/db/migrations
     deploy:
       resources:
         limits:
           memory: 200M
     shm_size: 128mb
+
+    depends_on:
+      db:
+        condition: service_healthy
+      master:
+        condition: service_started
 
   master:
     image: chrislusf/seaweedfs:4.15
@@ -51,6 +58,24 @@ services:
       - master
       - volume
 
+  db:
+    image: mysql:8.4
+    restart: always
+    env_file:
+      - .env.compose
+    volumes:
+      - mysql-data:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          memory: 250M
+    ports:
+      - 8008:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
   # s3:
   #   image: chrislusf/seaweedfs:4.15
   #   ports:
@@ -84,3 +109,5 @@ services:
 
 volumes:
   seaweed-data:
+  mysql-data:
+

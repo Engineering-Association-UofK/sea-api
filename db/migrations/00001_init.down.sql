@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS certificate_file;
+DROP TABLE IF EXISTS certificate;
+DROP TABLE IF EXISTS store;
+DROP TABLE IF EXISTS component_score;
+DROP TABLE IF EXISTS event_participant;
+DROP TABLE IF EXISTS event_component;
+DROP TABLE IF EXISTS event;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS users_temp;
+DROP TABLE IF EXISTS users;

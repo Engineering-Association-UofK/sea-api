@@ -2,15 +2,17 @@ package storage
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"sea-api/internal/config"
-	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4"
+	mysqlMigrate "github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -24,7 +26,7 @@ func NewMySQLConnection() *sqlx.DB {
 		ServerName:         app.DbHost,
 	})
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=%s&parseTime=true",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=%s&parseTime=true&multiStatements=true",
 		app.DbUsername,
 		app.DbPassword,
 		app.DbHost,
@@ -33,7 +35,7 @@ func NewMySQLConnection() *sqlx.DB {
 		app.DbName,
 	)
 
-	db, err := sqlx.Open(app.DbName, dsn)
+	db, err := sqlx.Open("mysql", dsn)
 	if err != nil {
 		slog.Error("Failed to open database connection: ", err)
 	}
@@ -47,26 +49,37 @@ func NewMySQLConnection() *sqlx.DB {
 		panic(err)
 	}
 
-	slog.Info("Opening initial SQL file...")
-	file, err := os.ReadFile(config.App.ResourcesDir + "/migrations/00001.init.up.sql")
+	runMigrations(db)
+
+	slog.Info("Database connection and migrations ready.")
+	return db
+}
+
+func runMigrations(db *sqlx.DB) {
+	slog.Info("Running database migrations...")
+
+	driver, err := mysqlMigrate.WithInstance(db.DB, &mysqlMigrate.Config{
+		MigrationsTable: "schema_migrations",
+	})
 	if err != nil {
+		slog.Error("Could not create migration driver", "error", err)
 		panic(err)
 	}
-	slog.Info("Running initial SQL script...")
 
-	queries := strings.Split(string(file), ";")
-
-	for _, query := range queries {
-		query = strings.TrimSpace(query)
-		if query == "" {
-			continue
-		}
-		_, err = db.Exec(query)
-		if err != nil {
-			panic(err)
-		}
+	m, err := migrate.NewWithDatabaseInstance(
+		"file:///app/db/migrations",
+		"mysql",
+		driver,
+	)
+	if err != nil {
+		slog.Error("Could not initialize migrate instance", "error", err)
+		panic(err)
 	}
 
-	slog.Info("MySQL connection ready.")
-	return db
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		slog.Error("Migration Up failed", "error", err)
+		panic(err)
+	}
+
+	slog.Info("Migrations finished successfully.")
 }

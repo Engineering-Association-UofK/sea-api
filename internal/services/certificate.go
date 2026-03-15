@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+const VERIFICATION_PATH = `https://sea.uofk.edu/cert/verify/`
+
 type CertificateService struct {
 	userRepo     *repositories.UserRepository
 	eventService *EventService
@@ -47,14 +49,6 @@ func (c *CertificateService) MakeCertificatesForEvent(eventId int64, progressCha
 		slog.Error("error getting participants", "error", err, "event_id", eventId)
 		return err
 	}
-	slog.Info("participants", "participants", len(participants))
-	type progress struct {
-		Total   int    `json:"total"`
-		Current int    `json:"current"`
-		ID      int64  `json:"id"`
-		Success bool   `json:"success"`
-		Name    string `json:"name"`
-	}
 
 	var ids []int64
 	for _, p := range participants {
@@ -70,36 +64,90 @@ func (c *CertificateService) MakeCertificatesForEvent(eventId int64, progressCha
 		slog.Error("error getting users", "error", err, "event_id", eventId)
 		return err
 	}
-	slog.Info("users", "users", len(users))
 
 	for i, user := range users {
 		_, err := c.CreateWorkshopCertificate(user.Index, eventId)
 		if err != nil {
 			slog.Error("error creating certificate", "error", err, "user_id", user.Index, "event_id", eventId)
-			s, err := parseToJsonString(progress{
-				Total:   len(ids),
-				Current: i + 1,
-				ID:      user.Index,
-				Success: false,
-				Name:    user.NameAr,
-			})
-			if err != nil {
-				slog.Error("Error parsing progress to JSON string", "error", err, "user_id", user.Index, "event_id", eventId)
-			}
-			progressChan <- s
+			parseProgressStruct(len(ids), i+1, user.Index, false, user.NameAr, progressChan)
 			continue
 		}
-		s, err := parseToJsonString(progress{
-			Total:   len(ids),
-			Current: i + 1,
-			ID:      user.Index,
-			Success: true,
-			Name:    user.NameAr,
+		parseProgressStruct(len(ids), i+1, user.Index, true, user.NameAr, progressChan)
+	}
+	progressChan <- "done"
+	return nil
+}
+
+func (c *CertificateService) SendCertificatesEmailsForEvent(eventId int64, progressChan chan string) error {
+	defer close(progressChan)
+	participants, err := c.eventService.EventRepo.GetEligibleParticipantByEventID(eventId)
+	if err != nil {
+		slog.Error("error getting participants", "error", err, "event_id", eventId)
+		return err
+	}
+
+	event, err := c.eventService.GetEventByID(eventId)
+	if err != nil {
+		slog.Error("error getting event", "error", err, "event_id", eventId)
+		return err
+	}
+
+	var ids []int64
+	for _, p := range participants {
+		if p.Status == models.COMPLETED && p.Completed {
+			if p.Grade >= 40 || p.Grade == 0 {
+				ids = append(ids, p.UserID)
+			}
+		}
+	}
+
+	certificates, err := c.certificateRepository.GetByEventIDAndUserIDs(eventId, ids)
+	if err != nil {
+		slog.Error("error getting certificates", "error", err, "event_id", eventId)
+		return err
+	}
+
+	users, err := c.userRepo.GetAllByIndices(ids)
+	if err != nil {
+		slog.Error("error getting users", "error", err, "event_id", eventId)
+		return err
+	}
+	slog.Info("Users", "users", users)
+
+	usersMap := utils.FromSlice(users, func(c models.UserModel) int64 { return c.Index })
+
+	for i, certificate := range certificates {
+		user, err := usersMap.Value(certificate.UserID)
+		if err != nil {
+			slog.Error("error getting user", "error", err, "event_id", eventId)
+			parseProgressStruct(len(ids), i+1, user.Index, false, user.NameAr, progressChan)
+			continue
+		}
+		name := strings.Split(user.NameAr, " ")
+		data := models.CertificateEmailData{
+			Username:  name[0] + " " + name[1],
+			EventName: event.Name,
+			EventType: string(event.EventType),
+			CertURL:   VERIFICATION_PATH + certificate.Hash,
+			Year:      time.Now().Year(),
+		}
+		temp, err := utils.ReadFile(string(utils.EmailCertificateAr), data)
+		if err != nil {
+			slog.Error("error reading template", "error", err, "event_id", eventId)
+			parseProgressStruct(len(ids), i+1, user.Index, false, user.NameAr, progressChan)
+			continue
+		}
+		err = c.mailService.sendEmail(models.Email{
+			To:      []string{user.Email},
+			Subject: "Certificate Completion",
+			HTML:    temp,
 		})
 		if err != nil {
-			slog.Error("Error parsing progress to JSON string", "error", err, "user_id", user.Index, "event_id", eventId)
+			slog.Error("error sending email", "error", err, "event_id", eventId)
+			parseProgressStruct(len(ids), i+1, user.Index, false, user.NameAr, progressChan)
+			continue
 		}
-		progressChan <- s
+		parseProgressStruct(len(ids), i+1, user.Index, true, user.NameAr, progressChan)
 	}
 	progressChan <- "done"
 	return nil
@@ -131,7 +179,7 @@ func (c *CertificateService) CreateWorkshopCertificate(userIndex, eventId int64)
 	stringToHash := user.NameEn + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
 	hash := sha256.Sum256([]byte(stringToHash))
 	hashString := hex.EncodeToString(hash[:])
-	url := "https://sea.uofk.edu/cert/verify/" + hashString
+	url := VERIFICATION_PATH + hashString
 
 	qr, err := utils.GenerateGearQR(url, 512, 512)
 	if err != nil {
@@ -147,7 +195,8 @@ func (c *CertificateService) CreateWorkshopCertificate(userIndex, eventId int64)
 		toArabicDate(time.Now(), "Monday الموافق January 02, 2006"),
 		event.Outcomes,
 		participant.Grade,
-		utils.GetArabicCertificateTemplate,
+		string(utils.EventCertificateAr),
+		utils.ReadFile,
 	)
 	if err != nil {
 		return 0, err
@@ -162,7 +211,8 @@ func (c *CertificateService) CreateWorkshopCertificate(userIndex, eventId int64)
 		time.Now().Format("Monday, Jan 02, 2006"),
 		event.Outcomes,
 		participant.Grade,
-		utils.GetEnglishCertificateTemplate,
+		string(utils.EventCertificateEn),
+		utils.ReadFile,
 	)
 	if err != nil {
 		return 0, err
@@ -205,7 +255,7 @@ func (c *CertificateService) CreateWorkshopCertificate(userIndex, eventId int64)
 		return 0, err
 	}
 
-	c.certificateRepository.CreateFile(models.CertificateFileModel{
+	_, err = c.certificateRepository.CreateFile(models.CertificateFileModel{
 		CertificateID: id,
 		StoreID:       storeIdEn,
 		Lang:          "en",
@@ -283,7 +333,7 @@ func (c *CertificateService) GetCertificates(zw *zip.Writer, id int64) error {
 	return nil
 }
 
-func (c *CertificateService) getFile(name, event, qr, startDate, endDate, nowDate string, tasks []string, grade float64, f func(data any) (string, error)) ([]byte, error) {
+func (c *CertificateService) getFile(name, event, qr, startDate, endDate, nowDate string, tasks []string, grade float64, filename string, f func(name string, data any) (string, error)) ([]byte, error) {
 	data := models.DefaultCertificateData{
 		Name:        name,
 		EventName:   event,
@@ -296,7 +346,7 @@ func (c *CertificateService) getFile(name, event, qr, startDate, endDate, nowDat
 		NowDate:   nowDate,
 	}
 
-	html, err := f(data)
+	html, err := f(filename, data)
 	if err != nil {
 		return nil, err
 	}
@@ -372,4 +422,19 @@ func parseToJsonString(data any) (string, error) {
 		return "", err
 	}
 	return string(jsonBytes), nil
+}
+
+func parseProgressStruct(total, current int, id int64, success bool, name string, progressChan chan string) {
+	s, err := parseToJsonString(models.Progress{
+		Total:   total,
+		Current: current,
+		ID:      id,
+		Success: success,
+		Name:    name,
+	})
+	if err != nil {
+		slog.Error("Error parsing progress to JSON string", "error", err)
+	} else {
+		progressChan <- s
+	}
 }
