@@ -22,7 +22,7 @@ func (s *PDFService) GeneratePDFFromHTML(ctx context.Context, html string) ([]by
 	s.workerSem <- struct{}{}
 	defer func() { <-s.workerSem }()
 
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
