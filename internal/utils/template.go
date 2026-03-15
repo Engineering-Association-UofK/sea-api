@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"os"
+	"sea-api/internal/config"
 	"sea-api/internal/models"
 	"text/template"
 )
@@ -24,7 +25,7 @@ func GetEnglishCertificateTemplate(data any) (string, error) {
 }
 
 func readFile(name string, data any) (string, error) {
-	content, err := os.ReadFile("resources/templates/" + name + ".html")
+	content, err := os.ReadFile(config.App.ResourcesDir + "/templates/" + name + ".html")
 	if err != nil {
 		return "", err
 	}

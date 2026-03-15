@@ -14,7 +14,7 @@ type MultiHandler struct {
 
 func NewMultiHandlerLog() *slog.Logger {
 	// Setup JSON file output
-	file, _ := os.Create("resources/logs.json")
+	file, _ := os.Create(App.ResourcesDir + "/logs.json")
 	jsonHandler := slog.NewJSONHandler(file, nil)
 
 	// Setup Terminal (Tint) output

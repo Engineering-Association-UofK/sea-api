@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"math"
 	"os"
+	"sea-api/internal/config"
 
 	"github.com/fogleman/gg"
 	"github.com/skip2/go-qrcode"
@@ -65,7 +66,7 @@ func GenerateGearQR(data string, width, height int) ([]byte, error) {
 	}
 
 	// Put logo in the middle
-	logoFile, err := os.Open("resources/logo.png")
+	logoFile, err := os.Open(config.App.ResourcesDir + "/logo.png")
 	if err == nil {
 		defer logoFile.Close()
 		logoImg, _, err := image.Decode(logoFile)

@@ -26,9 +26,18 @@ func (s *PDFService) GeneratePDFFromHTML(ctx context.Context, html string) ([]by
 	defer cancel()
 
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.ExecPath("/usr/bin/chromium"),
 		chromedp.NoSandbox,
 		chromedp.Headless,
 		chromedp.DisableGPU,
+		chromedp.Flag("disable-dev-shm-usage", true),
+		chromedp.Flag("disable-crash-reporter", true),
+		chromedp.Flag("disable-crashpad", true),
+		chromedp.Flag("no-crash-upload", true),
+		chromedp.Flag("no-first-run", true),
+		chromedp.Flag("disable-extensions", true),
+		chromedp.Flag("disable-background-networking", true),
+		chromedp.Flag("user-data-dir", "/tmp/chrome-data"),
 	)
 
 	allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, opts...)

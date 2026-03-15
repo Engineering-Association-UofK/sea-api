@@ -16,7 +16,7 @@ func NewCertificateRepository(db *sqlx.DB) *CertificateRepository {
 
 func (r *CertificateRepository) Create(item models.CertificateModel) (int64, error) {
 	query := `
-	INSERT INTO certificates (cert_hash, user_id, event_id, grade, issue_date, status)
+	INSERT INTO certificate (cert_hash, user_id, event_id, grade, issue_date, status)
 	VALUES (:cert_hash, :user_id, :event_id, :grade, :issue_date, :status)
 	`
 	res, err := r.DB.NamedExec(query, &item)
@@ -40,7 +40,7 @@ func (r *CertificateRepository) CreateFile(item models.CertificateFileModel) (in
 
 func (r *CertificateRepository) GetByID(id int64) (*models.CertificateModel, error) {
 	var model models.CertificateModel
-	err := r.DB.Get(&model, `SELECT * FROM certificates WHERE id = ?`, id)
+	err := r.DB.Get(&model, `SELECT * FROM certificate WHERE id = ?`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (r *CertificateRepository) GetByID(id int64) (*models.CertificateModel, err
 
 func (r *CertificateRepository) GetByHash(hash string) (*models.CertificateModel, error) {
 	var item models.CertificateModel
-	err := r.DB.Get(&item, `SELECT * FROM certificates WHERE cert_hash = ?`, hash)
+	err := r.DB.Get(&item, `SELECT * FROM certificate WHERE cert_hash = ?`, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (r *CertificateRepository) GetByHash(hash string) (*models.CertificateModel
 
 func (r *CertificateRepository) GetByUserIDAndEventID(userID, eventID int64) (*models.CertificateModel, error) {
 	var item models.CertificateModel
-	err := r.DB.Get(&item, `SELECT * FROM certificates WHERE user_id = ? AND event_id = ?`, userID, eventID)
+	err := r.DB.Get(&item, `SELECT * FROM certificate WHERE user_id = ? AND event_id = ?`, userID, eventID)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (r *CertificateRepository) GetFileByCertificateIDAndLang(certificateID int6
 
 func (r *CertificateRepository) Update(item *models.CertificateModel) error {
 	query := `
-	UPDATE certificates
+	UPDATE certificate
 	SET cert_hash = :cert_hash, user_id = :user_id, event_id = :event_id, issue_date = :issue_date, status = :status
 	WHERE id = :id
 	`
@@ -103,6 +103,6 @@ func (r *CertificateRepository) Update(item *models.CertificateModel) error {
 }
 
 func (r *CertificateRepository) Delete(id int64) error {
-	_, err := r.DB.Exec(`DELETE FROM certificates WHERE id = ?`, id)
+	_, err := r.DB.Exec(`DELETE FROM certificate WHERE id = ?`, id)
 	return err
 }
