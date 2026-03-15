@@ -48,7 +48,7 @@ func NewMySQLConnection() *sqlx.DB {
 	}
 
 	slog.Info("Opening initial SQL file...")
-	file, err := os.ReadFile("migrations/00001.init.up.sql")
+	file, err := os.ReadFile(config.App.ResourcesDir + "/migrations/00001.init.up.sql")
 	if err != nil {
 		panic(err)
 	}

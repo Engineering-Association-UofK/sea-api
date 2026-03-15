@@ -12,6 +12,8 @@ type Config struct {
 	LoggingLevel string `env:"LOGGING_LEVEL" envDefault:"INFO"`
 	HelperUrl    string `env:"HELPER_URL" envDefault:"http://localhost:8888"`
 
+	ResourcesDir string `env:"RESOURCES_DIR" envDefault:"./resources"`
+
 	DbName       string `env:"DB_NAME" envDefault:"mysql"`
 	DbDSN        string `env:"DB_DSN" envDefault:"localhost"`
 	DbHost       string `env:"DB_HOST" envDefault:"localhost"`

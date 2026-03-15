@@ -28,6 +28,21 @@ jobs:
       with:
         name: sea-api
         path: api
+    
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build Docker Image
+      run: |
+        IMAGE=${{ secrets.DOCKER_USERNAME }}/sea-api-server
+        TAG=latest
+        COMMIT_SHA=$(git rev-parse --short HEAD)
+        docker build -t $IMAGE:$TAG -t $IMAGE:$COMMIT_SHA .
+        docker push $IMAGE:$TAG
+        docker push $IMAGE:$COMMIT_SHA
 
   deploy:
     needs: build

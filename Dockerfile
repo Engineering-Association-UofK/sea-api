@@ -46,6 +46,20 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 # (e.g., alpine:3.17.2) or SHA (e.g., alpine@sha256:c41ab5c992deb4fe7e5da09f67a8804a46bd0592bfdf0b1847dde0e0889d2bff).
 FROM alpine:latest AS final
 
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    dumb-init \
+    udev \
+    mesa-gl \
+    libstdc++
+
+RUN mkdir -p /tmp/chrome-data && chmod 777 /tmp/chrome-data
+
 # Install any runtime dependencies that are needed to run your application.
 # Leverage a cache mount to /var/cache/apk/ to speed up subsequent builds.
 RUN --mount=type=cache,target=/var/cache/apk \
@@ -58,14 +72,19 @@ RUN --mount=type=cache,target=/var/cache/apk \
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
 ARG UID=10001
+RUN mkdir -p /home/appuser
+
 RUN adduser \
     --disabled-password \
     --gecos "" \
-    --home "/nonexistent" \
+    --home "/home/appuser" \
     --shell "/sbin/nologin" \
     --no-create-home \
     --uid "${UID}" \
     appuser
+
+RUN chown -R appuser:appuser /home/appuser
+
 USER appuser
 
 # Copy the executable from the "build" stage.
