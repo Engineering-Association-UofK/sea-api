@@ -54,15 +54,6 @@ jobs:
           name: sea-api
           path: .
 
-      - name: Copy to Cloud Machine
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEVELOPMENT_HOST }}
-          username: ${{ secrets.DEVELOPMENT_HOST_USERNAME }}
-          key: ${{ secrets.DEVELOPMENT_HOST_SSH_PRIVATE_KEY }}
-          source: "api"
-          target: "~"
-
       - name: Restart Application on Cloud Machine
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -70,8 +61,6 @@ jobs:
           username: ${{ secrets.DEVELOPMENT_HOST_USERNAME }}
           key: ${{ secrets.DEVELOPMENT_HOST_SSH_PRIVATE_KEY }}
           script: |
-            sudo systemctl stop api
-            sudo mv ~/api /opt/api/api
-            sudo chown backend:backend /opt/api/api
-            sudo chmod +x /opt/api/api
-            sudo systemctl start api
+            cd /opt/api
+            sudo docker compose pull
+            sudo docker compose up -d --force-recreate
