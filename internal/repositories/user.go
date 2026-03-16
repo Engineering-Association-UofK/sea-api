@@ -20,6 +20,9 @@ func (r *UserRepository) GetAll() ([]models.UserModel, error) {
 	if err != nil {
 		return nil, err
 	}
+	for i := range users {
+		users[i].Password = ""
+	}
 	return users, nil
 }
 
@@ -45,6 +48,9 @@ func (r *UserRepository) GetAllByIndices(indices []int64) ([]models.UserModel, e
 		return nil, err
 	}
 
+	for i := range users {
+		users[i].Password = ""
+	}
 	return users, nil
 }
 
@@ -95,6 +101,7 @@ func (r *UserRepository) GetByIndex(index int64) (*models.UserModel, error) {
 	if err != nil {
 		return nil, err
 	}
+	user.Password = ""
 	return &user, nil
 }
 
@@ -104,6 +111,7 @@ func (r *UserRepository) GetByUsername(username string) (*models.UserModel, erro
 	if err != nil {
 		return nil, err
 	}
+	user.Password = ""
 	return &user, nil
 }
 
@@ -113,6 +121,7 @@ func (r *UserRepository) GetByEmail(email string) (*models.UserModel, error) {
 	if err != nil {
 		return nil, err
 	}
+	user.Password = ""
 	return &user, nil
 }
 
@@ -122,6 +131,7 @@ func (r *UserRepository) GetByUniID(uniID string) (*models.UserModel, error) {
 	if err != nil {
 		return nil, err
 	}
+	user.Password = ""
 	return &user, nil
 }
 

@@ -80,7 +80,7 @@ func (c *CertificateService) MakeCertificatesForEvent(eventId int64, progressCha
 
 func (c *CertificateService) SendCertificatesEmailsForEvent(eventId int64, progressChan chan string) error {
 	defer close(progressChan)
-	participants, err := c.eventService.EventRepo.GetEligibleParticipantByEventID(eventId)
+	participants, err := c.eventService.EventRepo.GetParticipantByEventID(eventId)
 	if err != nil {
 		slog.Error("error getting participants", "error", err, "event_id", eventId)
 		return err
@@ -112,7 +112,6 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(eventId int64, progr
 		slog.Error("error getting users", "error", err, "event_id", eventId)
 		return err
 	}
-	slog.Info("Users", "users", users)
 
 	usersMap := utils.FromSlice(users, func(c models.UserModel) int64 { return c.Index })
 
