@@ -78,7 +78,8 @@ func (c *CertificateService) MakeCertificatesForEvent(eventId int64, progressCha
 	return nil
 }
 
-func (c *CertificateService) SendCertificatesEmailsForEvent(eventId int64, progressChan chan string) error {
+func (c *CertificateService) SendCertificatesEmailsForEvent(request models.CertificateSendEmailData, progressChan chan string) error {
+	eventId := request.EventID
 	defer close(progressChan)
 	participants, err := c.eventService.EventRepo.GetParticipantByEventID(eventId)
 	if err != nil {
@@ -138,6 +139,8 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(eventId int64, progr
 		}
 		err = c.mailService.sendEmail(models.Email{
 			To:      []string{user.Email},
+			Cc:      request.Cc,
+			Bcc:     request.Bcc,
 			Subject: "Certificate Completion",
 			HTML:    temp,
 		})

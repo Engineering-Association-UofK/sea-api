@@ -3,6 +3,7 @@ package handlers
 import (
 	"archive/zip"
 	"io"
+	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
 	"strconv"
@@ -83,9 +84,7 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 }
 
 func (h *CertificateHandler) SendCertificatesEmailsForEvent(ctx *gin.Context) {
-	var req struct {
-		EventID int64 `json:"event_id" binding:"required"`
-	}
+	var req models.CertificateSendEmailData
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(ctx)
@@ -98,7 +97,7 @@ func (h *CertificateHandler) SendCertificatesEmailsForEvent(ctx *gin.Context) {
 
 	progressChan := make(chan string)
 
-	go h.service.SendCertificatesEmailsForEvent(req.EventID, progressChan)
+	go h.service.SendCertificatesEmailsForEvent(req, progressChan)
 
 	ctx.Stream(func(w io.Writer) bool {
 		msg, ok := <-progressChan

@@ -58,3 +58,9 @@ type Progress struct {
 	Success bool   `json:"success"`
 	Name    string `json:"name"`
 }
+
+type CertificateSendEmailData struct {
+	EventID int64    `json:"event_id" binding:"required"`
+	Cc      []string `json:"cc"`
+	Bcc     []string `json:"bcc"`
+}
