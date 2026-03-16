@@ -1,11 +1,10 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"os/exec"
 	"time"
-
-	"github.com/chromedp/cdproto/page"
-	"github.com/chromedp/chromedp"
 )
 
 type PDFService struct {
@@ -22,54 +21,19 @@ func (s *PDFService) GeneratePDFFromHTML(ctx context.Context, html string) ([]by
 	s.workerSem <- struct{}{}
 	defer func() { <-s.workerSem }()
 
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.ExecPath("/usr/bin/chromium"),
-		chromedp.NoSandbox,
-		chromedp.Headless,
-		chromedp.DisableGPU,
-		chromedp.Flag("disable-dev-shm-usage", true),
-		chromedp.Flag("disable-crash-reporter", true),
-		chromedp.Flag("disable-crashpad", true),
-		chromedp.Flag("no-crash-upload", true),
-		chromedp.Flag("no-first-run", true),
-		chromedp.Flag("disable-extensions", true),
-		chromedp.Flag("disable-background-networking", true),
-		chromedp.Flag("user-data-dir", "/tmp/chrome-data"),
-	)
+	cmd := exec.CommandContext(ctx, "weasyprint", "-", "-")
 
-	allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, opts...)
-	defer allocCancel()
+	cmd.Stdin = bytes.NewBufferString(html)
+	var out bytes.Buffer
+	cmd.Stdout = &out
 
-	taskCtx, taskCancel := chromedp.NewContext(allocCtx)
-	defer taskCancel()
+	err := cmd.Run()
+	if err != nil {
+		return nil, err
+	}
 
-	var buf []byte
-	err := chromedp.Run(taskCtx,
-		chromedp.Navigate("about:blank"),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			tree, err := page.GetFrameTree().Do(ctx)
-			if err != nil {
-				return err
-			}
-			return page.SetDocumentContent(tree.Frame.ID, html).Do(ctx)
-		}),
-		chromedp.WaitReady("body", chromedp.ByQuery),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			var err error
-			buf, _, err = page.PrintToPDF().
-				WithPrintBackground(true).
-				WithPreferCSSPageSize(true).
-				WithMarginTop(0).
-				WithMarginBottom(0).
-				WithMarginLeft(0).
-				WithMarginRight(0).
-				Do(ctx)
-			return err
-		}),
-	)
-
-	return buf, err
+	return out.Bytes(), err
 }
