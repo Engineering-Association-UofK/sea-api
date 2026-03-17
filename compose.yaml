@@ -8,7 +8,6 @@ services:
     volumes:
       - ./.keys/sea_key.p12:/app/keys/sea_key.p12:ro
       - ./resources:/app/resources
-      - ./db/migrations:/app/db/migrations
     deploy:
       resources:
         limits:

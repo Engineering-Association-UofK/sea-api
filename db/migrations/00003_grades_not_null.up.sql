@@ -1,0 +1,1 @@
+ALTER TABLE event_participant MODIFY grade DECIMAL(5,2) NOT NULL;

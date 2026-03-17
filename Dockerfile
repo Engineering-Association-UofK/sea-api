@@ -56,6 +56,7 @@ USER appuser
 
 COPY --from=build /bin/server /bin/
 
+COPY ./db/migrations /app/db/migrations
 
 EXPOSE 8000
 
