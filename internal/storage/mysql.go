@@ -37,7 +37,8 @@ func NewMySQLConnection() *sqlx.DB {
 
 	db, err := sqlx.Open("mysql", dsn)
 	if err != nil {
-		slog.Error("Failed to open database connection: ", err)
+		slog.Error("Failed to open database connection: ", "error", err)
+		panic(err)
 	}
 
 	db.SetMaxOpenConns(25)
@@ -47,6 +48,13 @@ func NewMySQLConnection() *sqlx.DB {
 	err = db.Ping()
 	if err != nil {
 		panic(err)
+	}
+
+	if app.DbName == "tidb" {
+		_, err := db.Exec("SET SESSION tidb_skip_isolation_level_check=1")
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	runMigrations(db)
