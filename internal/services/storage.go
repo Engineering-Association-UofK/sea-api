@@ -27,18 +27,16 @@ type S3StorageService struct {
 
 func NewS3Service(repo *repositories.FileRepository) *S3StorageService {
 	internalClient := s3.New(s3.Options{
-		Region:             "us-east-1",
-		BaseEndpoint:       &config.App.StoreS3ApiUrl,
-		UsePathStyle:       true,
-		Credentials:        credentials.NewStaticCredentialsProvider(config.App.S3AccessKey, config.App.S3SecretKey, ""),
-		EndpointResolverV2: s3.NewDefaultEndpointResolverV2(),
+		Region:       "us-east-1",
+		BaseEndpoint: &config.App.StoreS3ApiUrl,
+		UsePathStyle: true,
+		Credentials:  credentials.NewStaticCredentialsProvider(config.App.S3AccessKey, config.App.S3SecretKey, ""),
 	})
 	externalClient := s3.New(s3.Options{
-		Region:             "us-east-1",
-		BaseEndpoint:       &config.App.StoreUrl,
-		UsePathStyle:       true,
-		Credentials:        credentials.NewStaticCredentialsProvider(config.App.S3AccessKey, config.App.S3SecretKey, ""),
-		EndpointResolverV2: s3.NewDefaultEndpointResolverV2(),
+		Region:       "us-east-1",
+		BaseEndpoint: &config.App.StoreUrl,
+		UsePathStyle: true,
+		Credentials:  credentials.NewStaticCredentialsProvider(config.App.S3AccessKey, config.App.S3SecretKey, ""),
 	})
 	return &S3StorageService{
 		FilesRepo:     repo,
@@ -65,7 +63,7 @@ func (s *S3StorageService) Upload(ctx context.Context, key string, data []byte, 
 		MimeType: contentType,
 	})
 	if err != nil {
-		s.Delete(context.Background(), id)
+		s.DeleteWithKey(context.Background(), key)
 		return 0, err
 	}
 
@@ -95,16 +93,20 @@ func (s *S3StorageService) Delete(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
-
-	_, err = s.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: &s.Bucket,
-		Key:    &file.Key,
-	})
+	err = s.DeleteWithKey(ctx, file.Key)
 	if err != nil {
 		return err
 	}
 
 	return s.FilesRepo.DeleteFile(id)
+}
+
+func (s *S3StorageService) DeleteWithKey(ctx context.Context, key string) error {
+	_, err := s.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: &s.Bucket,
+		Key:    &key,
+	})
+	return err
 }
 
 func (s *S3StorageService) GenerateDownloadUrlByID(ctx context.Context, id int64) (string, error) {
