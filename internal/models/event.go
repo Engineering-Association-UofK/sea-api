@@ -114,3 +114,7 @@ type ComponentScoreRequest struct {
 	ComponentID int64              `json:"component_id"`
 	Score       map[string]float64 `json:"score"`
 }
+
+type MakeCertificatesForEventRequest struct {
+	EventID int64 `json:"event_id"`
+}

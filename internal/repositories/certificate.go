@@ -40,7 +40,7 @@ func (r *CertificateRepository) CreateFile(item models.CertificateFileModel) (in
 
 func (r *CertificateRepository) GetByID(id int64) (*models.CertificateModel, error) {
 	var model models.CertificateModel
-	err := r.DB.Get(&model, `SELECT * FROM certificate WHERE id = ?`, id)
+	err := r.DB.Get(&model, `SELECT * FROM certificate WHERE user_id = ?`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +56,9 @@ func (r *CertificateRepository) GetByHash(hash string) (*models.CertificateModel
 	return &item, nil
 }
 
-func (r *CertificateRepository) GetByUserIDAndEventID(userID, eventID int64) (*models.CertificateModel, error) {
+func (r *CertificateRepository) GetByUserIDAndEventID(user_id, eventID int64) (*models.CertificateModel, error) {
 	var item models.CertificateModel
-	err := r.DB.Get(&item, `SELECT * FROM certificate WHERE user_id = ? AND event_id = ?`, userID, eventID)
+	err := r.DB.Get(&item, `SELECT * FROM certificate WHERE user_id = ? AND event_id = ?`, user_id, eventID)
 	if err != nil {
 		return nil, err
 	}
@@ -118,6 +118,6 @@ func (r *CertificateRepository) Update(item *models.CertificateModel) error {
 }
 
 func (r *CertificateRepository) Delete(id int64) error {
-	_, err := r.DB.Exec(`DELETE FROM certificate WHERE id = ?`, id)
+	_, err := r.DB.Exec(`DELETE FROM certificate WHERE user_id = ?`, id)
 	return err
 }

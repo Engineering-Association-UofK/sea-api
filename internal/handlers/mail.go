@@ -28,5 +28,5 @@ func (h *MailHandler) SendMail(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, gin.H{"message": "Email sent successfully"})
+	ctx.JSON(200, nil)
 }

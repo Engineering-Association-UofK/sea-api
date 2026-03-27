@@ -19,6 +19,18 @@ func NewCertificateHandler(service *services.CertificateService) *CertificateHan
 	return &CertificateHandler{service: service}
 }
 
+/*
+
+
+
+
+
+
+
+
+
+
+
 func (h *CertificateHandler) CreateWorkshopCertificate(ctx *gin.Context) {
 	var req struct {
 		UserID  int64 `json:"user_id" binding:"required"`
@@ -36,11 +48,9 @@ func (h *CertificateHandler) CreateWorkshopCertificate(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, gin.H{
-		"message":        "Certificate created successfully",
-		"certificate_id": id,
-	})
+	response.NewTransactionResponse(201, "Certificate created successfully", id, ctx)
 }
+*/
 
 func (h *CertificateHandler) VerifyCertificate(ctx *gin.Context) {
 
@@ -55,9 +65,7 @@ func (h *CertificateHandler) VerifyCertificate(ctx *gin.Context) {
 }
 
 func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
-	var req struct {
-		EventID int64 `json:"event_id" binding:"required"`
-	}
+	var req models.MakeCertificatesForEventRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(ctx)

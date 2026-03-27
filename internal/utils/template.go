@@ -11,27 +11,30 @@ import (
 type Templates string
 
 const (
-	EmailCertificateAr Templates = "email-certificate-ar"
-	EmailCertificateEn Templates = "email-certificate-en"
-	EmailTechnicalAr   Templates = "email-technical-ar"
-	EmailTechnicalEn   Templates = "email-technical-en"
+	EmailCertificateAr      Templates = "email-certificate-ar"
+	EmailCertificateEn      Templates = "email-certificate-en"
+	EmailTechnicalAr        Templates = "email-technical-ar"
+	EmailTechnicalEn        Templates = "email-technical-en"
+	EmailVerificationCodeEn Templates = "email-verification-code-en"
+	EmailVerificationLinkEn Templates = "email-verification-link-en"
+
 	EventCertificateAr Templates = "event-certificate-ar"
 	EventCertificateEn Templates = "event-certificate-en"
 )
 
 func GetEmailTechnicalTemplate(data any) (string, error) {
-	return ReadFile("email-technical-"+data.(models.TechnicalEmailTemplate).Lang, data)
+	return GetTemplate("email-technical-"+data.(models.TechnicalEmailTemplate).Lang, data)
 }
 
 func GetArabicCertificateTemplate(data any) (string, error) {
-	return ReadFile("cert-ar", data)
+	return GetTemplate("cert-ar", data)
 }
 
 func GetEnglishCertificateTemplate(data any) (string, error) {
-	return ReadFile("cert-en", data)
+	return GetTemplate("cert-en", data)
 }
 
-func ReadFile(name string, data any) (string, error) {
+func GetTemplate(name string, data any) (string, error) {
 	content, err := os.ReadFile(config.App.ResourcesDir + "/templates/" + name + ".html")
 	if err != nil {
 		return "", err

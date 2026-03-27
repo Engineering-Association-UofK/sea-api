@@ -13,11 +13,27 @@ type BaseError struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+type ErrorResponse struct {
+	BaseError
+	Errors map[string]string `json:"errors"`
+}
+
 func NewBaseError(status int, msg string, c *gin.Context) {
 	c.JSON(status, BaseError{
 		Status:    status,
 		Message:   msg,
 		Timestamp: time.Now(),
+	})
+}
+
+func NewErrorResponse(status int, msg string, c *gin.Context, errors map[string]string) {
+	c.JSON(status, ErrorResponse{
+		BaseError: BaseError{
+			Status:    status,
+			Message:   msg,
+			Timestamp: time.Now(),
+		},
+		Errors: errors,
 	})
 }
 

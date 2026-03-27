@@ -1,0 +1,11 @@
+ALTER TABLE users ADD COLUMN gender VARCHAR(10) NOT NULL;
+ALTER TABLE users ADD COLUMN department VARCHAR(255) NOT NULL;
+
+CREATE TABLE verification_code (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    code TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(idx)
+);

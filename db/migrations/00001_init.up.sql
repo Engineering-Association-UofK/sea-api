@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     idx INT PRIMARY KEY,
     uni_id INT UNIQUE,
     username VARCHAR(255) UNIQUE NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     status VARCHAR(20) NOT NULL DEFAULT 'active'
 );
 
-CREATE TABLE IF NOT EXISTS users_temp (
+CREATE TABLE users_temp (
     idx INT PRIMARY KEY,
     uni_id INT UNIQUE,
     username VARCHAR(255) UNIQUE,
@@ -28,14 +28,14 @@ CREATE TABLE IF NOT EXISTS users_temp (
     status VARCHAR(20) NOT NULL DEFAULT 'active'
 );
 
-CREATE TABLE IF NOT EXISTS user_roles (
+CREATE TABLE user_roles (
     user_id INT NOT NULL,
     role VARCHAR(50) NOT NULL,
     INDEX (user_id),
     FOREIGN KEY (user_id) REFERENCES users(idx)
 );
 
-CREATE TABLE IF NOT EXISTS event (
+CREATE TABLE event (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS event (
     end_date DATE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS event_component (
+CREATE TABLE event_component (
     id INT PRIMARY KEY AUTO_INCREMENT,
     event_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS event_component (
     FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS event_participant (
+CREATE TABLE event_participant (
     id INT PRIMARY KEY AUTO_INCREMENT,
     event_id INT NOT NULL,
     user_id INT NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS event_participant (
     FOREIGN KEY (user_id) REFERENCES users(idx) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS component_score (
+CREATE TABLE component_score (
     id INT PRIMARY KEY AUTO_INCREMENT,
     participant_id INT NOT NULL,
     component_id INT NOT NULL,
@@ -83,14 +83,14 @@ CREATE TABLE IF NOT EXISTS component_score (
     FOREIGN KEY (component_id) REFERENCES event_component(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS store (
+CREATE TABLE store (
     id INT PRIMARY KEY AUTO_INCREMENT,
     fid VARCHAR(255) UNIQUE NOT NULL,
     mime VARCHAR(255) NOT NULL,
     size INT
 );
 
-CREATE TABLE IF NOT EXISTS certificate (
+CREATE TABLE certificate (
     id INT PRIMARY KEY AUTO_INCREMENT,
     cert_hash VARCHAR(255) UNIQUE NOT NULL,
     user_id INT NOT NULL,
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS certificate (
     FOREIGN KEY (event_id) REFERENCES event(id)
 );
 
-CREATE TABLE IF NOT EXISTS certificate_file (
+CREATE TABLE certificate_file (
     id INT PRIMARY KEY AUTO_INCREMENT,
     certificate_id INT NOT NULL,
     store_id INT NOT NULL UNIQUE,

@@ -8,9 +8,25 @@ const (
 	ASSETS Path = "assets"
 )
 
+type ObjectType int
+
+const (
+	BlogPost ObjectType = iota
+	News
+	Form
+	Event
+)
+
 type StoreModel struct {
 	ID   int64  `db:"id"`
 	Fid  string `db:"fid"`
 	Size int64  `db:"size"`
 	Mime string `db:"mime"`
+}
+
+type FileModel struct {
+	ID       int64  `db:"id"`
+	Key      string `db:"file_key"`
+	FileSize int64  `db:"file_size"`
+	MimeType string `db:"mime_type"`
 }

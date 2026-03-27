@@ -1,0 +1,2 @@
+ALTER TABLE users RENAME COLUMN idx TO id;
+ALTER TABLE users_temp RENAME COLUMN idx TO id;

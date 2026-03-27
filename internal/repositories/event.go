@@ -290,16 +290,16 @@ func (r *EventRepository) GetComponentByID(id int64) (*models.EventComponentMode
 
 func (r *EventRepository) GetParticipantByID(id int64) (*models.EventParticipantModel, error) {
 	var participant models.EventParticipantModel
-	err := r.db.Get(&participant, `SELECT * FROM event_participant WHERE id = ?`, id)
+	err := r.db.Get(&participant, `SELECT * FROM event_participant WHERE user_id = ?`, id)
 	if err != nil {
 		return nil, err
 	}
 	return &participant, nil
 }
 
-func (r *EventRepository) GetParticipantByEventAndUserIDs(eventID int64, userID int64) (*models.EventParticipantModel, error) {
+func (r *EventRepository) GetParticipantByEventAndUserIDs(eventID int64, user_id int64) (*models.EventParticipantModel, error) {
 	var participant models.EventParticipantModel
-	err := r.db.Get(&participant, `SELECT * FROM event_participant WHERE event_id = ? AND user_id = ?`, eventID, userID)
+	err := r.db.Get(&participant, `SELECT * FROM event_participant WHERE event_id = ? AND user_id = ?`, eventID, user_id)
 	if err != nil {
 		return nil, err
 	}
@@ -388,18 +388,18 @@ func (r *EventRepository) GetScoresByParticipantIDs(participantIDs []int64) ([]m
 	return scores, err
 }
 
-func (r *EventRepository) GetParticipantByUserID(userID int) ([]models.EventParticipantModel, error) {
+func (r *EventRepository) GetParticipantByUserID(user_id int) ([]models.EventParticipantModel, error) {
 	var participant []models.EventParticipantModel
-	err := r.db.Select(&participant, `SELECT * FROM event_participant WHERE user_id = ?`, userID)
+	err := r.db.Select(&participant, `SELECT * FROM event_participant WHERE user_id = ?`, user_id)
 	if err != nil {
 		return nil, err
 	}
 	return participant, nil
 }
 
-func (r *EventRepository) GetParticipantByUserAndEventIDs(userID int, eventID int64) (*models.EventParticipantModel, error) {
+func (r *EventRepository) GetParticipantByUserAndEventIDs(user_id int, eventID int64) (*models.EventParticipantModel, error) {
 	var participant models.EventParticipantModel
-	err := r.db.Select(&participant, `SELECT * FROM event_participant WHERE user_id = ? AND event_id = ?`, userID, eventID)
+	err := r.db.Select(&participant, `SELECT * FROM event_participant WHERE user_id = ? AND event_id = ?`, user_id, eventID)
 	if err != nil {
 		return nil, err
 	}
@@ -440,12 +440,12 @@ func (r *EventRepository) MassDeleteComponent(ids []int64) error {
 }
 
 func (r *EventRepository) DeleteParticipant(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM event_participant WHERE id = ?`, id)
+	_, err := r.db.Exec(`DELETE FROM event_participant WHERE user_id = ?`, id)
 	return err
 }
 
 func (r *EventRepository) MassDeleteParticipant(ids []int64) error {
-	query, args, err := sqlx.In(`DELETE FROM event_participant WHERE id IN (?)`, ids)
+	query, args, err := sqlx.In(`DELETE FROM event_participant WHERE user_id IN (?)`, ids)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log/slog"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
@@ -54,12 +53,11 @@ func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 
 	id, err := h.EventService.CreateEvent(&event)
 	if err != nil {
-		slog.Error("error creating event", "error", err)
 		ctx.Error(err)
 		return
 	}
 	event.ID = id
-	ctx.JSON(200, gin.H{"message": "Event created successfully", "event": event})
+	response.NewTransactionResponse(201, "Event created successfully", id, ctx)
 }
 
 func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
@@ -70,12 +68,11 @@ func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
 	}
 
 	if err := h.EventService.UpdateEvent(&event); err != nil {
-		slog.Error("error updating event", "error", err)
-		response.InternalServerError(ctx)
+		ctx.Error(err)
 		return
 	}
 
-	ctx.JSON(200, gin.H{"message": "Event updated successfully", "event": event})
+	response.NewTransactionResponse(200, "Event updated successfully", event.ID, ctx)
 }
 
 func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
@@ -89,5 +86,5 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 		ctx.Error(err)
 		return
 	}
-	ctx.JSON(200, gin.H{"message": "Event deleted successfully"})
+	response.NewTransactionResponse(200, "Event deleted successfully", int64(intId), ctx)
 }
