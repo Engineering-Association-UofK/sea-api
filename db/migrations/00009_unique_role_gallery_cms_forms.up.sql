@@ -1,8 +1,5 @@
 ALTER TABLE user_roles ADD CONSTRAINT unique_user_role UNIQUE (user_id, role);
 
-ALTER TABLE users ADD COLUMN profile_image_id BIGINT;
-ALTER TABLE users ADD CONSTRAINT fk_profile_image FOREIGN KEY (profile_image_id) REFERENCES files(id);
-
 -- New files system
 
 CREATE TABLE files (
@@ -11,6 +8,10 @@ CREATE TABLE files (
     file_size BIGINT NOT NULL,
     mime_type VARCHAR(255) NOT NULL
 );
+
+ALTER TABLE users ADD COLUMN profile_image_id BIGINT;
+ALTER TABLE users ADD CONSTRAINT fk_profile_image FOREIGN KEY (profile_image_id) REFERENCES files(id);
+ALTER TABLE users ADD CONSTRAINT unique_profile_image_id UNIQUE (profile_image_id);
 
 -- Gallery as a subtype file to make it easier to manage
 
