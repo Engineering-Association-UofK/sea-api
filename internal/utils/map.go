@@ -11,12 +11,6 @@ var errMissingKey = errors.New("key does not exist in map")
 
 type Mpp[K comparable, V any] map[K]V
 
-// Constructor
-
-func NewMpp[K comparable, V any]() Mpp[K, V] {
-	return Mpp[K, V]{}
-}
-
 // Get Value
 
 func (mpp Mpp[K, V]) Value(key K) (V, error) {
@@ -64,7 +58,7 @@ func (mpp Mpp[K, V]) ForEach(fn func(K, V)) {
 }
 
 func MapValues[K comparable, V any, T any](m *Mpp[K, V], fn func(V) T) Mpp[K, T] {
-	result := NewMpp[K, T]()
+	result := Mpp[K, T]{}
 
 	for k, v := range *m {
 		result[k] = fn(v)
@@ -101,7 +95,7 @@ func (mpp Mpp[K, V]) Exists(key K) bool {
 // Specialized
 
 func (mpp Mpp[K, V]) Filter(fn func(K, V) bool) Mpp[K, V] {
-	result := NewMpp[K, V]()
+	result := Mpp[K, V]{}
 
 	for k, v := range mpp {
 		if fn(k, v) {
@@ -134,7 +128,7 @@ func (mpp Mpp[K, V]) String() string {
 }
 
 func (mpp Mpp[K, V]) Clone() Mpp[K, V] {
-	result := NewMpp[K, V]()
+	result := Mpp[K, V]{}
 
 	for k, v := range mpp {
 		result[k] = v
@@ -152,7 +146,7 @@ func (mpp Mpp[K, V]) ToMap() map[K]V {
 }
 
 func FromSlice[K comparable, V any](slice []V, getKey func(V) K) Mpp[K, V] {
-	m := NewMpp[K, V]()
+	m := Mpp[K, V]{}
 	for _, item := range slice {
 		m[getKey(item)] = item
 	}

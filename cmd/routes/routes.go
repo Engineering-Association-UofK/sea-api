@@ -1,68 +1,193 @@
 package routes
 
 import (
-	"sea-api/internal/handlers"
-	"sea-api/internal/response"
 	"time"
+
+	h "sea-api/internal/handlers"
+	m "sea-api/internal/models"
+	"sea-api/internal/response"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	UserHandler        *handlers.UserHandler
-	EventHandler       *handlers.EventHandler
-	MailHandler        *handlers.MailHandler
-	CertificateHandler *handlers.CertificateHandler
+	UserHandler        *h.UserHandler
+	EventHandler       *h.EventHandler
+	MailHandler        *h.MailHandler
+	CertificateHandler *h.CertificateHandler
+	AuthHandler        *h.AuthHandler
+	AccountHandler     *h.AccountHandler
+	GalleryHandler     *h.GalleryHandler
+	CmsHandler         *h.CmsHandler
+	FormHandler        *h.FormHandler
 )
 
 func SetupRouter() *gin.Engine {
 	r := gin.New()
-	r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
-		response.InternalServerError(c)
-		c.Abort()
-	}), gin.Logger())
+	{ // ==== Config ====
+		r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
+			response.InternalServerError(c)
+			c.Abort()
+		}), gin.Logger())
+		r.Use(cors.New(cors.Config{
+			AllowOrigins:     []string{"*"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+			ExposeHeaders:    []string{"Content-Length"},
+			AllowCredentials: false,
+			MaxAge:           12 * time.Hour,
+		}))
+		r.Use(h.ErrorHandlerMiddleware())
+		r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"status": 200}) })
+	}
+	apiV1 := r.Group("/api/v1")
 
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: false,
-		MaxAge:           12 * time.Hour,
-	}))
+	{ // ==== CERTIFICATES
+		cert := apiV1.Group("/cert")
+		cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
+		cert.GET("/download/:id", CertificateHandler.GetCertificates)
+	}
 
-	r.Use(handlers.ErrorHandlerMiddleware())
+	{ // ==== AUTHENTICATION
+		auth := apiV1.Group("/auth")
+		auth.POST("/send-verification-code", AuthHandler.SendVerificationCode)
+		auth.POST("/verify", AuthHandler.Verify)
+		auth.POST("/login", AuthHandler.Login)
+		auth.POST("/register", AuthHandler.Register)
+	}
 
-	r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"working": "yes"}) })
+	{ // ==== ACCOUNT
+		account := apiV1.Group("/account")
+		account.Use(UserHandler.AuthMiddleware())
 
-	api := r.Group("/api")
+		{ // ==== PROFILE
+			account.GET("", AccountHandler.GetProfile)
+			account.PUT("", AccountHandler.UpdateProfile)
+			account.PUT("/picture", AccountHandler.UpdatePicture)
+			account.PUT("/password", AccountHandler.UpdatePassword)
+			account.PUT("/email", AccountHandler.UpdateEmail)
+			account.PUT("/username", AccountHandler.UpdateUsername)
+			account.POST("/check-username", AccountHandler.CheckUsernameAvailability)
+		}
 
-	// ==== Mail ====
-	mail := api.Group("/mail")
-	mail.POST("", MailHandler.SendMail)
+		{ // ==== EVENTS & FORMS
+			event := account.Group("/event")
+			event.GET("/form/:id", FormHandler.GetEntireForUserForm) // <------------------- New
+		}
+	}
 
-	// ==== Users ====
-	user := api.Group("/user")
-	user.GET("/all", handlers.RequireRole("ROLE_SUPER_ADMIN"), UserHandler.GetAll)
+	{ // ###### Administration Endpoints ######
+		admin := apiV1.Group("/admin")
+		admin.Use(UserHandler.AuthMiddleware(), h.RequireRole(m.ROLE_ADMIN))
 
-	// ==== Events ====
-	event := api.Group("/event")
-	event.Use(handlers.AuthMiddleware())
-	event.GET("", EventHandler.GetAllEvents)
-	event.GET("/:id", EventHandler.GetEventByID)
-	event.POST("", EventHandler.CreateEvent)
-	event.PUT("", EventHandler.UpdateEvent)
-	event.DELETE("/:id", EventHandler.DeleteEvent)
+		{ // ==== USERS
+			user := admin.Group("/user")
+			user.Use(h.RequireAnyRole(m.ROLE_USER_MANAGER, m.ROLE_SUPER_ADMIN))
+			user.GET("/:id", UserHandler.GetByID)
+			user.POST("/all", UserHandler.GetAll)
+			user.POST("/temp-users", UserHandler.GetAllTempUsers)
+			user.GET("/username/:username", UserHandler.GetByUsername)
+			user.GET("/passcode/:id", UserHandler.GetTempUserPasscode)
+			user.PUT("", UserHandler.Update)
+			user.POST("/suspend", UserHandler.Suspend)
+			user.POST("/assign-passcodes", UserHandler.AssignPasscodes)
+		}
 
-	// ==== Certificates ====
-	certificate := api.Group("/certificate")
-	certificate.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
-	certificate.GET("/download/:id", CertificateHandler.GetCertificates)
-	certificate.Use(handlers.AuthMiddleware())
-	certificate.POST("/workshop", CertificateHandler.CreateWorkshopCertificate)
-	certificate.GET("/generate-all", CertificateHandler.MakeCertificatesForEvent)
-	certificate.GET("/send-all", CertificateHandler.SendCertificatesEmailsForEvent)
+		{ // ==== ADMIN
+			admin.Use(h.RequireAnyRole(m.ROLE_ADMIN_MANAGER, m.ROLE_SUPER_ADMIN))
+			admin.GET("", UserHandler.GetAdmins)
+			admin.POST("/:id", UserHandler.MakeAdmin)
+			admin.PUT("/", UserHandler.UpdateAdmin)
+			admin.DELETE("/:id", UserHandler.DeleteAdmin)
+			admin.POST("/add-manager/:id", h.RequireRole(m.ROLE_SUPER_ADMIN), UserHandler.MakeAdminManager)
+		}
 
+		{ // ==== BLOG POSTS
+			blog := admin.Group("/blog")
+			blog.Use(h.RequireAnyRole(m.ROLE_BLOG_MANAGER, m.ROLE_SUPER_ADMIN))
+			blog.GET("", CmsHandler.GetAllBlogPosts)
+			blog.GET("/:id", CmsHandler.GetBlogPostById)
+			blog.GET("/slug/:slug", CmsHandler.GetBlogPostBySlug)
+			blog.POST("", CmsHandler.CreateBlogPost)
+			blog.PUT("", CmsHandler.UpdateBlogPost)
+			blog.DELETE("/:id", CmsHandler.DeleteBlogPost)
+		}
+
+		{ // ==== GALLERY
+			gallery := admin.Group("/gallery")
+			gallery.Use(h.RequireAnyRole(m.ROLE_CONTENT_EDITOR, m.ROLE_SUPER_ADMIN))
+			gallery.POST("", GalleryHandler.Upload)
+			gallery.GET("", GalleryHandler.GetAll)
+			gallery.GET("/:id", GalleryHandler.GetByID)
+			gallery.DELETE("/:id", GalleryHandler.Delete)
+		}
+
+		// TODO: Add bot commands and forms
+
+		{ // ==== FORMS
+			form := admin.Group("/form")
+			form.Use(h.RequireAnyRole(m.ROLE_FORM_MANAGER, m.ROLE_SUPER_ADMIN))
+
+			form.GET("", FormHandler.GetAllForms)
+			form.POST("", FormHandler.CreateForm)
+			form.PUT("", FormHandler.UpdateForm)
+			form.DELETE("/:id", FormHandler.DeleteForm)
+
+			form.POST("/page", FormHandler.CreatePage)
+			form.PUT("/page", FormHandler.UpdatePage)
+			form.DELETE("/page/:id", FormHandler.DeletePage)
+
+			form.POST("/question", FormHandler.CreateQuestion)
+			form.PUT("/question", FormHandler.UpdateQuestion)
+			form.DELETE("/question/:id", FormHandler.DeleteQuestion)
+
+			form.GET("/:id", FormHandler.GetEntireForEditForm)
+
+			form.POST("/submit", FormHandler.SubmitForm)
+
+			form.GET("/analysis/:id", FormHandler.GetFormAnalysis)
+
+			// form.GET("/user-response/:id", FormHandler.GetResponseByID)
+			// form.GET("/user-responses/:id", FormHandler.GetUserResponsesForForm)
+
+			// form.GET("/responses/:id", FormHandler.GetResponsesByFormID)
+			// form.PUT("/response-status", FormHandler.UpdateResponseStatus)
+			// form.DELETE("/response/:id", FormHandler.DeleteResponse)
+
+		}
+
+		{ // ==== TEAM MEMBERS
+			team := admin.Group("/team")
+			team.Use(h.RequireAnyRole(m.ROLE_CONTENT_EDITOR, m.ROLE_SUPER_ADMIN))
+			team.POST("", CmsHandler.CreateTeamMember)
+			team.GET("", CmsHandler.GetAllTeamMembers)
+			team.GET("/:id", CmsHandler.GetTeamMemberByID)
+			team.PUT("", CmsHandler.UpdateTeamMember)
+			team.DELETE("/:id", CmsHandler.DeleteTeamMember)
+		}
+
+		{ // ==== EVENTS
+			event := admin.Group("/event")
+			event.Use(h.RequireAnyRole(m.ROLE_EVENT_MANAGER, m.ROLE_SUPER_ADMIN))
+			event.GET("", EventHandler.GetAllEvents)
+			event.GET("/:id", EventHandler.GetEventByID)
+			event.POST("", EventHandler.CreateEvent)
+			event.PUT("", EventHandler.UpdateEvent)
+			event.DELETE("/:id", EventHandler.DeleteEvent)
+			event.GET("/send-all-emails", CertificateHandler.SendCertificatesEmailsForEvent)
+		}
+
+		{ // ==== CERTIFICATES
+			certificate := admin.Group("/certificate")
+			certificate.Use(h.RequireAnyRole(m.ROLE_CERTIFICATE_MANAGER, m.ROLE_SUPER_ADMIN))
+			certificate.GET("/generate-all-for-event", CertificateHandler.MakeCertificatesForEvent)
+		}
+
+		{ // ==== MAIL
+			// mail := apiV1.Group("/mail")
+			// mail.POST("", MailHandler.SendMail)
+		}
+	}
 	return r
 }

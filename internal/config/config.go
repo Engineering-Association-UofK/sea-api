@@ -10,7 +10,11 @@ var App Config
 type Config struct {
 	Port         string `env:"PORT" envDefault:"8000"`
 	LoggingLevel string `env:"LOGGING_LEVEL" envDefault:"INFO"`
-	HelperUrl    string `env:"HELPER_URL" envDefault:"http://localhost:8888"`
+
+	MainUrl   string `env:"MAIN_URL" envDefault:"http://localhost:5173"`
+	ApiUrl    string `env:"API_URL" envDefault:"http://localhost:8000"`
+	StoreUrl  string `env:"STORE_URL" envDefault:"http://localhost:8333"`
+	HelperUrl string `env:"HELPER_URL" envDefault:"http://localhost:8888"`
 
 	ResourcesDir string `env:"RESOURCES_DIR" envDefault:"./resources"`
 
@@ -41,6 +45,9 @@ type Config struct {
 	StorePublicURL string `env:"STORE_PUBLIC_URL" envDefault:"http://localhost:8080"`
 	StoreFilerUrl  string `env:"STORE_FILER_URL" envDefault:"http://localhost:8888"`
 	StoreS3ApiUrl  string `env:"STORE_S3API_URL" envDefault:"http://localhost:8333"`
+
+	S3AccessKey string `env:"S3_ACCESS_KEY" required:"true"`
+	S3SecretKey string `env:"S3_SECRET_KEY" required:"true"`
 }
 
 func Load() error {

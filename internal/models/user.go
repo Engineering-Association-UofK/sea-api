@@ -1,29 +1,208 @@
 package models
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"database/sql"
+)
+
+var ListLimit = map[int]bool{
+	10:  true,
+	25:  true,
+	50:  true,
+	100: true,
+}
+
+var AllowedAdminRoles = map[Role]bool{
+	ROLE_CONTENT_EDITOR:      true,
+	ROLE_PAPER_CERTIFIER:     true,
+	ROLE_PAPER_VIEWER:        true,
+	ROLE_USER_MANAGER:        true,
+	ROLE_CERTIFICATE_MANAGER: true,
+	ROLE_FORM_MANAGER:        true,
+	ROLE_BLOG_MANAGER:        true,
+	ROLE_EVENT_MANAGER:       true,
+	ROLE_TECHNICAL_SUPPORT:   true,
+}
+
+var AdminRoles = []Role{
+	ROLE_CONTENT_EDITOR,
+	ROLE_PAPER_CERTIFIER,
+	ROLE_PAPER_VIEWER,
+	ROLE_USER_MANAGER,
+	ROLE_CERTIFICATE_MANAGER,
+	ROLE_FORM_MANAGER,
+	ROLE_BLOG_MANAGER,
+	ROLE_EVENT_MANAGER,
+	ROLE_TECHNICAL_SUPPORT,
+}
+
+type Status string
+
+const (
+	STATUS_ACTIVE    Status = "active"
+	STATUS_SUSPENDED Status = "suspended"
+	STATUS_GRADUATED Status = "graduated"
+	STATUS_DROPPED   Status = "dropped"
+	STATUS_WITHDRAWN Status = "withdrawn"
+	STATUS_DELETED   Status = "deleted"
+)
+
+type Gender string
+
+const (
+	MALE   Gender = "male"
+	FEMALE Gender = "female"
+)
+
+type Department string
+
+const (
+	DEP_MECHANICAL   Department = "mechanical"
+	DEP_CIVIL        Department = "civil"
+	DEP_ELECTRICAL   Department = "electrical"
+	DEP_CHEMICAL     Department = "chemical"
+	DEP_PETROLEUM    Department = "petroleum"
+	DEP_AGRICULTURAL Department = "agricultural"
+	DEP_MINING       Department = "mining"
+	DEP_SURVEYING    Department = "surveying"
+)
+
+type Role string
+
+const (
+	// Admin roles
+	ROLE_ADMIN               Role = "ROLE_ADMIN"
+	ROLE_CONTENT_EDITOR      Role = "ROLE_CONTENT_EDITOR"
+	ROLE_PAPER_CERTIFIER     Role = "ROLE_PAPER_CERTIFIER"
+	ROLE_PAPER_VIEWER        Role = "ROLE_PAPER_VIEWER"
+	ROLE_USER_MANAGER        Role = "ROLE_USER_MANAGER"
+	ROLE_ADMIN_MANAGER       Role = "ROLE_ADMIN_MANAGER"
+	ROLE_CERTIFICATE_MANAGER Role = "ROLE_CERTIFICATE_MANAGER" // <-- NEW
+	ROLE_FORM_MANAGER        Role = "ROLE_FORM_MANAGER"        // <-- NEW
+	ROLE_BLOG_MANAGER        Role = "ROLE_BLOG_MANAGER"
+	ROLE_EVENT_MANAGER       Role = "ROLE_EVENT_MANAGER"
+	ROLE_TECHNICAL_SUPPORT   Role = "ROLE_TECHNICAL_SUPPORT"
+	ROLE_SUPER_ADMIN         Role = "ROLE_SUPER_ADMIN"
+
+	// ROLE_CERTIFICATE_ISSUER Role = "ROLE_CERTIFICATE_ISSUER" // <-- REMOVED
+
+	// User roles
+)
 
 type UserModel struct {
-	Index    int64  `db:"idx"`
+	ID       int64  `db:"id"`
 	UniID    int64  `db:"uni_id"`
 	Username string `db:"username"`
+
+	ProfileImageID sql.NullInt64 `db:"profile_image_id"`
 
 	NameAr string `db:"name_ar"`
 	NameEn string `db:"name_en"`
 	Email  string `db:"email"`
 	Phone  string `db:"phone"`
 
+	Department Department `db:"department"`
+	Gender     Gender     `db:"gender"`
+
 	Password string `db:"password"`
 	Verified bool   `db:"verified"`
-	Status   string `db:"status"`
+	Status   Status `db:"status"`
+}
+
+type TempUserModel struct {
+	ID       sql.NullInt64  `db:"id"`
+	UniID    sql.NullInt64  `db:"uni_id"`
+	Username sql.NullString `db:"username"`
+
+	NameAr sql.NullString `db:"name_ar"`
+	NameEn sql.NullString `db:"name_en"`
+	Email  sql.NullString `db:"email"`
+	Phone  sql.NullString `db:"phone"`
+
+	Department sql.NullString `db:"department"`
+	Gender     sql.NullString `db:"gender"`
+
+	Password sql.NullString `db:"password"`
+	Verified sql.NullBool   `db:"verified"`
+	Status   sql.NullString `db:"status"`
 }
 
 type UserRole struct {
-	Index int64  `db:"user_id"`
-	Role  string `db:"role"`
+	UserID int64 `db:"user_id"`
+	Role   Role  `db:"role"`
 }
 
 type UserResponse struct {
-	Index    int64  `json:"index"`
+	ID       int64  `json:"id"`
+	UniID    int64  `json:"uni_id"`
+	Username string `json:"username"`
+
+	ProfilePic string `json:"profile_pic"`
+
+	NameAr string `json:"name_ar"`
+	NameEn string `json:"name_en"`
+	Email  string `json:"email"`
+	Phone  string `json:"phone"`
+
+	Department Department `json:"department"`
+	Gender     Gender     `json:"gender"`
+
+	Verified bool   `json:"verified"`
+	Status   Status `json:"status"`
+	Roles    []Role `json:"roles"`
+}
+
+type UserListItemResponse struct {
+	ID       int64  `json:"id"`
+	UniID    int64  `json:"uni_id"`
+	Username string `json:"username"`
+
+	Email      string     `json:"email"`
+	Department Department `json:"department"`
+	Gender     Gender     `json:"gender"`
+
+	Verified bool   `json:"verified"`
+	Status   Status `json:"status"`
+	Roles    []Role `json:"roles"`
+}
+
+type AdminResponse struct {
+	ID         int64  `json:"id"`
+	Email      string `json:"email"`
+	ProfilePic string `json:"profile_pic"`
+	NameAr     string `json:"name_ar"`
+	Username   string `json:"username"`
+	Gender     Gender `json:"gender"`
+	Roles      []Role `json:"roles"`
+}
+
+type AdminRequest struct {
+	ID    int64  `json:"id"`
+	Roles []Role `json:"roles"`
+}
+
+type TempUserResponse struct {
+	ID       int64  `json:"id"`
+	NameAr   string `json:"name_ar"`
+	Passcode string `json:"passcode"`
+}
+
+type UserListRequest struct {
+	Limit int `json:"limit" validate:"required"`
+	Page  int `json:"page" validate:"required"`
+}
+
+type UserListResponse struct {
+	Users []UserListItemResponse `json:"users"`
+	Pages int                    `json:"pages"`
+}
+
+type TempUserListResponse struct {
+	Users []TempUserResponse `json:"users"`
+	Pages int                `json:"pages"`
+}
+
+type UserProfileResponse struct {
+	ID       int64  `json:"id"`
 	UniID    int64  `json:"uni_id"`
 	Username string `json:"username"`
 
@@ -32,16 +211,43 @@ type UserResponse struct {
 	Email  string `json:"email"`
 	Phone  string `json:"phone"`
 
-	Verified bool     `db:"verified"`
-	Status   string   `db:"status"`
-	Roles    []string `db:"-"`
+	Department Department `json:"department"`
+	Gender     Gender     `json:"gender"`
+	ProfilePic string     `json:"profile_pic"`
 }
 
-type UserClaims struct {
-	Index    int64    `json:"index"`
-	Username string   `json:"username"`
-	Email    string   `json:"email"`
-	Roles    []string `json:"roles"`
+type UpdateProfileRequest struct {
+	ID         int64      `json:"id" validate:"required"`
+	UniID      int64      `json:"uni_id" validate:"required"`
+	NameAr     string     `json:"name_ar" validate:"required"`
+	NameEn     string     `json:"name_en" validate:"required"`
+	Phone      string     `json:"phone" validate:"required"`
+	Department Department `json:"department" validate:"required"`
+	Gender     Gender     `json:"gender" validate:"required"`
+}
 
-	jwt.RegisteredClaims
+type UserDetails struct {
+	UserProfileResponse
+}
+
+type UpdateUsernameRequest struct {
+	Username string `json:"username" validate:"required"`
+}
+
+type UpdateEmailRequest struct {
+	Email string `json:"email" validate:"required"`
+}
+
+type UpdatePasswordRequest struct {
+	OldPassword     string `json:"old_password" validate:"required"`
+	NewPassword     string `json:"new_password" validate:"required"`
+	ConfirmPassword string `json:"confirm_password" validate:"required"`
+}
+
+type CheckUsername struct {
+	Available bool `json:"available"`
+}
+
+type GetPasscodeResponse struct {
+	Passcode string `json:"passcode"`
 }

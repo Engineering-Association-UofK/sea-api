@@ -1,6 +1,6 @@
 services:
   server:
-    image: radgit/sea-api-server:latest
+    image: techseauofk/sea-api-server:latest
     env_file:
       - .env.compose
     ports:
@@ -75,27 +75,38 @@ services:
       timeout: 20s
       retries: 10
 
-  # s3:
-  #   image: chrislusf/seaweedfs:4.15
-  #   ports:
-  #     - 8333:8333
-  #     - 9327:9327
-  #   command: 's3 -filer="filer:8888" -ip.bind=0.0.0.0 -metricsPort=9327'
-  #   depends_on:
-  #     - master
-  #     - volume
-  #     - filer
-
-  webdav:
+  s3:
     image: chrislusf/seaweedfs:4.15
     ports:
-      - 7333:7333
-    command: 'webdav -filer="filer:8888"'
+      - 8333:8333
+      - 9327:9327
+    volumes:
+      - ./resources/config.json:/etc/seaweedfs/config.json:ro
+    command: 's3 -filer="filer:8888" -ip.bind=0.0.0.0 -metricsPort=9327 -config=/etc/seaweedfs/config.json'
     depends_on:
       - master
       - volume
       - filer
 
+  # webdav:
+  #   image: chrislusf/seaweedfs:4.15
+  #   ports:
+  #     - 7333:7333
+  #   command: 'webdav -filer="filer:8888"'
+  #   depends_on:
+  #     - master
+  #     - volume
+  #     - filer
+
+  # proxy:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "8081:80"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  #   depends_on:
+  #     - filer
+      
   # prometheus:
   #   image: prom/prometheus:v2.21.0
   #   ports:
@@ -109,4 +120,3 @@ services:
 volumes:
   seaweed-data:
   mysql-data:
-

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
@@ -135,7 +136,7 @@ func (s *EventService) CreateEvent(event *models.EventDTO) (int64, error) {
 
 func (s *EventService) UpdateEvent(event *models.EventDTO) error {
 	if _, err := s.EventRepo.GetEventByID(event.ID); err != nil {
-		return errors.New("event not found")
+		return err
 	}
 
 	outcomes := strings.Join(event.Outcomes, ",")
@@ -150,12 +151,12 @@ func (s *EventService) UpdateEvent(event *models.EventDTO) error {
 		Outcomes:        outcomes,
 	})
 	if err != nil {
-		return errors.Join(fmt.Errorf("Unable to update event: "), err)
+		return errs.New(errs.InternalServerError, err.Error(), nil)
 	}
 
 	components, err := s.EventRepo.GetComponentsByEventID(event.ID)
 	if err != nil {
-		return errors.Join(fmt.Errorf("Unable to get components: "), err)
+		return errs.New(errs.InternalServerError, err.Error(), nil)
 	}
 	if err := syncEntities(
 		components,
@@ -167,12 +168,12 @@ func (s *EventService) UpdateEvent(event *models.EventDTO) error {
 		s.EventRepo.MassDeleteComponent,
 		event.ID,
 	); err != nil {
-		return errors.Join(fmt.Errorf("Unable to sync components: "), err)
+		return errs.New(errs.InternalServerError, err.Error(), nil)
 	}
 
 	participants, err := s.EventRepo.GetParticipantByEventID(event.ID)
 	if err != nil {
-		return errors.Join(fmt.Errorf("Unable to get participants: "), err)
+		return errs.New(errs.InternalServerError, err.Error(), nil)
 	}
 	if err := syncEntities(
 		participants,
@@ -187,7 +188,7 @@ func (s *EventService) UpdateEvent(event *models.EventDTO) error {
 		s.EventRepo.MassDeleteParticipant,
 		event.ID,
 	); err != nil {
-		return errors.Join(fmt.Errorf("Unable to sync participants: "), err)
+		return errs.New(errs.InternalServerError, err.Error(), nil)
 	}
 
 	// Sync Scores
@@ -330,7 +331,7 @@ func (s *EventService) participantFromModelToDto(model []models.EventParticipant
 		slog.Error("error getting users", "error", err)
 		return []models.ParticipantDTO{}
 	}
-	usersMap := utils.FromSlice(users, func(u models.UserModel) int64 { return u.Index })
+	usersMap := utils.FromSlice(users, func(u models.UserModel) int64 { return u.ID })
 
 	scores, err := s.EventRepo.GetScoresByParticipantIDs(participantMap.Keys())
 	if err != nil {
@@ -340,10 +341,10 @@ func (s *EventService) participantFromModelToDto(model []models.EventParticipant
 		}
 	}
 
-	scoresByParticipant := utils.NewMpp[int64, utils.Mpp[int64, models.ComponentScoreModel]]()
+	scoresByParticipant := utils.Mpp[int64, utils.Mpp[int64, models.ComponentScoreModel]]{}
 	for _, score := range scores {
 		participantScores := scoresByParticipant.GetOrCreate(score.ParticipantID, func() utils.Mpp[int64, models.ComponentScoreModel] {
-			return utils.NewMpp[int64, models.ComponentScoreModel]()
+			return utils.Mpp[int64, models.ComponentScoreModel]{}
 		})
 		participantScores[score.ComponentID] = score
 	}
@@ -354,7 +355,7 @@ func (s *EventService) participantFromModelToDto(model []models.EventParticipant
 
 		participantScores, _ := scoresByParticipant.Value(m.ID)
 		if participantScores == nil {
-			participantScores = utils.NewMpp[int64, models.ComponentScoreModel]()
+			participantScores = utils.Mpp[int64, models.ComponentScoreModel]{}
 		}
 
 		grades := make([]models.ComScoreDTO, len(allEventComponents))
@@ -419,7 +420,7 @@ func syncEntities[ID comparable, Model any, DTO any](
 	deleteFn func([]ID) error,
 	eventId int64,
 ) error {
-	m := utils.NewMpp[ID, Model]()
+	m := utils.Mpp[ID, Model]{}
 	for _, e := range existing {
 		m.Add(getID(e), e)
 	}
