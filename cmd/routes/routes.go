@@ -120,7 +120,7 @@ func SetupRouter() *gin.Engine {
 			gallery.POST("", GalleryHandler.Upload)
 			gallery.GET("", GalleryHandler.GetAll)
 			gallery.GET("/:id", GalleryHandler.GetByID)
-			gallery.DELETE("/:id", GalleryHandler.Delete)
+			gallery.DELETE("", GalleryHandler.CleanGallery)
 		}
 
 		// TODO: Add bot commands and forms

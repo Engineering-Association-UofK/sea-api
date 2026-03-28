@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
@@ -74,19 +75,12 @@ func (h *GalleryHandler) GetByID(ctx *gin.Context) {
 	ctx.JSON(200, asset)
 }
 
-func (h *GalleryHandler) Delete(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		response.BadRequest(ctx)
-		return
-	}
-
-	err = h.GalleryService.DeleteAsset(ctx.Request.Context(), id)
+func (h *GalleryHandler) CleanGallery(ctx *gin.Context) {
+	num, err := h.GalleryService.CleanGallery()
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
 
-	response.NewTransactionResponse(200, "Asset deleted successfully", id, ctx)
+	response.NewTransactionResponse(200, fmt.Sprintf("%d assets deleted", num), 0, ctx)
 }

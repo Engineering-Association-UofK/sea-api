@@ -117,23 +117,31 @@ func (s *GalleryService) GetAllAssets() ([]models.GalleryAssetResponse, error) {
 	return responses, nil
 }
 
-func (s *GalleryService) DeleteAsset(ctx context.Context, id int64) error {
-	asset, err := s.Repo.GetAssetByID(id)
+func (s *GalleryService) CleanGallery() (int, error) {
+	assets, err := s.Repo.GetUnreferencedAssetIDs()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	err = s.Repo.DeleteAsset(id)
-	if err != nil {
-		return err
+	if len(assets) == 0 {
+		return 0, nil
 	}
 
-	err = s.Repo.DeleteReferencesByAsset(id)
-	if err != nil {
-		return err
+	var idsToDelete []int64
+	for _, asset := range assets {
+		err := s.S3Service.Delete(context.Background(), asset.FileID)
+		if err != nil {
+			slog.Error("Failed to delete asset", "Asset ID", asset.ID, "File ID", asset.FileID, "error", err)
+		} else {
+			idsToDelete = append(idsToDelete, asset.ID)
+		}
 	}
 
-	return s.S3Service.Delete(ctx, asset.FileID)
+	for _, id := range idsToDelete {
+		s.Repo.DeleteAsset(id)
+	}
+
+	return len(idsToDelete), nil
 }
 
 func (s *GalleryService) GetLinkByAssetID(assetID int64) (string, error) {

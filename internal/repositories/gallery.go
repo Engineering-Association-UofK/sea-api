@@ -44,6 +44,21 @@ func (r *GalleryRepository) GetAllAssets() ([]models.GalleryAssetModel, error) {
 	return assets, nil
 }
 
+func (r *GalleryRepository) GetUnreferencedAssetIDs() ([]models.GalleryAssetModel, error) {
+	var models []models.GalleryAssetModel
+	query := `
+	SELECT a.id, a.file_id, a.file_name, a.alt_text, a.uploaded_by, a.showcase, a.created_at
+	FROM gallery_assets a
+	LEFT JOIN gallery_references r ON a.id = r.asset_id
+	WHERE r.asset_id IS NULL
+	`
+	err := r.db.Select(&models, query)
+	if err != nil {
+		return nil, err
+	}
+	return models, nil
+}
+
 func (r *GalleryRepository) UpdateAsset(asset *models.GalleryAssetModel) error {
 	query := `
 	UPDATE gallery_assets
