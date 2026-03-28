@@ -2,6 +2,7 @@ package services
 
 import (
 	"crypto/rand"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"math/big"
@@ -190,6 +191,10 @@ func (s *AuthService) SendVerificationCode(userID int64) error {
 	if err == nil {
 		err = s.VerificationRepo.Delete(codeModel.ID)
 		if err != nil {
+			return err
+		}
+	} else {
+		if err != sql.ErrNoRows {
 			return err
 		}
 	}

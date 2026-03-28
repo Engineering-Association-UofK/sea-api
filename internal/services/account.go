@@ -37,14 +37,12 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 	if err != nil {
 		return nil, err
 	}
-
-	hash := fnv.New64()
-	hash.Write([]byte(fmt.Sprint(claims.UserID) + config.App.SecretSalt))
-	fileKey := fmt.Sprintf("%s/%d/%d%d", s.profilePath, time.Now().Year(), hash.Sum64(), claims.UserID)
-
-	url, err := s.store.GenerateDownloadUrlByKey(ctx, fileKey)
-	if err != nil {
-		return nil, err
+	url := ""
+	if user.ProfileImageID.Valid {
+		url, err = s.store.GenerateDownloadUrlByID(ctx, user.ProfileImageID.Int64)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &models.UserProfileResponse{
@@ -95,6 +93,10 @@ func (s *AccountService) UpdateProfilePicture(ctx context.Context, claims *model
 	if err != nil {
 		return err
 	}
+	user, err := s.UserRepo.GetByUserID(claims.UserID)
+	if err != nil {
+		return err
+	}
 
 	contentType := http.DetectContentType(fileBytes)
 	allowedTypes := map[string]bool{
@@ -110,12 +112,17 @@ func (s *AccountService) UpdateProfilePicture(ctx context.Context, claims *model
 	hash.Write([]byte(fmt.Sprint(claims.UserID) + config.App.SecretSalt))
 	fileKey := fmt.Sprintf("%s/%d/%d%d", s.profilePath, time.Now().Year(), hash.Sum64(), claims.UserID)
 
-	_, err = s.store.Upload(ctx, fileKey, fileBytes, contentType)
+	id, err := s.store.Upload(ctx, fileKey, fileBytes, contentType)
 	if err != nil {
 		return err
 	}
+	if user.ProfileImageID.Valid {
+		s.store.Delete(ctx, user.ProfileImageID.Int64)
+	}
+	user.ProfileImageID.Valid = true
+	user.ProfileImageID.Int64 = id
 
-	return nil
+	return s.UserRepo.Update(user, nil)
 }
 
 func (s *AccountService) UpdatePassword(claims *models.ManagedClaims, req models.UpdatePasswordRequest) error {
