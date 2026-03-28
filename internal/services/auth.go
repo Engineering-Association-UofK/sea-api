@@ -155,30 +155,21 @@ func (s *AuthService) Register(req models.RegisterRequest) error {
 }
 
 func (s *AuthService) Verify(req models.VerifyRequest) error {
-	code, err := s.VerificationRepo.GetByCode(req.Code)
+	code, err := s.VerificationRepo.GetByUserID(req.UserID)
 	if err != nil {
 		return err
 	}
-	if code == nil {
-		return errs.New(errs.BadRequest, "Invalid verification code", nil)
-	}
-	user, err := s.UserRepo.GetByUserID(req.UserID)
+	_, err = s.UserRepo.GetByUserID(req.UserID)
 	if err != nil {
 		return err
-	}
-	if user.Verified {
-		return errs.New(errs.Conflict, "User already verified", nil)
 	}
 	if bcrypt.CompareHashAndPassword([]byte(code.Code), []byte(req.Code)) != nil {
 		return errs.New(errs.BadRequest, "Invalid verification code", nil)
 	}
-	if user.ID != code.UserID {
-		return errs.New(errs.Forbidden, "Wrong code", nil)
-	}
 	if time.Now().After(code.CreatedAt.Add(time.Minute * 15)) {
 		return errs.New(errs.BadRequest, "Verification code has expired", nil)
 	}
-	err = s.UserRepo.Verify(user.ID)
+	err = s.UserRepo.Verify(req.UserID)
 	if err != nil {
 		return err
 	}
