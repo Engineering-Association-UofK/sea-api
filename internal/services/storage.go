@@ -70,15 +70,10 @@ func (s *S3StorageService) Upload(ctx context.Context, key string, data []byte, 
 	return id, nil
 }
 
-func (s *S3StorageService) Download(ctx context.Context, id int64) ([]byte, error) {
-	file, err := s.FilesRepo.GetFileById(id)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *S3StorageService) DownloadWithKey(ctx context.Context, key string) ([]byte, error) {
 	result, err := s.Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &s.Bucket,
-		Key:    &file.Key,
+		Key:    &key,
 	})
 	if err != nil {
 		return nil, err
@@ -86,6 +81,15 @@ func (s *S3StorageService) Download(ctx context.Context, id int64) ([]byte, erro
 	defer result.Body.Close()
 
 	return io.ReadAll(result.Body)
+}
+
+func (s *S3StorageService) Download(ctx context.Context, id int64) ([]byte, error) {
+	file, err := s.FilesRepo.GetFileById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.DownloadWithKey(ctx, file.Key)
 }
 
 func (s *S3StorageService) Delete(ctx context.Context, id int64) error {

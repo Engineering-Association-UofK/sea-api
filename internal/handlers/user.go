@@ -76,7 +76,7 @@ func (u *UserHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, user)
+	c.PureJSON(200, user)
 }
 
 func (u *UserHandler) GetByUsername(c *gin.Context) {
@@ -87,7 +87,7 @@ func (u *UserHandler) GetByUsername(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, user)
+	c.PureJSON(200, user)
 }
 
 func (u *UserHandler) GetTempUserPasscode(c *gin.Context) {

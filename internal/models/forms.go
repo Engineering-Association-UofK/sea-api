@@ -121,6 +121,7 @@ type FormAnalysisRow struct {
 // Full render DTOs
 
 type FormForEditDTO struct {
+	Url       string                  `json:"url"`
 	Form      UpdateFormRequest       `json:"form"`
 	Pages     []UpdatePageRequest     `json:"pages"`
 	Questions []UpdateQuestionRequest `json:"questions"`

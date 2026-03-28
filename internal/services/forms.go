@@ -57,6 +57,14 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 		return nil, err
 	}
 
+	url := ""
+	if rows[0].HeaderImageID.Valid {
+		url, err = s.galleryService.GetLinkByAssetID(rows[0].HeaderImageID.Int64)
+		if err != nil {
+			slog.Error("Unable to get form image url", "error", err, "Form ID", formID)
+		}
+	}
+
 	form := models.UpdateFormRequest{
 		ID: rows[0].FormID,
 		CreateFormRequest: models.CreateFormRequest{
@@ -107,6 +115,7 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 	}
 
 	return &models.FormForEditDTO{
+		Url:       url,
 		Form:      form,
 		Pages:     pages,
 		Questions: questions,

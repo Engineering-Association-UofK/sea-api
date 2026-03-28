@@ -119,6 +119,13 @@ func (s *UserService) GetAllUserDetailsByIndices(indices []int64) ([]models.User
 
 	var userResponses []models.UserDetails
 	for _, user := range users {
+		url := ""
+		if user.ProfileImageID.Valid {
+			link, err := s.S3StorageService.GenerateDownloadUrlByID(context.Background(), user.ProfileImageID.Int64)
+			if err == nil {
+				url = link
+			}
+		}
 		userResponses = append(userResponses, models.UserDetails{
 			UserProfileResponse: models.UserProfileResponse{
 				ID:         user.ID,
@@ -130,6 +137,7 @@ func (s *UserService) GetAllUserDetailsByIndices(indices []int64) ([]models.User
 				Phone:      user.Phone,
 				Gender:     user.Gender,
 				Department: user.Department,
+				ProfilePic: url,
 			},
 		})
 	}
@@ -171,6 +179,15 @@ func (s *UserService) GetUserDetails(id int64) (*models.UserDetails, error) {
 		return nil, err
 	}
 
+	url := ""
+	if user.ProfileImageID.Valid {
+		link, err := s.S3StorageService.GenerateDownloadUrlByID(context.Background(), user.ProfileImageID.Int64)
+		if err != nil {
+			return nil, err
+		}
+		url = link
+	}
+
 	return &models.UserDetails{
 		UserProfileResponse: models.UserProfileResponse{
 			ID:         user.ID,
@@ -182,6 +199,7 @@ func (s *UserService) GetUserDetails(id int64) (*models.UserDetails, error) {
 			Phone:      user.Phone,
 			Gender:     user.Gender,
 			Department: user.Department,
+			ProfilePic: url,
 		},
 	}, nil
 }

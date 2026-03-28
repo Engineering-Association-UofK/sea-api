@@ -34,7 +34,7 @@ func (a *AccountHandler) GetProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, profile)
+	c.PureJSON(http.StatusOK, profile)
 }
 
 func (a *AccountHandler) UpdateProfile(c *gin.Context) {

@@ -55,7 +55,7 @@ func (h *CmsHandler) GetBlogPostById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, post)
+	ctx.PureJSON(200, post)
 }
 
 func (h *CmsHandler) GetBlogPostBySlug(ctx *gin.Context) {
@@ -66,7 +66,7 @@ func (h *CmsHandler) GetBlogPostBySlug(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, post)
+	ctx.PureJSON(200, post)
 }
 
 func (h *CmsHandler) GetAllBlogPosts(ctx *gin.Context) {
@@ -76,7 +76,7 @@ func (h *CmsHandler) GetAllBlogPosts(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, posts)
+	ctx.PureJSON(200, posts)
 }
 
 func (h *CmsHandler) UpdateBlogPost(ctx *gin.Context) {
@@ -142,7 +142,7 @@ func (h *CmsHandler) GetTeamMemberByID(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, member)
+	ctx.PureJSON(200, member)
 }
 
 func (h *CmsHandler) GetAllTeamMembers(ctx *gin.Context) {
@@ -155,7 +155,7 @@ func (h *CmsHandler) GetAllTeamMembers(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, members)
+	ctx.PureJSON(200, members)
 }
 
 func (h *CmsHandler) UpdateTeamMember(ctx *gin.Context) {

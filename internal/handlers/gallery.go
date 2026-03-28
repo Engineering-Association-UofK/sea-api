@@ -56,7 +56,7 @@ func (h *GalleryHandler) GetAll(ctx *gin.Context) {
 		ctx.Error(err)
 		return
 	}
-	ctx.JSON(200, assets)
+	ctx.PureJSON(200, assets)
 }
 
 func (h *GalleryHandler) GetByID(ctx *gin.Context) {
@@ -72,7 +72,7 @@ func (h *GalleryHandler) GetByID(ctx *gin.Context) {
 		ctx.Error(err)
 		return
 	}
-	ctx.JSON(200, asset)
+	ctx.PureJSON(200, asset)
 }
 
 func (h *GalleryHandler) CleanGallery(ctx *gin.Context) {
