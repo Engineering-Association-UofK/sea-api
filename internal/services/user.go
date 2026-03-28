@@ -26,6 +26,10 @@ func NewUserService(repo *repositories.UserRepository, suspensionsRepo *reposito
 // ======== GET ALL ========
 
 func (s *UserService) GetAllTempUsers(req *models.UserListRequest) (*models.TempUserListResponse, error) {
+	if err := isValidGetListRequest(req); err != nil {
+		return nil, err
+	}
+
 	pages, err := s.repo.GetPagesCount(int(req.Limit), true)
 	if err != nil {
 		return nil, err
@@ -63,11 +67,8 @@ func (s *UserService) GetAllTempUsers(req *models.UserListRequest) (*models.Temp
 }
 
 func (s *UserService) GetAll(req *models.UserListRequest) (*models.UserListResponse, error) {
-	if req.Page < 1 || req.Limit < 1 {
-		return nil, errs.New(errs.BadRequest, "Given page and limit must be greater than 0", nil)
-	}
-	if !models.ListLimit[req.Limit] {
-		return nil, errs.New(errs.BadRequest, "Given limit is not valid", nil)
+	if err := isValidGetListRequest(req); err != nil {
+		return nil, err
 	}
 
 	pages, err := s.repo.GetPagesCount(int(req.Limit), false)
@@ -505,4 +506,16 @@ func generatePasscode(length int) (string, error) {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(bytes), nil
+}
+
+// ======== VALIDATION ========
+
+func isValidGetListRequest(req *models.UserListRequest) error {
+	if req.Page < 1 || req.Limit < 1 {
+		return errs.New(errs.BadRequest, "Given page and limit must be greater than 0", nil)
+	}
+	if !models.ListLimit[req.Limit] {
+		return errs.New(errs.BadRequest, "Given limit is not valid", nil)
+	}
+	return nil
 }
