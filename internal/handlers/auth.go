@@ -65,7 +65,7 @@ func (h *AuthHandler) Verify(c *gin.Context) {
 }
 
 func (h *AuthHandler) SendVerificationCode(c *gin.Context) {
-	var req models.VerifyRequest
+	var req models.VerifyEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c)
 		return

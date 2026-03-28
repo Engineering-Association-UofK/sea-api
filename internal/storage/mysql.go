@@ -75,7 +75,7 @@ func runMigrations(db *sqlx.DB) {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		"file:///app/db/migrations",
+		config.App.MigrationsDir,
 		"mysql",
 		driver,
 	)

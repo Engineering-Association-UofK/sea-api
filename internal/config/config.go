@@ -16,7 +16,8 @@ type Config struct {
 	StoreUrl  string `env:"STORE_URL" envDefault:"http://localhost:8333"`
 	HelperUrl string `env:"HELPER_URL" envDefault:"http://localhost:8888"`
 
-	ResourcesDir string `env:"RESOURCES_DIR" envDefault:"./resources"`
+	ResourcesDir  string `env:"RESOURCES_DIR" envDefault:"./resources"`
+	MigrationsDir string `env:"MIGRATIONS_DIR" envDefault:"file://db/migrations"`
 
 	DbName       string `env:"DB_NAME" envDefault:"mysql"`
 	DbDSN        string `env:"DB_DSN" envDefault:"localhost"`

@@ -50,6 +50,10 @@ type VerificationCodeModel struct {
 	CreatedAt time.Time `db:"created_at"`
 }
 
+type VerifyEmailRequest struct {
+	UserID int64 `json:"user_id" binding:"required"`
+}
+
 type VerifyRequest struct {
 	UserID int64  `json:"user_id" binding:"required"`
 	Code   string `json:"code" binding:"required"`

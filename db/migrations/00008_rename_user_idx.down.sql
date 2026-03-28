@@ -1,2 +1,0 @@
-ALTER TABLE users RENAME COLUMN id TO idx;
-ALTER TABLE users_temp RENAME COLUMN id TO idx;
