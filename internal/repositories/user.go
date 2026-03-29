@@ -117,7 +117,7 @@ func (r *UserRepository) GetAdmins() ([]models.UserModel, error) {
 		SELECT u.* FROM users u
 		JOIN user_roles ur ON u.id = ur.user_id
 		WHERE ur.role = ?
-	`, models.ROLE_ADMIN)
+	`, models.RoleSystemAdmin)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (r *UserRepository) AddAdmin(id int64) error {
 	}
 	defer tx.Rollback()
 
-	_, err = tx.Exec(`INSERT INTO user_roles (user_id, role) VALUES (?, ?)`, id, models.ROLE_ADMIN)
+	_, err = tx.Exec(`INSERT INTO user_roles (user_id, role) VALUES (?, ?)`, id, models.RoleSystemAdmin)
 	if err != nil {
 		return err
 	}

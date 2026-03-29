@@ -12,27 +12,27 @@ var ListLimit = map[int]bool{
 }
 
 var AllowedAdminRoles = map[Role]bool{
-	ROLE_CONTENT_EDITOR:      true,
-	ROLE_PAPER_CERTIFIER:     true,
-	ROLE_PAPER_VIEWER:        true,
-	ROLE_USER_MANAGER:        true,
-	ROLE_CERTIFICATE_MANAGER: true,
-	ROLE_FORM_MANAGER:        true,
-	ROLE_BLOG_MANAGER:        true,
-	ROLE_EVENT_MANAGER:       true,
-	ROLE_TECHNICAL_SUPPORT:   true,
+	RoleSystemUserMgr:   true,
+	RoleSystemSupport:   true,
+	RoleContentEditor:   true,
+	RoleContentBlogMgr:  true,
+	RoleContentEventMgr: true,
+	RoleContentFormMgr:  true,
+	RoleCertifier:       true,
+	RoleCertMgr:         true,
+	RolePaperViewer:     true,
 }
 
 var AdminRoles = []Role{
-	ROLE_CONTENT_EDITOR,
-	ROLE_PAPER_CERTIFIER,
-	ROLE_PAPER_VIEWER,
-	ROLE_USER_MANAGER,
-	ROLE_CERTIFICATE_MANAGER,
-	ROLE_FORM_MANAGER,
-	ROLE_BLOG_MANAGER,
-	ROLE_EVENT_MANAGER,
-	ROLE_TECHNICAL_SUPPORT,
+	RoleSystemUserMgr,
+	RoleSystemSupport,
+	RoleContentEditor,
+	RoleContentBlogMgr,
+	RoleContentEventMgr,
+	RoleContentFormMgr,
+	RoleCertifier,
+	RoleCertMgr,
+	RolePaperViewer,
 }
 
 type Status string
@@ -69,23 +69,24 @@ const (
 type Role string
 
 const (
-	// Admin roles
-	ROLE_ADMIN               Role = "ROLE_ADMIN"
-	ROLE_CONTENT_EDITOR      Role = "ROLE_CONTENT_EDITOR"
-	ROLE_PAPER_CERTIFIER     Role = "ROLE_PAPER_CERTIFIER"
-	ROLE_PAPER_VIEWER        Role = "ROLE_PAPER_VIEWER"
-	ROLE_USER_MANAGER        Role = "ROLE_USER_MANAGER"
-	ROLE_ADMIN_MANAGER       Role = "ROLE_ADMIN_MANAGER"
-	ROLE_CERTIFICATE_MANAGER Role = "ROLE_CERTIFICATE_MANAGER" // <-- NEW
-	ROLE_FORM_MANAGER        Role = "ROLE_FORM_MANAGER"        // <-- NEW
-	ROLE_BLOG_MANAGER        Role = "ROLE_BLOG_MANAGER"
-	ROLE_EVENT_MANAGER       Role = "ROLE_EVENT_MANAGER"
-	ROLE_TECHNICAL_SUPPORT   Role = "ROLE_TECHNICAL_SUPPORT"
-	ROLE_SUPER_ADMIN         Role = "ROLE_SUPER_ADMIN"
+	RoleSystemSuperAdmin   Role = "sys:super_admin"
+	RoleSystemAdmin        Role = "sys:admin"
+	RoleSystemAdminManager Role = "sys:admin_manager"
+	RoleSystemUserMgr      Role = "sys:user_manager"
+	RoleSystemSupport      Role = "sys:tech_support"
 
-	// ROLE_CERTIFICATE_ISSUER Role = "ROLE_CERTIFICATE_ISSUER" // <-- REMOVED
+	RoleContentEditor   Role = "content:editor"
+	RoleContentBlogMgr  Role = "content:blog_manager"
+	RoleContentEventMgr Role = "content:event_manager"
+	RoleContentFormMgr  Role = "content:form_manager"
 
-	// User roles
+	RoleCertifier   Role = "cert:certifier"
+	RoleCertMgr     Role = "cert:manager"
+	RolePaperViewer Role = "cert:viewer"
+
+	RoleOrgOwner     Role = "org:owner"
+	RoleOrgMember    Role = "org:member"
+	RoleOrgModerator Role = "org:moderator"
 )
 
 type UserModel struct {

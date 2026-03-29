@@ -280,7 +280,7 @@ func (s *UserService) Update(req *models.UpdateProfileRequest) error {
 		return err
 	}
 	// Check is user is Super Admin to abort changes
-	if slices.Contains(roles, models.ROLE_SUPER_ADMIN) {
+	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot update a Super Admin profile", nil)
 	}
 	user.UniID = req.UniID
@@ -307,7 +307,7 @@ func (s *UserService) Suspend(req *models.SuspensionRequest, adminId int64) erro
 	}
 	if rolesModels, err := s.repo.GetRolesByUserID(req.UserID); err == nil {
 		roles := utils.ExtractField(rolesModels, func(r models.UserRole) models.Role { return r.Role })
-		if slices.Contains(roles, models.ROLE_SUPER_ADMIN) {
+		if slices.Contains(roles, models.RoleSystemSuperAdmin) {
 			return errs.New(errs.Forbidden, "Cannot suspend a Super Admin", nil)
 		}
 	}
@@ -385,13 +385,22 @@ func (s *UserService) GetAdmins() ([]models.AdminResponse, error) {
 
 	var adminResponses []models.AdminResponse
 	for _, a := range admins {
+		url := ""
+		if a.ProfileImageID.Valid {
+			link, err := s.S3StorageService.GenerateDownloadUrlByID(context.Background(), a.ProfileImageID.Int64)
+			if err != nil {
+				return nil, err
+			}
+			url = link
+		}
 		adminResponses = append(adminResponses, models.AdminResponse{
-			ID:       a.ID,
-			Email:    a.Email,
-			NameAr:   a.NameAr,
-			Username: a.Username,
-			Gender:   a.Gender,
-			Roles:    rolesMap[a.ID],
+			ID:         a.ID,
+			Email:      a.Email,
+			ProfilePic: url,
+			NameAr:     a.NameAr,
+			Username:   a.Username,
+			Gender:     a.Gender,
+			Roles:      rolesMap[a.ID],
 		})
 	}
 
@@ -403,10 +412,10 @@ func (s *UserService) AddAdmin(ID int64) error {
 	if err != nil {
 		return err
 	}
-	if slices.Contains(roles, models.ROLE_SUPER_ADMIN) {
+	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot add a Super Admin as an admin", nil)
 	}
-	if slices.Contains(roles, models.ROLE_ADMIN) {
+	if slices.Contains(roles, models.RoleSystemAdmin) {
 		return errs.New(errs.Conflict, "User is already an admin", nil)
 	}
 	err = s.repo.AddAdmin(ID)
@@ -421,13 +430,13 @@ func (s *UserService) MakeAdminManager(ID int64) error {
 	if err != nil {
 		return err
 	}
-	if slices.Contains(roles, models.ROLE_SUPER_ADMIN) {
+	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot add a Super Admin as an admin", nil)
 	}
-	if slices.Contains(roles, models.ROLE_ADMIN_MANAGER) {
+	if slices.Contains(roles, models.RoleSystemAdminManager) {
 		return errs.New(errs.Conflict, "User is already an admin manager", nil)
 	}
-	err = s.repo.CreateRole(&models.UserRole{UserID: ID, Role: models.ROLE_ADMIN_MANAGER})
+	err = s.repo.CreateRole(&models.UserRole{UserID: ID, Role: models.RoleSystemAdminManager})
 	if err != nil {
 		return err
 	}
@@ -439,7 +448,7 @@ func (s *UserService) UpdateAdminRoles(req *models.AdminRequest) error {
 	if err != nil {
 		return err
 	}
-	if slices.Contains(roles, models.ROLE_SUPER_ADMIN) {
+	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot update a Super Admin's roles", nil)
 	}
 	for _, role := range req.Roles {
@@ -459,10 +468,10 @@ func (s *UserService) RemoveAdmin(ID int64) error {
 	if err != nil {
 		return err
 	}
-	if slices.Contains(roles, models.ROLE_SUPER_ADMIN) {
+	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot remove a Super Admin as an admin", nil)
 	}
-	if !slices.Contains(roles, models.ROLE_ADMIN) {
+	if !slices.Contains(roles, models.RoleSystemAdmin) {
 		return errs.New(errs.Conflict, "User is not an admin", nil)
 	}
 	err = s.repo.RemoveAdmin(ID)

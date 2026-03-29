@@ -79,11 +79,11 @@ func SetupRouter() *gin.Engine {
 
 	{ // ###### Administration Endpoints ######
 		admin := apiV1.Group("/admin")
-		admin.Use(UserHandler.AuthMiddleware(), h.RequireRole(m.ROLE_ADMIN))
+		admin.Use(UserHandler.AuthMiddleware(), h.RequireRole(m.RoleSystemAdmin))
 
 		{ // ==== USERS
 			user := admin.Group("/user")
-			user.Use(h.RequireAnyRole(m.ROLE_USER_MANAGER, m.ROLE_SUPER_ADMIN))
+			user.Use(h.RequireAnyRole(m.RoleSystemUserMgr, m.RoleSystemSuperAdmin))
 			user.GET("/:id", UserHandler.GetByID)
 			user.POST("/all", UserHandler.GetAll)
 			user.POST("/temp-users", UserHandler.GetAllTempUsers)
@@ -95,17 +95,17 @@ func SetupRouter() *gin.Engine {
 		}
 
 		{ // ==== ADMIN
-			admin.Use(h.RequireAnyRole(m.ROLE_ADMIN_MANAGER, m.ROLE_SUPER_ADMIN))
+			admin.Use(h.RequireAnyRole(m.RoleSystemAdminManager, m.RoleSystemSuperAdmin))
 			admin.GET("", UserHandler.GetAdmins)
 			admin.POST("/:id", UserHandler.MakeAdmin)
 			admin.PUT("/", UserHandler.UpdateAdmin)
 			admin.DELETE("/:id", UserHandler.DeleteAdmin)
-			admin.POST("/add-manager/:id", h.RequireRole(m.ROLE_SUPER_ADMIN), UserHandler.MakeAdminManager)
+			admin.POST("/add-manager/:id", h.RequireRole(m.RoleSystemSuperAdmin), UserHandler.MakeAdminManager)
 		}
 
 		{ // ==== BLOG POSTS
 			blog := admin.Group("/blog")
-			blog.Use(h.RequireAnyRole(m.ROLE_BLOG_MANAGER, m.ROLE_SUPER_ADMIN))
+			blog.Use(h.RequireAnyRole(m.RoleContentBlogMgr, m.RoleSystemSuperAdmin))
 			blog.GET("", CmsHandler.GetAllBlogPosts)
 			blog.GET("/:id", CmsHandler.GetBlogPostById)
 			blog.GET("/slug/:slug", CmsHandler.GetBlogPostBySlug)
@@ -116,18 +116,18 @@ func SetupRouter() *gin.Engine {
 
 		{ // ==== GALLERY
 			gallery := admin.Group("/gallery")
-			gallery.Use(h.RequireAnyRole(m.ROLE_CONTENT_EDITOR, m.ROLE_SUPER_ADMIN))
+			gallery.Use(h.RequireAnyRole(m.RoleContentEditor, m.RoleSystemSuperAdmin))
 			gallery.POST("", GalleryHandler.Upload)
 			gallery.GET("", GalleryHandler.GetAll)
 			gallery.GET("/:id", GalleryHandler.GetByID)
 			gallery.DELETE("", GalleryHandler.CleanGallery)
 		}
 
-		// TODO: Add bot commands and forms
+		// TODO: Add bot commands
 
 		{ // ==== FORMS
 			form := admin.Group("/form")
-			form.Use(h.RequireAnyRole(m.ROLE_FORM_MANAGER, m.ROLE_SUPER_ADMIN))
+			form.Use(h.RequireAnyRole(m.RoleContentFormMgr, m.RoleSystemSuperAdmin))
 
 			form.GET("", FormHandler.GetAllForms)
 			form.POST("", FormHandler.CreateForm)
@@ -159,7 +159,7 @@ func SetupRouter() *gin.Engine {
 
 		{ // ==== TEAM MEMBERS
 			team := admin.Group("/team")
-			team.Use(h.RequireAnyRole(m.ROLE_CONTENT_EDITOR, m.ROLE_SUPER_ADMIN))
+			team.Use(h.RequireAnyRole(m.RoleContentEditor, m.RoleSystemSuperAdmin))
 			team.POST("", CmsHandler.CreateTeamMember)
 			team.GET("", CmsHandler.GetAllTeamMembers)
 			team.GET("/:id", CmsHandler.GetTeamMemberByID)
@@ -169,7 +169,7 @@ func SetupRouter() *gin.Engine {
 
 		{ // ==== EVENTS
 			event := admin.Group("/event")
-			event.Use(h.RequireAnyRole(m.ROLE_EVENT_MANAGER, m.ROLE_SUPER_ADMIN))
+			event.Use(h.RequireAnyRole(m.RoleContentEventMgr, m.RoleSystemSuperAdmin))
 			event.GET("", EventHandler.GetAllEvents)
 			event.GET("/:id", EventHandler.GetEventByID)
 			event.POST("", EventHandler.CreateEvent)
@@ -180,7 +180,7 @@ func SetupRouter() *gin.Engine {
 
 		{ // ==== CERTIFICATES
 			certificate := admin.Group("/certificate")
-			certificate.Use(h.RequireAnyRole(m.ROLE_CERTIFICATE_MANAGER, m.ROLE_SUPER_ADMIN))
+			certificate.Use(h.RequireAnyRole(m.RoleCertifier, m.RoleSystemSuperAdmin))
 			certificate.GET("/generate-all-for-event", CertificateHandler.MakeCertificatesForEvent)
 		}
 
