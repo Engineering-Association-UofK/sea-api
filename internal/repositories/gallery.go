@@ -44,6 +44,22 @@ func (r *GalleryRepository) GetAllAssets() ([]models.GalleryAssetModel, error) {
 	return assets, nil
 }
 
+func (r *GalleryRepository) GetAllGallery() ([]models.GallerySqlModel, error) {
+	var assets []models.GallerySqlModel
+	err := r.db.Select(&assets, `
+	SELECT a.id, a.file_id, a.file_name, a.alt_text, a.uploaded_by, a.created_at,
+	COUNT(r.asset_id) AS reference_times
+	FROM gallery_assets a
+	LEFT JOIN gallery_references r ON a.id = r.asset_id
+	GROUP BY a.id, a.file_id, a.file_name, a.alt_text, a.uploaded_by, a.created_at
+	ORDER BY a.created_at DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	return assets, nil
+}
+
 func (r *GalleryRepository) GetUnreferencedAssetIDs() ([]models.GalleryAssetModel, error) {
 	var models []models.GalleryAssetModel
 	query := `

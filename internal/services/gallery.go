@@ -96,7 +96,7 @@ func (s *GalleryService) GetAssetByID(id int64) (*models.GalleryAssetResponse, e
 }
 
 func (s *GalleryService) GetAllAssets() ([]models.GalleryAssetResponse, error) {
-	assets, err := s.Repo.GetAllAssets()
+	assets, err := s.Repo.GetAllGallery()
 	if err != nil {
 		return nil, err
 	}
@@ -105,12 +105,13 @@ func (s *GalleryService) GetAllAssets() ([]models.GalleryAssetResponse, error) {
 	for _, asset := range assets {
 		url, _ := s.S3Service.GenerateDownloadUrlByID(context.Background(), asset.FileID)
 		responses = append(responses, models.GalleryAssetResponse{
-			ID:         asset.ID,
-			URL:        url,
-			FileName:   asset.FileName,
-			AltText:    asset.AltText,
-			UploadedBy: asset.UploadedBy,
-			CreatedAt:  asset.CreatedAt,
+			ID:             asset.ID,
+			URL:            url,
+			ReferenceTimes: asset.ReferenceTimes,
+			FileName:       asset.FileName,
+			AltText:        asset.AltText,
+			UploadedBy:     asset.UploadedBy,
+			CreatedAt:      asset.CreatedAt,
 		})
 	}
 
