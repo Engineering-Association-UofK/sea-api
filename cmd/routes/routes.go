@@ -185,8 +185,8 @@ func SetupRouter() *gin.Engine {
 		}
 
 		{ // ==== MAIL
-			// mail := apiV1.Group("/mail")
-			// mail.POST("", MailHandler.SendMail)
+			mail := apiV1.Group("/mail")
+			mail.POST("", MailHandler.SendMail)
 		}
 	}
 	return r
