@@ -287,15 +287,20 @@ func (c *CertificateService) VerifyCertificate(hash string) (*models.Certificate
 	if err != nil {
 		return nil, err
 	}
+	valid := true
+	status := cert.Status
+	if status == models.REVOKED {
+		valid = false
+	}
 
 	return &models.CertificateVerify{
-		Valid:     true,
-		ID:        cert.ID,
+		Valid:     valid,
+		ID:        fmt.Sprint(cert.ID),
 		NameAr:    user.NameAr,
 		NameEn:    user.NameEn,
 		EventName: event.Name,
-		Status:    cert.Status,
-		Grade:     cert.Grade,
+		Status:    status,
+		Grade:     fmt.Sprintf("%.2f", cert.Grade),
 		Outcomes:  event.Outcomes,
 		EndDate:   event.EndDate,
 		IssueDate: cert.IssueDate,

@@ -40,12 +40,12 @@ type CertificateFileModel struct {
 
 type CertificateVerify struct {
 	Valid     bool       `json:"valid"`
-	ID        int64      `json:"id"`
+	ID        string     `json:"id"`
 	NameAr    string     `json:"name_ar"`
 	NameEn    string     `json:"name_en"`
 	EventName string     `json:"event"`
 	Status    CertStatus `json:"status"`
-	Grade     float64    `json:"grade"`
+	Grade     string     `json:"grade"`
 	Outcomes  []string   `json:"outcomes"`
 	EndDate   time.Time  `json:"end_date"`
 	IssueDate time.Time  `json:"issue_date"`

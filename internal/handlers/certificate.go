@@ -3,6 +3,7 @@ package handlers
 import (
 	"archive/zip"
 	"io"
+	"log/slog"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
@@ -18,39 +19,6 @@ type CertificateHandler struct {
 func NewCertificateHandler(service *services.CertificateService) *CertificateHandler {
 	return &CertificateHandler{service: service}
 }
-
-/*
-
-
-
-
-
-
-
-
-
-
-
-func (h *CertificateHandler) CreateWorkshopCertificate(ctx *gin.Context) {
-	var req struct {
-		UserID  int64 `json:"user_id" binding:"required"`
-		EventID int64 `json:"event_id" binding:"required"`
-	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
-		return
-	}
-
-	id, err := h.service.CreateWorkshopCertificate(req.UserID, req.EventID)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	response.NewTransactionResponse(201, "Certificate created successfully", id, ctx)
-}
-*/
 
 func (h *CertificateHandler) VerifyCertificate(ctx *gin.Context) {
 
@@ -125,6 +93,7 @@ func (h *CertificateHandler) GetCertificates(ctx *gin.Context) {
 		response.BadRequest(ctx)
 		return
 	}
+	slog.Info("ID is: " + id)
 
 	pr, pw := io.Pipe()
 	go func() {
