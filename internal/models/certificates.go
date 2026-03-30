@@ -40,23 +40,24 @@ type CertificateFileModel struct {
 
 type CertificateVerify struct {
 	Valid     bool       `json:"valid"`
-	ID        int64      `json:"id"`
+	ID        string     `json:"id"`
 	NameAr    string     `json:"name_ar"`
 	NameEn    string     `json:"name_en"`
 	EventName string     `json:"event"`
 	Status    CertStatus `json:"status"`
-	Grade     float64    `json:"grade"`
+	Grade     string     `json:"grade"`
 	Outcomes  []string   `json:"outcomes"`
 	EndDate   time.Time  `json:"end_date"`
 	IssueDate time.Time  `json:"issue_date"`
 }
 
 type Progress struct {
-	Total   int    `json:"total"`
-	Current int    `json:"current"`
-	ID      int64  `json:"id"`
-	Success bool   `json:"success"`
-	Name    string `json:"name"`
+	Total     int       `json:"total"`
+	Current   int       `json:"current"`
+	ID        int64     `json:"id"`
+	Success   bool      `json:"success"`
+	Timestamp time.Time `json:"timestamp"`
+	Name      string    `json:"name"`
 }
 
 type CertificateSendEmailData struct {

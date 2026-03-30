@@ -46,7 +46,7 @@ func SetupRouter() *gin.Engine {
 	{ // ==== CERTIFICATES
 		cert := apiV1.Group("/cert")
 		cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
-		cert.GET("/download/:id", CertificateHandler.GetCertificates)
+		cert.GET("/download/:hash", CertificateHandler.GetCertificates)
 	}
 
 	{ // ==== AUTHENTICATION

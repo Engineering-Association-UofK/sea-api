@@ -4,15 +4,17 @@ import (
 	"encoding/json"
 	"log/slog"
 	"sea-api/internal/models"
+	"time"
 )
 
 func ParseProgressStruct(total, current int, id int64, success bool, name string, progressChan chan string) {
 	s, err := parseToJsonString(models.Progress{
-		Total:   total,
-		Current: current,
-		ID:      id,
-		Success: success,
-		Name:    name,
+		Total:     total,
+		Current:   current,
+		ID:        id,
+		Success:   success,
+		Timestamp: time.Now(),
+		Name:      name,
 	})
 	if err != nil {
 		slog.Error("Error parsing progress to JSON string", "error", err)

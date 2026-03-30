@@ -40,7 +40,6 @@ func Init() {
 	userRepository := repositories.NewUserRepository(db)
 	suspensionsRepo := repositories.NewSuspensionsRepo(db)
 	eventRepository := repositories.NewEventRepository(db)
-	storeRepository := repositories.NewStoreRepository(db)
 	certificateRepository := repositories.NewCertificateRepository(db)
 	verificationRepo := repositories.NewVerificationRepo(db)
 	fileRepo := repositories.NewFileRepository(db)
@@ -49,7 +48,6 @@ func Init() {
 	formRepository := repositories.NewFormRepository(db)
 
 	// Initialize services
-	storageService := services.NewSeaweedService(storeRepository)
 	s3StorageService := services.NewS3Service(fileRepo)
 	galleryService := services.NewGalleryService(galleryRepository, s3StorageService)
 	pdfService := services.NewPDFService(10)
@@ -64,7 +62,7 @@ func Init() {
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
 	FormService := services.NewFormService(formRepository, galleryService)
 
-	certificateService := services.NewCertificateService(userRepository, eventService, storageService, pdfService, mailService, certificateRepository)
+	certificateService := services.NewCertificateService(userRepository, eventService, s3StorageService, pdfService, mailService, certificateRepository)
 	schedularService := services.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService)
 	schedularService.Run()
 

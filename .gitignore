@@ -29,6 +29,7 @@ go.work.sum
 /resources
 /.vscode
 /.keys
+~
 
 # Files
 *.html

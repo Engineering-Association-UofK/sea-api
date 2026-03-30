@@ -22,28 +22,33 @@ import (
 const VERIFICATION_PATH = `https://sea.uofk.edu/cert/verify/`
 
 type CertificateService struct {
-	userRepo     *repositories.UserRepository
-	eventService *EventService
-	storeService *StorageService
-	pdfService   *PDFService
-	mailService  *MailService
+	userRepo       *repositories.UserRepository
+	eventService   *EventService
+	S3StoreService *S3StorageService
+	pdfService     *PDFService
+	mailService    *MailService
 
 	certificateRepository *repositories.CertificateRepository
+
+	storePath string
 }
 
-func NewCertificateService(userRepo *repositories.UserRepository, eventService *EventService, storeService *StorageService, pdfService *PDFService, mailService *MailService, CertificateRepository *repositories.CertificateRepository) *CertificateService {
+func NewCertificateService(userRepo *repositories.UserRepository, eventService *EventService, S3StoreService *S3StorageService, pdfService *PDFService, mailService *MailService, CertificateRepository *repositories.CertificateRepository) *CertificateService {
 	return &CertificateService{
 		userRepo:              userRepo,
 		pdfService:            pdfService,
 		eventService:          eventService,
-		storeService:          storeService,
+		S3StoreService:        S3StoreService,
 		mailService:           mailService,
 		certificateRepository: CertificateRepository,
+		storePath:             "public/certificates",
 	}
 }
 
-func (c *CertificateService) MakeCertificatesForEvent(eventId int64, progressChan chan string) error {
+func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, eventId int64, progressChan chan string) error {
 	defer close(progressChan)
+	progressChan <- "started"
+
 	participants, err := c.eventService.EventRepo.GetParticipantByEventID(eventId)
 	if err != nil {
 		slog.Error("error getting participants", "error", err, "event_id", eventId)
@@ -66,7 +71,7 @@ func (c *CertificateService) MakeCertificatesForEvent(eventId int64, progressCha
 	}
 
 	for i, user := range users {
-		_, err := c.CreateWorkshopCertificate(user.ID, eventId)
+		_, err := c.CreateWorkshopCertificate(ctx, user.ID, eventId)
 		if err != nil {
 			slog.Error("error creating certificate", "error", err, "user_id", user.ID, "event_id", eventId)
 			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, user.NameAr, progressChan)
@@ -81,6 +86,8 @@ func (c *CertificateService) MakeCertificatesForEvent(eventId int64, progressCha
 func (c *CertificateService) SendCertificatesEmailsForEvent(request models.CertificateSendEmailData, progressChan chan string) error {
 	eventId := request.EventID
 	defer close(progressChan)
+	progressChan <- "started"
+
 	participants, err := c.eventService.EventRepo.GetParticipantByEventID(eventId)
 	if err != nil {
 		slog.Error("error getting participants", "error", err, "event_id", eventId)
@@ -155,7 +162,7 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 	return nil
 }
 
-func (c *CertificateService) CreateWorkshopCertificate(userUserID, eventId int64) (int64, error) {
+func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, userUserID, eventId int64) (int64, error) {
 	cert, err := c.certificateRepository.GetByUserIDAndEventID(userUserID, eventId)
 	if err == nil {
 		return cert.ID, nil
@@ -219,14 +226,14 @@ func (c *CertificateService) CreateWorkshopCertificate(userUserID, eventId int64
 		return 0, err
 	}
 
-	storeIdAr, err := c.storeService.UploadFileMaster("cert.pdf", pdfAr)
+	storeIdAr, err := c.S3StoreService.Upload(ctx, c.storePath+"/ar/"+hashString+".pdf", pdfAr, "application/pdf")
 	if err != nil {
 		return 0, err
 	}
-	storeIdEn, err := c.storeService.UploadFileMaster("cert.pdf", pdfEn)
+	storeIdEn, err := c.S3StoreService.Upload(ctx, c.storePath+"/en/"+hashString+".pdf", pdfEn, "application/pdf")
 	if err != nil {
-		c.storeService.DeleteFile(storeIdAr)
-		slog.Error("error uploading file", "error", err, "stored file", storeIdAr)
+		c.S3StoreService.Delete(ctx, storeIdAr)
+		slog.Error("error uploading file", "error", err, "s3 stored file", storeIdEn)
 		return 0, err
 	}
 
@@ -239,8 +246,8 @@ func (c *CertificateService) CreateWorkshopCertificate(userUserID, eventId int64
 		Status:    models.ACTIVE,
 	})
 	if err != nil {
-		c.storeService.DeleteFile(storeIdAr)
-		c.storeService.DeleteFile(storeIdEn)
+		c.S3StoreService.Delete(ctx, storeIdAr)
+		c.S3StoreService.Delete(ctx, storeIdEn)
 		slog.Error("error creating certificate", "error", err, "stored file", storeIdAr, "stored file", storeIdEn)
 		return 0, err
 	}
@@ -251,8 +258,8 @@ func (c *CertificateService) CreateWorkshopCertificate(userUserID, eventId int64
 		Lang:          "ar",
 	})
 	if err != nil {
-		c.storeService.DeleteFile(storeIdAr)
-		c.storeService.DeleteFile(storeIdEn)
+		c.S3StoreService.Delete(ctx, storeIdAr)
+		c.S3StoreService.Delete(ctx, storeIdEn)
 		return 0, err
 	}
 
@@ -262,7 +269,7 @@ func (c *CertificateService) CreateWorkshopCertificate(userUserID, eventId int64
 		Lang:          "en",
 	})
 	if err != nil {
-		c.storeService.DeleteFile(storeIdEn)
+		c.S3StoreService.Delete(ctx, storeIdEn)
 		return 0, err
 	}
 
@@ -287,25 +294,29 @@ func (c *CertificateService) VerifyCertificate(hash string) (*models.Certificate
 	if err != nil {
 		return nil, err
 	}
+	valid := true
+	status := cert.Status
+	if status == models.REVOKED {
+		valid = false
+	}
 
 	return &models.CertificateVerify{
-		Valid:     true,
-		ID:        cert.ID,
+		Valid:     valid,
+		ID:        fmt.Sprint(cert.ID),
 		NameAr:    user.NameAr,
 		NameEn:    user.NameEn,
 		EventName: event.Name,
-		Status:    cert.Status,
-		Grade:     cert.Grade,
+		Status:    status,
+		Grade:     fmt.Sprintf("%.2f", cert.Grade),
 		Outcomes:  event.Outcomes,
 		EndDate:   event.EndDate,
 		IssueDate: cert.IssueDate,
 	}, nil
 }
 
-func (c *CertificateService) GetCertificates(zw *zip.Writer, id int64) error {
-	cert, err := c.certificateRepository.GetByID(id)
+func (c *CertificateService) GetCertificates(zw *zip.Writer, hash string) error {
+	cert, err := c.certificateRepository.GetByHash(hash)
 	if err != nil {
-		slog.Error("error getting certificate", "error", err, "certificate_id", id)
 		return err
 	}
 
@@ -318,7 +329,7 @@ func (c *CertificateService) GetCertificates(zw *zip.Writer, id int64) error {
 	}
 
 	for i, file := range files {
-		data, err := c.storeService.DownloadFileFID(file.StoreID)
+		data, err := c.S3StoreService.Download(context.Background(), file.StoreID)
 		if err != nil {
 			return err
 		}
