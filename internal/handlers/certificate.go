@@ -3,11 +3,9 @@ package handlers
 import (
 	"archive/zip"
 	"io"
-	"log/slog"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,7 +44,7 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 
 	progressChan := make(chan string)
 
-	go h.service.MakeCertificatesForEvent(req.EventID, progressChan)
+	go h.service.MakeCertificatesForEvent(ctx.Request.Context(), req.EventID, progressChan)
 
 	ctx.Stream(func(w io.Writer) bool {
 		msg, ok := <-progressChan
@@ -87,19 +85,13 @@ func (h *CertificateHandler) SendCertificatesEmailsForEvent(ctx *gin.Context) {
 }
 
 func (h *CertificateHandler) GetCertificates(ctx *gin.Context) {
-	id := ctx.Param("id")
-	intId, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		response.BadRequest(ctx)
-		return
-	}
-	slog.Info("ID is: " + id)
+	hash := ctx.Param("hash")
 
 	pr, pw := io.Pipe()
 	go func() {
 		zipWriter := zip.NewWriter(pw)
 
-		err = h.service.GetCertificates(zipWriter, intId)
+		err := h.service.GetCertificates(zipWriter, hash)
 		if err != nil {
 			pw.CloseWithError(err)
 			return

@@ -38,6 +38,15 @@ func (r *CertificateRepository) CreateFile(item models.CertificateFileModel) (in
 	return res.LastInsertId()
 }
 
+func (r *CertificateRepository) GetAll() ([]models.CertificateModel, error) {
+	var items []models.CertificateModel
+	err := r.DB.Select(&items, `SELECT * FROM certificate`)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 func (r *CertificateRepository) GetByID(id int64) (*models.CertificateModel, error) {
 	var model models.CertificateModel
 	err := r.DB.Get(&model, `SELECT * FROM certificate WHERE id = ?`, id)
@@ -80,6 +89,15 @@ func (r *CertificateRepository) GetByEventIDAndUserIDs(eventID int64, userIDs []
 	return items, err
 }
 
+func (r *CertificateRepository) GetAllFiles() ([]models.CertificateFileModel, error) {
+	var items []models.CertificateFileModel
+	err := r.DB.Select(&items, `SELECT * FROM certificate_file`)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 func (r *CertificateRepository) GetFileById(id int64) (*models.CertificateFileModel, error) {
 	var item models.CertificateFileModel
 	err := r.DB.Get(&item, `SELECT * FROM certificate_file WHERE id = ?`, id)
@@ -114,6 +132,18 @@ func (r *CertificateRepository) Update(item *models.CertificateModel) error {
 	WHERE id = :id
 	`
 	_, err := r.DB.NamedExec(query, &item)
+	return err
+}
+
+func (r *CertificateRepository) UpdateFile(id int64, storeID int64) error {
+	query := `
+	UPDATE certificate_file
+	SET store_id = :store_id
+	WHERE id = :id	`
+	_, err := r.DB.NamedExec(query, map[string]interface{}{
+		"store_id": storeID,
+		"id":       id,
+	})
 	return err
 }
 

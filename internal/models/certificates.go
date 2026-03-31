@@ -52,11 +52,12 @@ type CertificateVerify struct {
 }
 
 type Progress struct {
-	Total   int    `json:"total"`
-	Current int    `json:"current"`
-	ID      int64  `json:"id"`
-	Success bool   `json:"success"`
-	Name    string `json:"name"`
+	Total     int       `json:"total"`
+	Current   int       `json:"current"`
+	ID        int64     `json:"id"`
+	Success   bool      `json:"success"`
+	Timestamp time.Time `json:"timestamp"`
+	Name      string    `json:"name"`
 }
 
 type CertificateSendEmailData struct {
