@@ -25,6 +25,7 @@ type EventModel struct {
 	ID              int64     `db:"id"`
 	Name            string    `db:"name"`
 	Description     string    `db:"description"`
+	PresenterID     int64     `db:"presenter_id"`
 	EventType       EventType `db:"event_type"`
 	MaxParticipants int       `db:"max_participants"`
 	StartDate       time.Time `db:"start_date"`
@@ -63,6 +64,7 @@ type EventDTO struct {
 	ID              int64            `json:"id"`
 	Name            string           `json:"name"`
 	Description     string           `json:"description"`
+	PresenterID     int64            `json:"presenter_id"`
 	EventType       EventType        `json:"event_type"`
 	MaxParticipants int              `json:"max_participants"`
 	StartDate       time.Time        `json:"start_date"`
@@ -100,6 +102,7 @@ type ComScoreDTO struct {
 type EventListResponse struct {
 	ID              int64     `json:"id"`
 	Name            string    `json:"name"`
+	PresenterID     int64     `json:"presenter_id"`
 	EventType       EventType `json:"event_type"`
 	MaxParticipants int       `json:"max_participants"`
 	StartDate       time.Time `json:"start_date"`

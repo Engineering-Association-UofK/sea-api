@@ -49,11 +49,13 @@ func Init() {
 	galleryRepository := repositories.NewGalleryRepository(db)
 	CmsRepository := repositories.NewCmsRepository(db)
 	formRepository := repositories.NewFormRepository(db)
+	collaboratorRepository := repositories.NewCollaboratorRepo(db)
 
 	// Initialize services
+	pdfService := services.NewPDFService(10)
 	s3StorageService := services.NewS3Service(fileRepo)
 	galleryService := services.NewGalleryService(galleryRepository, s3StorageService)
-	pdfService := services.NewPDFService(10)
+	collaboratorService := services.NewCollaboratorService(collaboratorRepository, s3StorageService)
 
 	eventService := services.NewEventService(eventRepository, userRepository)
 	accountService := services.NewAccountService(userRepository, s3StorageService)
@@ -65,7 +67,7 @@ func Init() {
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
 	FormService := services.NewFormService(formRepository, galleryService)
 
-	certificateService := services.NewCertificateService(userRepository, eventService, s3StorageService, pdfService, mailService, certificateRepository)
+	certificateService := services.NewCertificateService(userRepository, eventService, s3StorageService, pdfService, mailService, collaboratorService, certificateRepository)
 	schedularService := services.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService)
 	schedularService.Run()
 
@@ -79,4 +81,5 @@ func Init() {
 	routes.GalleryHandler = handlers.NewGalleryHandler(galleryService)
 	routes.CmsHandler = handlers.NewCmsHandler(CmsService)
 	routes.FormHandler = handlers.NewFormHandler(FormService)
+	routes.CollaboratorHandler = handlers.NewCollaboratorHandler(collaboratorService)
 }

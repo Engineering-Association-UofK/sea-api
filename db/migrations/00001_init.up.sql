@@ -71,11 +71,14 @@ CREATE TABLE event (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
+    presenter_id INT NOT NULL,
     event_type VARCHAR(255) NOT NULL,
     max_participants INT NOT NULL,
     outcomes TEXT NOT NULL,
     start_date DATE NOT NULL,
-    end_date DATE NOT NULL
+    end_date DATE NOT NULL,
+
+    FOREIGN KEY (presenter_id) REFERENCES collaborators(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE event_component (
@@ -114,6 +117,16 @@ CREATE TABLE component_score (
     FOREIGN KEY (participant_id) REFERENCES event_participant(id) ON DELETE CASCADE,
     FOREIGN KEY (component_id) REFERENCES event_component(id) ON DELETE CASCADE
 );
+
+CREATE TABLE collaborators (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name_ar VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    signature_id INT NOT NULL,
+
+    FOREIGN KEY (signature_id) REFERENCES files(id) ON DELETE CASCADE
+)
 
 -- -------- CERTIFICATE SCHEMA
 

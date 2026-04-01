@@ -110,7 +110,7 @@ func (s *AccountService) UpdateProfilePicture(ctx context.Context, claims *model
 
 	hash := fnv.New64()
 	hash.Write([]byte(fmt.Sprint(claims.UserID) + config.App.SecretSalt))
-	fileKey := fmt.Sprintf("%s/%d/%d%d.%s", s.profilePath, time.Now().Year(), hash.Sum64(), claims.UserID, contentType[6:])
+	fileKey := fmt.Sprintf("%s/%d/%d-%d.%s", s.profilePath, time.Now().Year(), hash.Sum64(), claims.UserID, contentType[6:])
 
 	id, err := s.store.Upload(ctx, fileKey, fileBytes, contentType)
 	if err != nil {

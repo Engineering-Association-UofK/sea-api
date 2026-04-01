@@ -12,15 +12,16 @@ import (
 )
 
 var (
-	UserHandler        *h.UserHandler
-	EventHandler       *h.EventHandler
-	MailHandler        *h.MailHandler
-	CertificateHandler *h.CertificateHandler
-	AuthHandler        *h.AuthHandler
-	AccountHandler     *h.AccountHandler
-	GalleryHandler     *h.GalleryHandler
-	CmsHandler         *h.CmsHandler
-	FormHandler        *h.FormHandler
+	UserHandler         *h.UserHandler
+	EventHandler        *h.EventHandler
+	MailHandler         *h.MailHandler
+	CertificateHandler  *h.CertificateHandler
+	AuthHandler         *h.AuthHandler
+	AccountHandler      *h.AccountHandler
+	GalleryHandler      *h.GalleryHandler
+	CmsHandler          *h.CmsHandler
+	FormHandler         *h.FormHandler
+	CollaboratorHandler *h.CollaboratorHandler
 )
 
 func SetupRouter() *gin.Engine {
@@ -178,6 +179,16 @@ func SetupRouter() *gin.Engine {
 			event.DELETE("/:id", EventHandler.DeleteEvent)
 			event.GET("/send-all-emails", CertificateHandler.SendCertificatesEmailsForEvent)
 			event.POST("/import-users/:id", EventHandler.ImportUsers)
+		}
+
+		{ // ==== Collaborators
+			collabs := admin.Group("/collabs")
+			collabs.Use(h.RequireAnyRole(m.RoleContentEventMgr, m.RoleSystemSuperAdmin))
+			collabs.GET("", CollaboratorHandler.GetAll)
+			collabs.GET("/:id", CollaboratorHandler.GetByID)
+			collabs.POST("", CollaboratorHandler.Create)
+			collabs.PUT("", CollaboratorHandler.Update)
+			collabs.DELETE("/:id", CollaboratorHandler.Delete)
 		}
 
 		{ // ==== CERTIFICATES
