@@ -22,24 +22,26 @@ import (
 const VERIFICATION_PATH = `https://sea.uofk.edu/cert/verify/`
 
 type CertificateService struct {
-	userRepo       *repositories.UserRepository
-	eventService   *EventService
-	S3StoreService *S3StorageService
-	pdfService     *PDFService
-	mailService    *MailService
+	userRepo            *repositories.UserRepository
+	eventService        *EventService
+	S3StoreService      *S3StorageService
+	pdfService          *PDFService
+	mailService         *MailService
+	CollaboratorService *CollaboratorService
 
 	certificateRepository *repositories.CertificateRepository
 
 	storePath string
 }
 
-func NewCertificateService(userRepo *repositories.UserRepository, eventService *EventService, S3StoreService *S3StorageService, pdfService *PDFService, mailService *MailService, CertificateRepository *repositories.CertificateRepository) *CertificateService {
+func NewCertificateService(userRepo *repositories.UserRepository, eventService *EventService, S3StoreService *S3StorageService, pdfService *PDFService, mailService *MailService, CollaboratorService *CollaboratorService, CertificateRepository *repositories.CertificateRepository) *CertificateService {
 	return &CertificateService{
 		userRepo:              userRepo,
 		pdfService:            pdfService,
 		eventService:          eventService,
 		S3StoreService:        S3StoreService,
 		mailService:           mailService,
+		CollaboratorService:   CollaboratorService,
 		certificateRepository: CertificateRepository,
 		storePath:             "public/certificates",
 	}
@@ -184,6 +186,20 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		return 0, err
 	}
 
+	collab, err := c.CollaboratorService.repo.GetByID(event.PresenterID)
+	if err != nil {
+		return 0, err
+	}
+
+	signature := ""
+	if collab.SignatureID.Valid {
+		signatureImage, err := c.S3StoreService.Download(ctx, collab.SignatureID.Int64)
+		if err != nil {
+			return 0, err
+		}
+		signature = base64.StdEncoding.EncodeToString(signatureImage)
+	}
+
 	stringToHash := user.NameEn + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
 	hash := sha256.Sum256([]byte(stringToHash))
 	hashString := hex.EncodeToString(hash[:])
@@ -198,6 +214,8 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		user.NameAr,
 		event.Name,
 		base64.StdEncoding.EncodeToString(qr),
+		collab.NameAr,
+		signature,
 		toArabicDate(event.StartDate, "02 January, 2006"),
 		toArabicDate(event.EndDate, "02 January, 2006"),
 		toArabicDate(time.Now(), "Monday الموافق January 02, 2006"),
@@ -214,6 +232,8 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		user.NameEn,
 		event.Name,
 		base64.StdEncoding.EncodeToString(qr),
+		collab.NameEn,
+		signature,
 		event.StartDate.Format("January 01, 2006"),
 		event.EndDate.Format("January 01, 2006"),
 		time.Now().Format("Monday, Jan 02, 2006"),
@@ -345,13 +365,16 @@ func (c *CertificateService) GetCertificates(zw *zip.Writer, hash string) error 
 	return nil
 }
 
-func (c *CertificateService) getFile(name, event, qr, startDate, endDate, nowDate string, tasks []string, grade float64, filename string, f func(name string, data any) (string, error)) ([]byte, error) {
+func (c *CertificateService) getFile(name, event, qr, collabName, signature, startDate, endDate, nowDate string, tasks []string, grade float64, filename string, f func(name string, data any) (string, error)) ([]byte, error) {
 	data := models.DefaultCertificateData{
 		Name:        name,
 		EventName:   event,
 		Grade:       grade,
 		TaskColumns: make3x3Grid(tasks),
 		QRCode:      fmt.Sprintf("data:image/png;base64,%s", qr),
+
+		CollabName: collabName,
+		Signature:  fmt.Sprintf("data:image/png;base64,%s", signature),
 
 		StartDate: startDate,
 		EndDate:   endDate,

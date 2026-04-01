@@ -16,6 +16,9 @@ type DefaultCertificateData struct {
 	TaskColumns [][]string
 	QRCode      string
 
+	CollabName string
+	Signature  string
+
 	StartDate string
 	EndDate   string
 	NowDate   string
