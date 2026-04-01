@@ -143,12 +143,12 @@ func (s *AuthService) Register(req models.RegisterRequest) error {
 		Department: req.Department,
 		Verified:   false,
 		Status:     models.STATUS_ACTIVE,
-	})
+	}, nil)
 	if err != nil {
 		return err
 	}
 
-	err = s.UserRepo.DeleteTempUser(req.UserID)
+	err = s.UserRepo.DeleteTempUser(req.UserID, nil)
 	if err != nil {
 		slog.Error("error deleting temp user", "error", err, "user_id", req.UserID)
 	}

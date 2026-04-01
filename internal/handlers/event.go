@@ -88,3 +88,27 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 	}
 	response.NewTransactionResponse(200, "Event deleted successfully", int64(intId), ctx)
 }
+
+func (h *EventHandler) ImportUsers(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		response.BadRequest(ctx)
+		return
+	}
+
+	file, _, err := ctx.Request.FormFile("file")
+	if err != nil {
+		response.BadRequest(ctx)
+		return
+	}
+	defer file.Close()
+
+	err = h.EventService.ImportUsers(id, file)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Users imported successfully", id, ctx)
+}

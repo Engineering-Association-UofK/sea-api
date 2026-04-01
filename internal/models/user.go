@@ -39,6 +39,7 @@ type Status string
 
 const (
 	STATUS_ACTIVE    Status = "active"
+	STATUS_INACTIVE  Status = "inactive"
 	STATUS_SUSPENDED Status = "suspended"
 	STATUS_GRADUATED Status = "graduated"
 	STATUS_DROPPED   Status = "dropped"

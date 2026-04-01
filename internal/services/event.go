@@ -1,16 +1,25 @@
 package services
 
 import (
+	"crypto/sha512"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"sea-api/internal/config"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
+	"sea-api/internal/utils/sheets"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jmoiron/sqlx"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type EventService struct {
@@ -97,7 +106,7 @@ func (s *EventService) CreateEvent(event *models.EventDTO) (int64, error) {
 	if len(event.Components) != 0 {
 		components := s.componentFromDtoToModel(event.Components, id)
 
-		err = s.EventRepo.MassCreateComponent(components)
+		err = s.EventRepo.MassCreateComponent(components, nil)
 		if err != nil {
 			return 0, err
 		}
@@ -106,7 +115,7 @@ func (s *EventService) CreateEvent(event *models.EventDTO) (int64, error) {
 	if len(event.Participants) != 0 {
 		participants, _ := s.participantFromDtoToModel(event.Participants, id)
 
-		err = s.EventRepo.MassCreateParticipant(participants)
+		err = s.EventRepo.MassCreateParticipant(participants, nil)
 		if err != nil {
 			return 0, err
 		}
@@ -123,7 +132,7 @@ func (s *EventService) CreateEvent(event *models.EventDTO) (int64, error) {
 
 		scores := s.extractScoresFromDTOs(event.Participants, userPartMap)
 		if len(scores) > 0 {
-			if err := s.EventRepo.MassCreateScore(scores); err != nil {
+			if err := s.EventRepo.MassCreateScore(scores, nil); err != nil {
 				return 0, err
 			}
 		}
@@ -230,6 +239,93 @@ func (s *EventService) UpdateEvent(event *models.EventDTO) error {
 
 func (s *EventService) DeleteEvent(id int64) error {
 	return s.EventRepo.DeleteEvent(id)
+}
+
+// ======== SPECIAL ========
+
+func (s *EventService) ImportUsers(eventID int64, file io.Reader) error {
+	users, err := sheets.ParseExcelToStructs[models.EventUsersImport](file)
+	if err != nil {
+		return err
+	}
+
+	ids := utils.ExtractField(users, func(u models.EventUsersImport) int64 {
+		index, _ := strconv.ParseInt(u.Index, 10, 64)
+		return index
+	})
+	existing, err := s.UserRepo.GetAllByIndices(ids)
+	if err != nil {
+		return err
+	}
+
+	existingMap := utils.FromSlice(existing, func(u models.UserModel) int64 { return u.ID })
+
+	tx, err := s.UserRepo.DB.Beginx()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	var participants []models.EventParticipantModel
+	for _, u := range users {
+		index, err := strconv.ParseInt(u.Index, 10, 64)
+		if err != nil {
+			return err
+		}
+		if _, ok := existingMap[index]; !ok {
+			username := sha512.Sum512([]byte(u.NameEn + "|" + config.App.SecretSalt))
+			p, _ := generatePasscode(8)
+			pass, _ := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
+			err = s.UserRepo.Create(&models.UserModel{
+				ID:         index,
+				UniID:      0,
+				Username:   hex.EncodeToString(username[:]),
+				NameEn:     u.NameEn,
+				NameAr:     u.NameAr,
+				Email:      u.Email,
+				Phone:      "",
+				Department: "",
+				Verified:   false,
+				Password:   string(pass),
+				Status:     models.STATUS_INACTIVE,
+				Gender:     models.MALE,
+			}, tx)
+			if err != nil {
+				return err
+			}
+
+			err = s.UserRepo.DeleteTempUser(index, tx)
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				return err
+			}
+		}
+
+		grade := 0.0
+		if g, err := strconv.ParseFloat(u.Grade, 64); err == nil {
+			grade = g
+		}
+
+		participants = append(participants, models.EventParticipantModel{
+			EventID:   eventID,
+			UserID:    index,
+			Status:    models.COMPLETED,
+			Grade:     grade,
+			JoinedAt:  time.Now(),
+			Completed: true,
+		})
+	}
+
+	if len(participants) > 0 {
+		err = s.EventRepo.MassCreateParticipant(participants, tx)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ======== HELPERS ========
@@ -415,7 +511,7 @@ func syncEntities[ID comparable, Model any, DTO any](
 	newDTOs []DTO,
 	getID func(Model) ID,
 	dtoToModel func([]DTO, int64) []Model,
-	createFn func([]Model) error,
+	createFn func([]Model, *sqlx.Tx) error,
 	updateFn func([]Model) error,
 	deleteFn func([]ID) error,
 	eventId int64,
@@ -437,7 +533,7 @@ func syncEntities[ID comparable, Model any, DTO any](
 	}
 
 	if len(toCreate) > 0 {
-		if err := createFn(toCreate); err != nil {
+		if err := createFn(toCreate, nil); err != nil {
 			return fmt.Errorf("Error Creating: %s", err)
 		}
 	}

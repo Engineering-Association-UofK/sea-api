@@ -233,3 +233,19 @@ func (u *UserHandler) AssignPasscodes(c *gin.Context) {
 
 	c.JSON(200, gin.H{"message": "Passcodes assigned successfully"})
 }
+
+func (u *UserHandler) UpdateUsersImport(c *gin.Context) {
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		response.BadRequest(c)
+		return
+	}
+
+	err = u.service.UpdateUsersImport(file)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "User updated successfully", 0, c)
+}

@@ -5,12 +5,15 @@ import (
 	"sea-api/cmd/routes"
 	"sea-api/internal/config"
 	"sea-api/internal/handlers"
+	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
 	"sea-api/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
+
+var mods []models.ImportUserUpdate
 
 func main() {
 	err := config.Load()

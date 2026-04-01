@@ -43,12 +43,18 @@ func (r *EventRepository) CreateComponent(component *models.EventComponentModel)
 	return res.LastInsertId()
 }
 
-func (r *EventRepository) MassCreateComponent(components []models.EventComponentModel) error {
+func (r *EventRepository) MassCreateComponent(components []models.EventComponentModel, tx *sqlx.Tx) error {
 	query := `
 	INSERT INTO event_component
 	(event_id, name, description, max_score)
 	VALUES (:event_id, :name, :description, :max_score)
 	`
+	if tx != nil {
+		query = tx.Rebind(query)
+		_, err := tx.NamedExec(query, components)
+		return err
+	}
+
 	query, args, err := sqlx.Named(query, components)
 	if err != nil {
 		return err
@@ -72,12 +78,18 @@ func (r *EventRepository) CreateParticipant(participant *models.EventParticipant
 	return res.LastInsertId()
 }
 
-func (r *EventRepository) MassCreateParticipant(participants []models.EventParticipantModel) error {
+func (r *EventRepository) MassCreateParticipant(participants []models.EventParticipantModel, tx *sqlx.Tx) error {
 	query := `
 	INSERT INTO event_participant
 	(event_id, user_id, grade, status, joined_at, completed)
 	VALUES (:event_id, :user_id, :grade, :status, :joined_at, :completed)
 	`
+	if tx != nil {
+		query = tx.Rebind(query)
+		_, err := tx.NamedExec(query, participants)
+		return err
+	}
+
 	query, args, err := sqlx.Named(query, participants)
 	if err != nil {
 		return err
@@ -101,12 +113,18 @@ func (r *EventRepository) CreateScore(score *models.ComponentScoreModel) (int64,
 	return res.LastInsertId()
 }
 
-func (r *EventRepository) MassCreateScore(scores []models.ComponentScoreModel) error {
+func (r *EventRepository) MassCreateScore(scores []models.ComponentScoreModel, tx *sqlx.Tx) error {
 	query := `
 	INSERT INTO component_score
 	(participant_id, component_id, score)
 	VALUES (:participant_id, :component_id, :score)
 	`
+	if tx != nil {
+		query = tx.Rebind(query)
+		_, err := tx.NamedExec(query, scores)
+		return err
+	}
+
 	query, args, err := sqlx.Named(query, scores)
 	if err != nil {
 		return err
