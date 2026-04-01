@@ -5,11 +5,15 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"io"
+	"log/slog"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
+	"sea-api/internal/utils/sheets"
 	"slices"
+	"strconv"
 	"time"
 )
 
@@ -364,6 +368,35 @@ func (s *UserService) AssignPasscodes(progressChan chan string) error {
 		utils.ParseProgressStruct(total, i+1, u.ID.Int64, true, u.NameAr.String, progressChan)
 	}
 	progressChan <- "done"
+	return nil
+}
+
+func (s *UserService) UpdateUsersImport(file io.Reader) error {
+	mods, err := sheets.ParseExcelToStructs[models.ImportUserUpdate](file)
+	if err != nil {
+		return err
+	}
+
+	users, err := s.repo.GetAll(100, 1)
+	if err != nil {
+		return err
+	}
+
+	modsMap := utils.FromSlice(mods, func(u models.ImportUserUpdate) string { return u.Email })
+
+	for _, u := range users {
+		if user, ok := modsMap[u.Email]; ok {
+			index, err := strconv.ParseInt(user.Index, 10, 64)
+			if err != nil {
+				slog.Error("user "+user.Index+" failed to update", "error", err)
+			}
+			u.ID = index
+			u.Phone = user.Phone
+			u.Status = models.STATUS_INACTIVE
+			s.repo.UpdateWithID(&u, nil)
+		}
+	}
+
 	return nil
 }
 

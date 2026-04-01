@@ -8,11 +8,11 @@ import (
 )
 
 type UserRepository struct {
-	db *sqlx.DB
+	DB *sqlx.DB
 }
 
-func NewUserRepository(db *sqlx.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(DB *sqlx.DB) *UserRepository {
+	return &UserRepository{DB: DB}
 }
 
 // ======== GET ALL ========
@@ -20,7 +20,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 func (r *UserRepository) GetAll(limit int, page int) ([]models.UserModel, error) {
 	var users []models.UserModel
 	offset := (page - 1) * limit
-	err := r.db.Select(&users, `SELECT * FROM users LIMIT ? OFFSET ?`, limit, offset)
+	err := r.DB.Select(&users, `SELECT * FROM users LIMIT ? OFFSET ?`, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (r *UserRepository) GetAll(limit int, page int) ([]models.UserModel, error)
 func (r *UserRepository) GetAllTempUsers(limit int, page int) ([]models.TempUserModel, error) {
 	var users []models.TempUserModel
 	offset := (page - 1) * limit
-	err := r.db.Select(&users, `SELECT * FROM users_temp LIMIT ? OFFSET ?`, limit, offset)
+	err := r.DB.Select(&users, `SELECT * FROM users_temp LIMIT ? OFFSET ?`, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (r *UserRepository) GetAllTempUsers(limit int, page int) ([]models.TempUser
 
 func (r *UserRepository) GetTempUsersWithNullPasswords() ([]models.TempUserModel, error) {
 	var users []models.TempUserModel
-	err := r.db.Select(&users, `SELECT * FROM users_temp WHERE password IS NULL OR password = ''`)
+	err := r.DB.Select(&users, `SELECT * FROM users_temp WHERE password IS NULL OR password = ''`)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (r *UserRepository) GetPagesCount(limit int, isTempUser bool) (int, error) 
 		table = "users_temp"
 	}
 	var count int
-	err := r.db.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, table))
+	err := r.DB.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, table))
 	if err != nil {
 		return 0, err
 	}
@@ -72,9 +72,9 @@ func (r *UserRepository) GetAllByIndices(indices []int64) ([]models.UserModel, e
 		return nil, err
 	}
 
-	query = r.db.Rebind(query)
+	query = r.DB.Rebind(query)
 
-	err = r.db.Select(&users, query, args...)
+	err = r.DB.Select(&users, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +93,8 @@ func (r *UserRepository) GetAllRolesByUserIDs(ids []int64) ([]models.UserRole, e
 		return nil, err
 	}
 
-	query = r.db.Rebind(query)
-	err = r.db.Select(&roles, query, args...)
+	query = r.DB.Rebind(query)
+	err = r.DB.Select(&roles, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (r *UserRepository) GetAllRolesByUserIDs(ids []int64) ([]models.UserRole, e
 
 func (r *UserRepository) GetRolesByUserID(id int64) ([]models.UserRole, error) {
 	var roles []models.UserRole
-	err := r.db.Select(&roles, `SELECT role FROM user_roles WHERE user_id = ?`, id)
+	err := r.DB.Select(&roles, `SELECT role FROM user_roles WHERE user_id = ?`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (r *UserRepository) GetRolesByUserID(id int64) ([]models.UserRole, error) {
 
 func (r *UserRepository) GetAdmins() ([]models.UserModel, error) {
 	var users []models.UserModel
-	err := r.db.Select(&users, `
+	err := r.DB.Select(&users, `
 		SELECT u.* FROM users u
 		JOIN user_roles ur ON u.id = ur.user_id
 		WHERE ur.role = ?
@@ -128,7 +128,7 @@ func (r *UserRepository) GetAdmins() ([]models.UserModel, error) {
 
 func (r *UserRepository) GetByUserID(id int64) (*models.UserModel, error) {
 	var user models.UserModel
-	err := r.db.Get(&user, `SELECT * FROM users WHERE id = ?`, id)
+	err := r.DB.Get(&user, `SELECT * FROM users WHERE id = ?`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (r *UserRepository) GetByUserID(id int64) (*models.UserModel, error) {
 
 func (r *UserRepository) GetByUsername(username string) (*models.UserModel, error) {
 	var user models.UserModel
-	err := r.db.Get(&user, `SELECT * FROM users WHERE username = ?`, username)
+	err := r.DB.Get(&user, `SELECT * FROM users WHERE username = ?`, username)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (r *UserRepository) GetByUsername(username string) (*models.UserModel, erro
 
 func (r *UserRepository) GetByEmail(email string) (*models.UserModel, error) {
 	var user models.UserModel
-	err := r.db.Get(&user, `SELECT * FROM users WHERE email = ?`, email)
+	err := r.DB.Get(&user, `SELECT * FROM users WHERE email = ?`, email)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (r *UserRepository) GetByEmail(email string) (*models.UserModel, error) {
 
 func (r *UserRepository) GetByUniID(uniID int64) (*models.UserModel, error) {
 	var user models.UserModel
-	err := r.db.Get(&user, `SELECT * FROM users WHERE uni_id = ?`, uniID)
+	err := r.DB.Get(&user, `SELECT * FROM users WHERE uni_id = ?`, uniID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (r *UserRepository) GetByUniID(uniID int64) (*models.UserModel, error) {
 
 func (r *UserRepository) GetTempUser(id int64) (*models.TempUserModel, error) {
 	var user models.TempUserModel
-	err := r.db.Get(&user, `SELECT * FROM users_temp WHERE id = ?`, id)
+	err := r.DB.Get(&user, `SELECT * FROM users_temp WHERE id = ?`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (r *UserRepository) GetTempUser(id int64) (*models.TempUserModel, error) {
 
 // ======= CREATE ========
 
-func (r *UserRepository) Create(user *models.UserModel) error {
+func (r *UserRepository) Create(user *models.UserModel, tx *sqlx.Tx) error {
 	query := `
 	INSERT INTO users (
 		id, uni_id, username, profile_image_id, name_ar, name_en,
@@ -184,12 +184,16 @@ func (r *UserRepository) Create(user *models.UserModel) error {
 		:email, :phone, :password, :verified, :status,
 		:department, :gender
 	)`
-	_, err := r.db.NamedExec(query, user)
+	if tx != nil {
+		_, err := tx.NamedExec(query, user)
+		return err
+	}
+	_, err := r.DB.NamedExec(query, user)
 	return err
 }
 
 func (r *UserRepository) CreateRole(role *models.UserRole) error {
-	_, err := r.db.NamedExec(`INSERT INTO user_roles (id, role) VALUES (:id, :role)`, role)
+	_, err := r.DB.NamedExec(`INSERT INTO user_roles (id, role) VALUES (:id, :role)`, role)
 	return err
 }
 
@@ -207,12 +211,29 @@ func (r *UserRepository) Update(user *models.UserModel, tx *sqlx.Tx) error {
 		_, err := tx.NamedExec(query, user)
 		return err
 	}
-	_, err := r.db.NamedExec(query, user)
+	_, err := r.DB.NamedExec(query, user)
+	return err
+}
+
+// Update using email as key, updating the id as well
+func (r *UserRepository) UpdateWithID(user *models.UserModel, tx *sqlx.Tx) error {
+	query := `
+	UPDATE users
+	SET id = :id, uni_id = :uni_id, username = :username, profile_image_id = :profile_image_id, name_ar = :name_ar, name_en = :name_en,
+	phone = :phone, password = :password, verified = :verified,
+	status = :status, department = :department, gender = :gender
+	WHERE email = :email`
+
+	if tx != nil {
+		_, err := tx.NamedExec(query, user)
+		return err
+	}
+	_, err := r.DB.NamedExec(query, user)
 	return err
 }
 
 func (r *UserRepository) UpdateTempPasscode(id int64, passcode string) error {
-	_, err := r.db.Exec(`UPDATE users_temp SET password = ? WHERE id = ?`, passcode, id)
+	_, err := r.DB.Exec(`UPDATE users_temp SET password = ? WHERE id = ?`, passcode, id)
 	return err
 }
 
@@ -222,7 +243,7 @@ func (r *UserRepository) UpdateRole(role *models.UserRole, tx *sqlx.Tx) error {
 		_, err := tx.NamedExec(query, role)
 		return err
 	}
-	_, err := r.db.NamedExec(query, role)
+	_, err := r.DB.NamedExec(query, role)
 	return err
 }
 
@@ -232,7 +253,7 @@ func (r *UserRepository) RemoveRole(id int64, role models.Role, tx *sqlx.Tx) err
 		_, err := tx.Exec(query, id, role)
 		return err
 	}
-	_, err := r.db.Exec(query, id, role)
+	_, err := r.DB.Exec(query, id, role)
 	return err
 }
 
@@ -252,7 +273,7 @@ func (r *UserRepository) ReplaceRoles(id int64, roles []models.Role, tx *sqlx.Tx
 		return nil
 	}
 
-	newTx, err := r.db.Beginx()
+	newTx, err := r.DB.Beginx()
 	if err != nil {
 		return err
 	}
@@ -270,7 +291,7 @@ func (r *UserRepository) ReplaceRoles(id int64, roles []models.Role, tx *sqlx.Tx
 }
 
 func (r *UserRepository) AddAdmin(id int64) error {
-	tx, err := r.db.Beginx()
+	tx, err := r.DB.Beginx()
 	if err != nil {
 		return err
 	}
@@ -285,7 +306,7 @@ func (r *UserRepository) AddAdmin(id int64) error {
 }
 
 func (r *UserRepository) RemoveAdmin(id int64) error {
-	tx, err := r.db.Beginx()
+	tx, err := r.DB.Beginx()
 	if err != nil {
 		return err
 	}
@@ -301,30 +322,50 @@ func (r *UserRepository) RemoveAdmin(id int64) error {
 
 // ======== DELETE ========
 
-func (r *UserRepository) Delete(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM users WHERE id = ?`, id)
+func (r *UserRepository) Delete(id int64, tx *sqlx.Tx) error {
+	query := `DELETE FROM users WHERE id = ?`
+	if tx != nil {
+		_, err := tx.Exec(query, id)
+		return err
+	}
+	_, err := r.DB.Exec(query, id)
 	return err
 }
 
-func (r *UserRepository) DeleteTempUser(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM users_temp WHERE id = ?`, id)
+func (r *UserRepository) DeleteTempUser(id int64, tx *sqlx.Tx) error {
+	query := `DELETE FROM users_temp WHERE id = ?`
+	if tx != nil {
+		_, err := tx.Exec(query, id)
+		return err
+	}
+	_, err := r.DB.Exec(query, id)
 	return err
 }
 
-func (r *UserRepository) DeleteRole(id int64, role models.Role) error {
-	_, err := r.db.Exec(`DELETE FROM user_roles WHERE user_id = ? AND role = ?`, id, role)
+func (r *UserRepository) DeleteRole(id int64, role models.Role, tx *sqlx.Tx) error {
+	query := `DELETE FROM user_roles WHERE id = ? AND role = ?`
+	if tx != nil {
+		_, err := tx.Exec(query, id, role)
+		return err
+	}
+	_, err := r.DB.Exec(query, id, role)
 	return err
 }
 
-func (r *UserRepository) DeleteRolesByUserID(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM user_roles WHERE user_id = ?`, id)
+func (r *UserRepository) DeleteRolesByUserID(id int64, tx *sqlx.Tx) error {
+	query := `DELETE FROM user_roles WHERE user_id = ?`
+	if tx != nil {
+		_, err := tx.Exec(query, id)
+		return err
+	}
+	_, err := r.DB.Exec(query, id)
 	return err
 }
 
 // ======== SPECIAL ========
 
 func (r *UserRepository) Verify(id int64) error {
-	_, err := r.db.Exec(`UPDATE users SET verified = ? WHERE id = ?`, true, id)
+	_, err := r.DB.Exec(`UPDATE users SET verified = ? WHERE id = ?`, true, id)
 	return err
 }
 
@@ -334,20 +375,20 @@ func (r *UserRepository) Suspend(id int64, tx *sqlx.Tx) error {
 		_, err := tx.Exec(query, models.STATUS_SUSPENDED, id)
 		return err
 	}
-	_, err := r.db.Exec(query, models.STATUS_SUSPENDED, id)
+	_, err := r.DB.Exec(query, models.STATUS_SUSPENDED, id)
 	return err
 }
 
 func (r *UserRepository) Activate(id int64) error {
-	_, err := r.db.Exec(`UPDATE users SET status = ? WHERE id = ?`, models.STATUS_ACTIVE, id)
+	_, err := r.DB.Exec(`UPDATE users SET status = ? WHERE id = ?`, models.STATUS_ACTIVE, id)
 	return err
 }
 
 func (r *UserRepository) RemoveSuspensionState(id int64) error {
-	_, err := r.db.Exec(`UPDATE users SET status = ? WHERE id = ? AND status = ?`, models.STATUS_ACTIVE, id, models.STATUS_SUSPENDED)
+	_, err := r.DB.Exec(`UPDATE users SET status = ? WHERE id = ? AND status = ?`, models.STATUS_ACTIVE, id, models.STATUS_SUSPENDED)
 	return err
 }
 
 func (r *UserRepository) BeginTransaction() (*sqlx.Tx, error) {
-	return r.db.Beginx()
+	return r.DB.Beginx()
 }

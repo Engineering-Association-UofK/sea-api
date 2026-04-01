@@ -92,6 +92,7 @@ func SetupRouter() *gin.Engine {
 			user.PUT("", UserHandler.Update)
 			user.POST("/suspend", UserHandler.Suspend)
 			user.POST("/assign-passcodes", UserHandler.AssignPasscodes)
+			user.POST("/import-users-with-emails", UserHandler.UpdateUsersImport)
 		}
 
 		{ // ==== ADMIN
@@ -176,6 +177,7 @@ func SetupRouter() *gin.Engine {
 			event.PUT("", EventHandler.UpdateEvent)
 			event.DELETE("/:id", EventHandler.DeleteEvent)
 			event.GET("/send-all-emails", CertificateHandler.SendCertificatesEmailsForEvent)
+			event.POST("/import-users/:id", EventHandler.ImportUsers)
 		}
 
 		{ // ==== CERTIFICATES

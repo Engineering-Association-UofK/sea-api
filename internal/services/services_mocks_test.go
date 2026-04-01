@@ -65,12 +65,12 @@ func (m *MockUserRepository) GetTempUser(id int64) (*models.TempUserModel, error
 	return args.Get(0).(*models.TempUserModel), args.Error(1)
 }
 
-func (m *MockUserRepository) Create(user *models.UserModel) error {
+func (m *MockUserRepository) Create(user *models.UserModel, tx *sqlx.Tx) error {
 	args := m.Called(user)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) DeleteTempUser(id int64) error {
+func (m *MockUserRepository) DeleteTempUser(id int64, tx *sqlx.Tx) error {
 	args := m.Called(id)
 	return args.Error(0)
 }

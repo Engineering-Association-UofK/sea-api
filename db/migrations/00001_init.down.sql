@@ -12,7 +12,6 @@ DROP TABLE IF EXISTS suspension_history;
 DROP TABLE IF EXISTS suspensions;
 DROP TABLE IF EXISTS certificate_file;
 DROP TABLE IF EXISTS certificate;
-DROP TABLE IF EXISTS store;
 DROP TABLE IF EXISTS component_score;
 DROP TABLE IF EXISTS event_participant;
 DROP TABLE IF EXISTS event_component;

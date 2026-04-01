@@ -22,8 +22,8 @@ type IUserRepository interface {
 	Update(user *models.UserModel, tx *sqlx.Tx) error
 	GetRolesByUserID(id int64) ([]models.UserRole, error)
 	GetTempUser(id int64) (*models.TempUserModel, error)
-	Create(user *models.UserModel) error
-	DeleteTempUser(id int64) error
+	Create(user *models.UserModel, tx *sqlx.Tx) error
+	DeleteTempUser(id int64, tx *sqlx.Tx) error
 	Verify(id int64) error
 }
 

@@ -53,7 +53,7 @@ CREATE TABLE user_roles (
 
     UNIQUE (user_id, role),
 
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE verification_code (
@@ -62,7 +62,7 @@ CREATE TABLE verification_code (
     code TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
 );
 
 -- -------- EVENT SCHEMA
@@ -100,7 +100,7 @@ CREATE TABLE event_participant (
     UNIQUE (event_id, user_id),
 
     FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE component_score (
@@ -113,13 +113,6 @@ CREATE TABLE component_score (
 
     FOREIGN KEY (participant_id) REFERENCES event_participant(id) ON DELETE CASCADE,
     FOREIGN KEY (component_id) REFERENCES event_component(id) ON DELETE CASCADE
-);
-
-CREATE TABLE store (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    fid VARCHAR(255) UNIQUE NOT NULL,
-    mime VARCHAR(255) NOT NULL,
-    size INT
 );
 
 -- -------- CERTIFICATE SCHEMA
@@ -135,7 +128,7 @@ CREATE TABLE certificate (
 
     UNIQUE (user_id, event_id),
 
-    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE,
     FOREIGN KEY (event_id) REFERENCES event(id)
 );
 
@@ -148,7 +141,7 @@ CREATE TABLE certificate_file (
     UNIQUE (certificate_id, lang),
 
     FOREIGN KEY (certificate_id) REFERENCES certificate(id),
-    FOREIGN KEY (store_id) REFERENCES store(id) ON DELETE CASCADE
+    FOREIGN KEY (store_id) REFERENCES files(id) ON DELETE CASCADE
 );
 
 -- -------- SUSPENSION SCHEMA
@@ -161,8 +154,8 @@ CREATE TABLE suspensions (
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ended_at TIMESTAMP NOT NULL,
 
-    FOREIGN KEY (admin_id) REFERENCES users(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (admin_id) REFERENCES users(id) ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE suspension_history (
@@ -173,8 +166,8 @@ CREATE TABLE suspension_history (
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ended_at TIMESTAMP NOT NULL,
 
-    FOREIGN KEY (admin_id) REFERENCES users(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (admin_id) REFERENCES users(id) ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
 );
 
 -- -------- GALLERY SCHEMA
@@ -191,7 +184,7 @@ CREATE TABLE gallery_assets (
     INDEX idx_uploaded_by (uploaded_by),
     INDEX idx_file_id (file_id),
     
-    FOREIGN KEY (uploaded_by) REFERENCES users(id),
+    FOREIGN KEY (uploaded_by) REFERENCES users(id) ON UPDATE CASCADE,
     FOREIGN KEY (file_id) REFERENCES files(id)
 );
 
@@ -225,7 +218,7 @@ CREATE TABLE blog_posts (
     INDEX idx_published_date (is_published, created_at),
     INDEX idx_cover_image (cover_image_id),
 
-    FOREIGN KEY (author_id) REFERENCES users(id),
+    FOREIGN KEY (author_id) REFERENCES users(id) ON UPDATE CASCADE,
     FOREIGN KEY (cover_image_id) REFERENCES gallery_assets(id)
 );
 
@@ -239,7 +232,7 @@ CREATE TABLE team_members (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_order (is_active, display_order),
 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE news_gallery (
@@ -266,7 +259,7 @@ CREATE TABLE forms (
     INDEX idx_is_active (is_active),
 
     FOREIGN KEY (header_image_id) REFERENCES gallery_assets(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
+    FOREIGN KEY (created_by) REFERENCES users(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE form_pages (
@@ -299,7 +292,7 @@ CREATE TABLE form_responses (
 
     INDEX idx_user_form (user_id, form_id),
 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (form_id) REFERENCES forms(id) ON DELETE CASCADE
 );
 
