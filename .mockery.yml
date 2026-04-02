@@ -1,0 +1,12 @@
+
+all: true
+recursive: true
+dir: 'internal/mocks' 
+filename: 'mock_{{.InterfaceName}}.go' 
+structname: 'Mock{{.InterfaceName}}'
+generate: true
+
+packages:
+  sea-api: 
+    config:
+      all: true
