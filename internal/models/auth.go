@@ -27,13 +27,13 @@ type ManagedClaims struct {
 }
 
 type RegisterRequest struct {
-	UserID   int64  `json:"user_id" binding:"required"`
-	UniID    int64  `json:"uni_id" binding:"required"`
-	Username string `json:"username" binding:"required"`
+	UserID   int64         `json:"user_id" binding:"required"`
+	UniID    int64         `json:"uni_id" binding:"required"`
+	Username TrimmedString `json:"username" binding:"required,min=3,max=20"`
 
 	NameAr string `json:"name_ar" binding:"required"`
 	NameEn string `json:"name_en" binding:"required"`
-	Email  string `json:"email" binding:"required"`
+	Email  string `json:"email" binding:"required,email"`
 	Phone  string `json:"phone"`
 
 	Passcode        string     `json:"passcode" binding:"required"`

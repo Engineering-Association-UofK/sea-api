@@ -32,11 +32,11 @@ type NewsGalleryModel struct {
 // DTOs
 
 type BlogPostRequest struct {
-	CoverImageID int64  `json:"cover_image_id" validate:"required"`
-	Title        string `json:"title" validate:"required"`
+	CoverImageID int64  `json:"cover_image_id" binding:"required"`
+	Title        string `json:"title" binding:"required,min=3,max=255"`
 	Slug         string `json:"slug"`
-	Content      string `json:"content" validate:"required"`
-	IsPublished  bool   `json:"is_published" validate:"required"`
+	Content      string `json:"content" binding:"required"`
+	IsPublished  bool   `json:"is_published" binding:"required"`
 }
 
 type BlogPostUpdateRequest struct {
@@ -59,15 +59,15 @@ type BlogPostResponse struct {
 }
 
 type TeamMemberRequest struct {
-	UserID       int64  `json:"user_id" validate:"required"`
-	Role         string `json:"role" validate:"required"`
-	Bio          string `json:"bio" validate:"required"`
-	DisplayOrder int    `json:"display_order" validate:"required"`
-	IsActive     bool   `json:"is_active" validate:"required"`
+	UserID       int64  `json:"user_id" binding:"required"`
+	Role         string `json:"role" binding:"required"`
+	Bio          string `json:"bio" binding:"required"`
+	DisplayOrder int    `json:"display_order" binding:"required"`
+	IsActive     bool   `json:"is_active" binding:"required"`
 }
 
 type TeamMemberUpdateRequest struct {
-	ID int64 `json:"id" validate:"required"`
+	ID int64 `json:"id" binding:"required"`
 	TeamMemberRequest
 }
 

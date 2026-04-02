@@ -2,7 +2,20 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
+	"strings"
 )
+
+type TrimmedString string
+
+func (ts *TrimmedString) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*ts = TrimmedString(strings.TrimSpace(s))
+	return nil
+}
 
 var ListLimit = map[int]bool{
 	10:  true,
@@ -189,8 +202,8 @@ type TempUserResponse struct {
 }
 
 type UserListRequest struct {
-	Limit int `json:"limit" validate:"required"`
-	Page  int `json:"page" validate:"required"`
+	Limit int `json:"limit" binding:"required"`
+	Page  int `json:"page" binding:"required"`
 }
 
 type UserListResponse struct {
@@ -219,13 +232,13 @@ type UserProfileResponse struct {
 }
 
 type UpdateProfileRequest struct {
-	ID         int64      `json:"id" validate:"required"`
-	UniID      int64      `json:"uni_id" validate:"required"`
-	NameAr     string     `json:"name_ar" validate:"required"`
-	NameEn     string     `json:"name_en" validate:"required"`
-	Phone      string     `json:"phone" validate:"required"`
-	Department Department `json:"department" validate:"required"`
-	Gender     Gender     `json:"gender" validate:"required"`
+	ID         int64         `json:"id" binding:"required"`
+	UniID      int64         `json:"uni_id" binding:"required"`
+	NameAr     TrimmedString `json:"name_ar" binding:"required"`
+	NameEn     TrimmedString `json:"name_en" binding:"required"`
+	Phone      TrimmedString `json:"phone" binding:"required"`
+	Department Department    `json:"department" binding:"required"`
+	Gender     Gender        `json:"gender" binding:"required"`
 }
 
 type UserDetails struct {
@@ -233,17 +246,17 @@ type UserDetails struct {
 }
 
 type UpdateUsernameRequest struct {
-	Username string `json:"username" validate:"required"`
+	Username TrimmedString `json:"username" binding:"required"`
 }
 
 type UpdateEmailRequest struct {
-	Email string `json:"email" validate:"required"`
+	Email string `json:"email" binding:"required,email"`
 }
 
 type UpdatePasswordRequest struct {
-	OldPassword     string `json:"old_password" validate:"required"`
-	NewPassword     string `json:"new_password" validate:"required"`
-	ConfirmPassword string `json:"confirm_password" validate:"required"`
+	OldPassword     string `json:"old_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required"`
+	ConfirmPassword string `json:"confirm_password" binding:"required"`
 }
 
 type CheckUsername struct {

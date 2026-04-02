@@ -12,9 +12,9 @@ type SuspensionModel struct {
 }
 
 type SuspensionRequest struct {
-	UserID   int64  `json:"user_id"`
-	Reason   string `json:"reason"`
-	Duration int64  `json:"duration"`
+	UserID   int64  `json:"user_id" binding:"required"`
+	Reason   string `json:"reason" binding:"required"`
+	Duration int64  `json:"duration" binding:"required"`
 }
 
 type SuspensionResponse struct {

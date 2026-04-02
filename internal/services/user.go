@@ -288,9 +288,9 @@ func (s *UserService) Update(req *models.UpdateProfileRequest) error {
 		return errs.New(errs.Forbidden, "Cannot update a Super Admin profile", nil)
 	}
 	user.UniID = req.UniID
-	user.NameAr = req.NameAr
-	user.NameEn = req.NameEn
-	user.Phone = req.Phone
+	user.NameAr = string(req.NameAr)
+	user.NameEn = string(req.NameEn)
+	user.Phone = string(req.Phone)
 	user.Department = req.Department
 	user.Gender = req.Gender
 	if err := s.repo.Update(user, nil); err != nil {

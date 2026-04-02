@@ -117,7 +117,7 @@ func (s *AuthService) Register(req models.RegisterRequest) error {
 	if err == nil {
 		return errs.New(errs.Conflict, "Email already in use", nil)
 	}
-	_, err = s.UserRepo.GetByUsername(req.Username)
+	_, err = s.UserRepo.GetByUsername(string(req.Username))
 	if err == nil {
 		return errs.New(errs.Conflict, "Username already in use", nil)
 	}
@@ -133,7 +133,7 @@ func (s *AuthService) Register(req models.RegisterRequest) error {
 	err = s.UserRepo.Create(&models.UserModel{
 		ID:         req.UserID,
 		UniID:      req.UniID,
-		Username:   req.Username,
+		Username:   string(req.Username),
 		NameAr:     req.NameAr,
 		NameEn:     req.NameEn,
 		Email:      req.Email,

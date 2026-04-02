@@ -92,7 +92,7 @@ func (s *CollaboratorService) Create(ctx context.Context, req *models.Collaborat
 	}
 
 	hash := fnv.New64()
-	hash.Write([]byte(req.NameAr + req.NameEn + req.Email + config.App.SecretSalt))
+	hash.Write([]byte(string(req.NameAr) + string(req.NameEn) + string(req.Email) + config.App.SecretSalt))
 	fileKey := fmt.Sprintf("%s/%d-%s.%s", s.signaturePath, hash.Sum64(), strings.Split(req.NameEn, " ")[0], contentType[6:])
 
 	id, err := s.s3StorageService.Upload(ctx, fileKey, fileBytes, contentType)
@@ -103,7 +103,7 @@ func (s *CollaboratorService) Create(ctx context.Context, req *models.Collaborat
 	return s.repo.Create(&models.CollaboratorModel{
 		NameAr: req.NameAr,
 		NameEn: req.NameEn,
-		Email:  req.Email,
+		Email:  string(req.Email),
 		SignatureID: sql.NullInt64{
 			Int64: id,
 			Valid: true,
@@ -129,7 +129,7 @@ func (s *CollaboratorService) Update(ctx context.Context, req *models.Collaborat
 		}
 
 		hash := fnv.New64()
-		hash.Write([]byte(req.NameAr + req.NameEn + req.Email + config.App.SecretSalt))
+		hash.Write([]byte(string(req.NameAr) + string(req.NameEn) + string(req.Email) + config.App.SecretSalt))
 		fileKey := fmt.Sprintf("%s/%d-%s.%s", s.signaturePath, hash.Sum64(), strings.Split(req.NameEn, " ")[0], contentType[6:])
 
 		newFileID, err := s.s3StorageService.Upload(ctx, fileKey, fileBytes, contentType)
@@ -145,7 +145,7 @@ func (s *CollaboratorService) Update(ctx context.Context, req *models.Collaborat
 
 	collaborator.NameAr = req.NameAr
 	collaborator.NameEn = req.NameEn
-	collaborator.Email = req.Email
+	collaborator.Email = string(req.Email)
 
 	return s.repo.Update(collaborator)
 }

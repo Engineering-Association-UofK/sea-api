@@ -62,13 +62,13 @@ type ComponentScoreModel struct {
 
 type EventDTO struct {
 	ID              int64            `json:"id"`
-	Name            string           `json:"name"`
-	Description     string           `json:"description"`
-	PresenterID     int64            `json:"presenter_id"`
-	EventType       EventType        `json:"event_type"`
-	MaxParticipants int              `json:"max_participants"`
-	StartDate       time.Time        `json:"start_date"`
-	EndDate         time.Time        `json:"end_date"`
+	Name            string           `json:"name" binding:"required"`
+	Description     string           `json:"description" binding:"required"`
+	PresenterID     int64            `json:"presenter_id" binding:"required"`
+	EventType       EventType        `json:"event_type" binding:"required"`
+	MaxParticipants int              `json:"max_participants" binding:"required"`
+	StartDate       time.Time        `json:"start_date" binding:"required"`
+	EndDate         time.Time        `json:"end_date" binding:"required"`
 	Outcomes        []string         `json:"outcomes"`
 	Components      []ComponentDTO   `json:"components"`
 	Participants    []ParticipantDTO `json:"participants"`
@@ -76,14 +76,14 @@ type EventDTO struct {
 
 type ComponentDTO struct {
 	ID          int64   `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
+	Name        string  `json:"name" binding:"required"`
+	Description string  `json:"description" binding:"required"`
 	MaxScore    float64 `json:"max_score"`
 }
 
 type ParticipantDTO struct {
 	ID        int64             `json:"id"`
-	UserID    int64             `json:"user_id"`
+	UserID    int64             `json:"user_id" binding:"required"`
 	NameAr    string            `json:"name_ar"`
 	NameEn    string            `json:"name_en"`
 	Grade     []ComScoreDTO     `json:"grade"`
@@ -110,14 +110,14 @@ type EventListResponse struct {
 }
 
 type MassApplyEventRequest struct {
-	UserIDs []int64 `json:"user_ids"`
+	UserIDs []int64 `json:"user_ids" binding:"required"`
 }
 
 type ComponentScoreRequest struct {
-	ComponentID int64              `json:"component_id"`
-	Score       map[string]float64 `json:"score"`
+	ComponentID int64              `json:"component_id" binding:"required"`
+	Score       map[string]float64 `json:"score" binding:"required"`
 }
 
 type MakeCertificatesForEventRequest struct {
-	EventID int64 `json:"event_id"`
+	EventID int64 `json:"event_id" binding:"required"`
 }

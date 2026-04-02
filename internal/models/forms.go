@@ -177,55 +177,55 @@ type FormAnswerDTO struct {
 // Request
 
 type CreateFormRequest struct {
-	Title                string `json:"title"`
-	Description          string `json:"description"`
-	AllowMultipleEntries bool   `json:"allow_multiple"`
-	IsActive             bool   `json:"is_active"`
+	Title                string `json:"title" binding:"required"`
+	Description          string `json:"description" binding:"required"`
+	AllowMultipleEntries bool   `json:"allow_multiple" binding:"required"`
+	IsActive             bool   `json:"is_active" binding:"required"`
 	HeaderImageID        int64  `json:"header_image_id"`
 }
 
 type UpdateFormRequest struct {
-	ID int64 `json:"id"`
+	ID int64 `json:"id" binding:"required"`
 	CreateFormRequest
 }
 
 type CreatePageRequest struct {
-	FormID     int64 `json:"form_id"`
-	PageNumber int   `json:"page_num"`
+	FormID     int64 `json:"form_id" binding:"required"`
+	PageNumber int   `json:"page_num" binding:"required"`
 }
 
 type UpdatePageRequest struct {
-	ID int64 `json:"id"`
+	ID int64 `json:"id" binding:"required"`
 	CreatePageRequest
 }
 
 type CreateQuestionRequest struct {
-	FormPageID   int64           `json:"form_page_id"`
-	QuestionText string          `json:"question_text"`
-	Type         QuestionType    `json:"type"`
+	FormPageID   int64           `json:"form_page_id" binding:"required"`
+	QuestionText string          `json:"question_text" binding:"required"`
+	Type         QuestionType    `json:"type" binding:"required"`
 	Options      json.RawMessage `json:"options"`
-	IsRequired   bool            `json:"is_required"`
-	DisplayOrder int             `json:"display_order"`
+	IsRequired   bool            `json:"is_required" binding:"required"`
+	DisplayOrder int             `json:"display_order" binding:"required"`
 }
 
 type UpdateQuestionRequest struct {
-	ID int64 `json:"id"`
+	ID int64 `json:"id" binding:"required"`
 	CreateQuestionRequest
 }
 
 type AnswerRequest struct {
-	QuestionID  int64  `json:"question_id"`
-	AnswerValue string `json:"answer_value"`
+	QuestionID  int64  `json:"question_id" binding:"required"`
+	AnswerValue string `json:"answer_value" binding:"required"`
 }
 
 type SubmitFormRequest struct {
-	FormID  int64           `json:"form_id"`
-	Answers []AnswerRequest `json:"answers"`
+	FormID  int64           `json:"form_id" binding:"required"`
+	Answers []AnswerRequest `json:"answers" binding:"required"`
 }
 
 type UpdateResponseStatusRequest struct {
-	ID     int64          `json:"id"`
-	Status ResponseStatus `json:"status"`
+	ID     int64          `json:"id" binding:"required"`
+	Status ResponseStatus `json:"status" binding:"required"`
 }
 
 // Response

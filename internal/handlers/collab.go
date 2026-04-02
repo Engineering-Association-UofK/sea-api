@@ -55,7 +55,7 @@ func (h *CollaboratorHandler) Create(ctx *gin.Context) {
 	var req models.CollaboratorCreateRequest
 	req.NameAr = ctx.PostForm("name_ar")
 	req.NameEn = ctx.PostForm("name_en")
-	req.Email = ctx.PostForm("email")
+	req.Email = models.TrimmedString(ctx.PostForm("email"))
 
 	file, _, err := ctx.Request.FormFile("file")
 	if err != nil || req.NameAr == "" || req.NameEn == "" {
@@ -92,7 +92,7 @@ func (h *CollaboratorHandler) Update(ctx *gin.Context) {
 	req.ID = id
 	req.NameAr = ctx.PostForm("name_ar")
 	req.NameEn = ctx.PostForm("name_en")
-	req.Email = ctx.PostForm("email")
+	req.Email = models.TrimmedString(ctx.PostForm("email"))
 	if id == 0 || req.NameAr == "" || req.NameEn == "" {
 		response.BadRequest(ctx)
 		return

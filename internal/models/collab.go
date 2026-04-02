@@ -11,9 +11,9 @@ type CollaboratorModel struct {
 }
 
 type CollaboratorCreateRequest struct {
-	NameAr string `json:"name_ar"`
-	NameEn string `json:"name_en"`
-	Email  string `json:"email"`
+	NameAr string        `json:"name_ar"`
+	NameEn string        `json:"name_en"`
+	Email  TrimmedString `json:"email" binding:"required,email"`
 }
 
 type CollaboratorUpdateRequest struct {

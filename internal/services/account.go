@@ -66,10 +66,10 @@ func (s *AccountService) UpdateProfile(claims *models.ManagedClaims, req models.
 	}
 	errsMap := utils.Mpp[string, string]{}
 
-	if len(strings.Split(req.NameAr, " ")) < 2 {
+	if len(strings.Split(string(req.NameAr), " ")) < 2 {
 		errsMap.Add("name_ar", "Name in Arabic is not valid")
 	}
-	if len(strings.Split(req.NameEn, " ")) < 2 {
+	if len(strings.Split(string(req.NameEn), " ")) < 2 {
 		errsMap.Add("name_en", "Name in English is not valid")
 	}
 	if _, err := s.UserRepo.GetByUniID(req.UniID); err != nil {
@@ -80,11 +80,11 @@ func (s *AccountService) UpdateProfile(claims *models.ManagedClaims, req models.
 	}
 
 	user.UniID = req.UniID
-	user.NameAr = req.NameAr
-	user.NameEn = req.NameEn
+	user.NameAr = string(req.NameAr)
+	user.NameEn = string(req.NameEn)
 	user.Gender = req.Gender
 	user.Department = req.Department
-	user.Phone = req.Phone
+	user.Phone = string(req.Phone)
 	return s.UserRepo.Update(user, nil)
 }
 
@@ -164,7 +164,7 @@ func (s *AccountService) UpdateEmail(claims *models.ManagedClaims, req models.Up
 }
 
 func (s *AccountService) UpdateUsername(claims *models.ManagedClaims, req models.UpdateUsernameRequest) error {
-	if err := ValidateUsername(req.Username); err != nil {
+	if err := ValidateUsername(string(req.Username)); err != nil {
 		return err
 	}
 	if !s.IsUsernameAvailable(req) {
@@ -175,12 +175,12 @@ func (s *AccountService) UpdateUsername(claims *models.ManagedClaims, req models
 	if err != nil {
 		return err
 	}
-	user.Username = req.Username
+	user.Username = string(req.Username)
 	return s.UserRepo.Update(user, nil)
 }
 
 func (s *AccountService) IsUsernameAvailable(req models.UpdateUsernameRequest) bool {
-	_, err := s.UserRepo.GetByUsername(req.Username)
+	_, err := s.UserRepo.GetByUsername(string(req.Username))
 	return err != nil
 }
 
