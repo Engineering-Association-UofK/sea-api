@@ -55,7 +55,7 @@ func (r *VerificationRepo) GetByUserID(user_id int64) (*models.VerificationCodeM
 
 func (r *VerificationRepo) Delete(id int64) error {
 	query := `
-		DELETE FROM verification_code WHERE user_id = ?
+		DELETE FROM verification_code WHERE id = ?
 	`
 	_, err := r.db.Exec(query, id)
 	return err

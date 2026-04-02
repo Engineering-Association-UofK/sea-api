@@ -7,8 +7,8 @@ import (
 )
 
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username TrimmedString `json:"username" binding:"required"`
+	Password string        `json:"password" binding:"required"`
 }
 
 type LoginResponse struct {
@@ -30,17 +30,18 @@ type RegisterRequest struct {
 	UserID   int64         `json:"user_id" binding:"required"`
 	UniID    int64         `json:"uni_id" binding:"required"`
 	Username TrimmedString `json:"username" binding:"required,min=3,max=20"`
+	Email    TrimmedString `json:"email" binding:"required,email"`
 
 	NameAr string `json:"name_ar" binding:"required"`
 	NameEn string `json:"name_en" binding:"required"`
-	Email  string `json:"email" binding:"required,email"`
 	Phone  string `json:"phone"`
 
-	Passcode        string     `json:"passcode" binding:"required"`
-	Password        string     `json:"password" binding:"required"`
-	ConfirmPassword string     `json:"confirm_password" binding:"required"`
-	Department      Department `json:"department" binding:"required"`
-	Gender          Gender     `json:"gender" binding:"required"`
+	Passcode        string `json:"passcode" binding:"required"`
+	Password        string `json:"password" binding:"required"`
+	ConfirmPassword string `json:"confirm_password" binding:"required"`
+
+	Department Department `json:"department" binding:"required"`
+	Gender     Gender     `json:"gender" binding:"required"`
 }
 
 type VerificationCodeModel struct {

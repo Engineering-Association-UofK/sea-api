@@ -458,12 +458,12 @@ func (r *EventRepository) MassDeleteComponent(ids []int64) error {
 }
 
 func (r *EventRepository) DeleteParticipant(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM event_participant WHERE user_id = ?`, id)
+	_, err := r.db.Exec(`DELETE FROM event_participant WHERE id = ?`, id)
 	return err
 }
 
 func (r *EventRepository) MassDeleteParticipant(ids []int64) error {
-	query, args, err := sqlx.In(`DELETE FROM event_participant WHERE user_id IN (?)`, ids)
+	query, args, err := sqlx.In(`DELETE FROM event_participant WHERE id IN (?)`, ids)
 	if err != nil {
 		return err
 	}

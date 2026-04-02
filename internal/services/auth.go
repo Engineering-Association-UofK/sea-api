@@ -44,12 +44,12 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 	var userID int64 = 0
 	var err error = nil
 
-	if userID, err = strconv.ParseInt(req.Username, 10, 64); err == nil {
+	if userID, err = strconv.ParseInt(string(req.Username), 10, 64); err == nil {
 		user, err = s.UserRepo.GetByUserID(userID)
-	} else if strings.Contains(req.Username, "@") {
-		user, err = s.UserRepo.GetByEmail(req.Username)
+	} else if strings.Contains(string(req.Username), "@") {
+		user, err = s.UserRepo.GetByEmail(string(req.Username))
 	} else {
-		user, err = s.UserRepo.GetByUsername(req.Username)
+		user, err = s.UserRepo.GetByUsername(string(req.Username))
 	}
 	if err != nil {
 		return nil, err
@@ -102,6 +102,7 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 }
 
 func (s *AuthService) Register(req models.RegisterRequest) error {
+
 	tempUser, err := s.UserRepo.GetTempUser(req.UserID)
 	if err != nil {
 		return errs.New(errs.NotFound, "Student UserID was not found in out database, please contact administration", nil)
@@ -113,7 +114,7 @@ func (s *AuthService) Register(req models.RegisterRequest) error {
 	if tempUser.Password.Valid && tempUser.Password.String != req.Passcode {
 		return errs.New(errs.BadRequest, "Passcode is not valid", nil)
 	}
-	_, err = s.UserRepo.GetByEmail(req.Email)
+	_, err = s.UserRepo.GetByEmail(string(req.Email))
 	if err == nil {
 		return errs.New(errs.Conflict, "Email already in use", nil)
 	}
@@ -136,7 +137,7 @@ func (s *AuthService) Register(req models.RegisterRequest) error {
 		Username:   string(req.Username),
 		NameAr:     req.NameAr,
 		NameEn:     req.NameEn,
-		Email:      req.Email,
+		Email:      string(req.Email),
 		Phone:      req.Phone,
 		Password:   string(hashedPassword),
 		Gender:     req.Gender,
@@ -160,9 +161,12 @@ func (s *AuthService) Verify(req models.VerifyRequest) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.UserRepo.GetByUserID(req.UserID)
+	user, err := s.UserRepo.GetByUserID(req.UserID)
 	if err != nil {
 		return err
+	}
+	if user.Verified {
+		return errs.New(errs.Conflict, "User is already verified", nil)
 	}
 	if bcrypt.CompareHashAndPassword([]byte(code.Code), []byte(req.Code)) != nil {
 		return errs.New(errs.BadRequest, "Invalid verification code", nil)
@@ -186,15 +190,19 @@ func (s *AuthService) SendVerificationCode(userID int64) error {
 	if err != nil {
 		return err
 	}
+	if user.Verified {
+		return errs.New(errs.Conflict, "User is already verified", nil)
+	}
 
-	codeModel, err := s.VerificationRepo.GetByUserID(userID)
-	if err == nil {
-		err = s.VerificationRepo.Delete(codeModel.ID)
+	for {
+		oldCode, err := s.VerificationRepo.GetByUserID(userID)
 		if err != nil {
+			if err == sql.ErrNoRows {
+				break
+			}
 			return err
 		}
-	} else {
-		if err != sql.ErrNoRows {
+		if err := s.VerificationRepo.Delete(oldCode.ID); err != nil {
 			return err
 		}
 	}
@@ -207,7 +215,7 @@ func (s *AuthService) SendVerificationCode(userID int64) error {
 	if err != nil {
 		return err
 	}
-	codeModel = &models.VerificationCodeModel{
+	codeModel := &models.VerificationCodeModel{
 		Code:      string(hashedCode),
 		UserID:    userID,
 		CreatedAt: time.Now(),

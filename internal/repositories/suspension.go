@@ -48,7 +48,7 @@ func (r *SuspensionsRepo) GetByUserID(user_id int64) (*models.SuspensionModel, e
 }
 
 func (r *SuspensionsRepo) Delete(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM suspensions WHERE user_id = ?`, id)
+	_, err := r.db.Exec(`DELETE FROM suspensions WHERE id = ?`, id)
 	return err
 }
 
@@ -71,7 +71,7 @@ func (r *SuspensionsRepo) CleanExpired() ([]int64, error) {
 		return ids, err
 	}
 
-	query, args, err := sqlx.In(`DELETE FROM suspensions WHERE user_id IN (?)`, ids)
+	query, args, err := sqlx.In(`DELETE FROM suspensions WHERE id IN (?)`, ids)
 	if err != nil {
 		return nil, err
 	}
