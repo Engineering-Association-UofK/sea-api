@@ -6,6 +6,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type ICollaboratorRepo interface {
+	Create(collab *models.CollaboratorModel) (int64, error)
+	GetByID(id int64) (*models.CollaboratorModel, error)
+	GetAll() ([]models.CollaboratorModel, error)
+	Update(collab *models.CollaboratorModel) error
+	Delete(id int64) error
+}
+
 type CollaboratorRepo struct {
 	DB *sqlx.DB
 }

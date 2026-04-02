@@ -15,13 +15,13 @@ import (
 )
 
 type CollaboratorService struct {
-	repo             *repositories.CollaboratorRepo
-	s3StorageService *S3StorageService
+	repo             repositories.ICollaboratorRepo
+	s3StorageService IS3StorageService
 
 	signaturePath string
 }
 
-func NewCollaboratorService(repo *repositories.CollaboratorRepo, s3StorageService *S3StorageService) *CollaboratorService {
+func NewCollaboratorService(repo repositories.ICollaboratorRepo, s3StorageService IS3StorageService) *CollaboratorService {
 	return &CollaboratorService{
 		repo:             repo,
 		s3StorageService: s3StorageService,

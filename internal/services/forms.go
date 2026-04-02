@@ -15,11 +15,11 @@ import (
 )
 
 type FormService struct {
-	formRepo       *repositories.FormRepository
+	formRepo       repositories.IFormRepository
 	galleryService *GalleryService
 }
 
-func NewFormService(formRepo *repositories.FormRepository, galleryService *GalleryService) *FormService {
+func NewFormService(formRepo repositories.IFormRepository, galleryService *GalleryService) *FormService {
 	return &FormService{formRepo: formRepo, galleryService: galleryService}
 }
 

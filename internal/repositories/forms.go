@@ -7,6 +7,54 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type IFormRepository interface {
+	// CREATE
+	UpsertAnswer(answer *models.FormAnswerModel) error
+	CreateAnswersBatch(answers []models.FormAnswerModel) error
+	CreateForm(form *models.FormModel) (int64, error)
+	CreatePage(page *models.FormPageModel) (int64, error)
+	CreateQuestion(question *models.FormQuestionModel) (int64, error)
+	CreateQuestionsBatch(questions []models.FormQuestionModel) error
+	CreateResponse(response *models.FormResponseModel) (int64, error)
+	CreateAnswer(answer *models.FormAnswerModel) (int64, error)
+
+	// GET One
+	GetFormByID(id int64) (*models.FormModel, error)
+	GetPageByID(id int64) (*models.FormPageModel, error)
+	GetPageByFormIdAndPageNumber(formID int64, pageNumber int) (*models.FormPageModel, error)
+	GetQuestionByID(id int64) (*models.FormQuestionModel, error)
+	GetResponseByID(id int64) (*models.FormResponseModel, error)
+	GetFormAnalysisData(formID int64) ([]models.FormAnalysisRow, error)
+	GetFormWithQuestions(formID int64) ([]models.FormRow, error)
+
+	// GET Many
+	GetAllForms() ([]models.FormModel, error)
+	GetPagesByFormID(formID int64) ([]models.FormPageModel, error)
+	GetQuestionsByPageID(pageID int64) ([]models.FormQuestionModel, error)
+	GetResponsesByFormID(formID int64) ([]models.FormResponseModel, error)
+	GetNumberOfResponsesByFormID(formID int64) (int, error)
+	GetAnswersByResponseID(responseID int64) ([]models.FormAnswerModel, error)
+	GetRequiredQuestionsByFormID(formID int64) ([]models.FormQuestionModel, error)
+	GetQuestionsByFormID(formID int64) ([]models.FormQuestionModel, error)
+	GetAnswersByResponseIDs(responseIDs []int64) ([]models.FormAnswerModel, error)
+	GetUserResponsesForForm(userID, formID int64) ([]models.FormResponseModel, error)
+
+	// UPDATE
+	UpdateForm(form *models.FormModel) error
+	UpdatePage(page *models.FormPageModel) error
+	UpdateQuestion(question *models.FormQuestionModel) error
+	UpdateQuestions(questions []models.FormQuestionModel) error
+	UpdateAnswer(answer *models.FormAnswerModel) error
+	UpdateResponseStatus(id int64, status models.ResponseStatus) error
+
+	// DELETE
+	DeleteForm(id int64) error
+	DeletePage(id int64) error
+	DeleteQuestion(id int64) error
+	DeleteResponse(id int64) error
+	DeleteAnswer(id int64) error
+}
+
 type FormRepository struct {
 	db *sqlx.DB
 }

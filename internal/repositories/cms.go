@@ -6,6 +6,21 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type ICmsRepository interface {
+	CreateBlogPost(post *models.BlogPostModel) (int64, error)
+	GetBlogPostByID(id int64) (*models.BlogPostModel, error)
+	GetBlogPostBySlug(slug string) (*models.BlogPostModel, error)
+	GetAllBlogPosts(publishedOnly bool) ([]models.BlogPostModel, error)
+	UpdateBlogPost(post *models.BlogPostModel) error
+	DeleteBlogPost(id int64) error
+	CreateTeamMember(member *models.TeamMemberModel) (int64, error)
+	GetTeamMemberByID(id int64) (*models.TeamMemberModel, error)
+	GetTeamMemberByUserID(userID int64) (*models.TeamMemberModel, error)
+	GetAllTeamMembers(activeOnly bool) ([]models.TeamMemberModel, error)
+	UpdateTeamMember(member *models.TeamMemberModel) error
+	DeleteTeamMember(id int64) error
+}
+
 type CmsRepository struct {
 	db *sqlx.DB
 }

@@ -7,6 +7,13 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type ISuspensionsRepo interface {
+	Create(suspension *models.SuspensionModel, tx *sqlx.Tx, isHistory bool) (int64, error)
+	GetByUserID(user_id int64) (*models.SuspensionModel, error)
+	Delete(id int64) error
+	CleanExpired() ([]int64, error)
+}
+
 type SuspensionsRepo struct {
 	db *sqlx.DB
 }

@@ -103,17 +103,30 @@ func (u *UserHandler) AuthMiddleware() gin.HandlerFunc {
 
 		// Check validity
 		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
+			c.Error(errs.New(errs.Forbidden, "Invalid token", nil))
 			c.Abort()
 			return
 		}
 
-		claims.Roles, err = u.service.GetRolesByUserID(claims.UserID)
+		user, err := u.service.GetByUserID(c.Request.Context(), claims.UserID)
 		if err != nil {
 			c.Error(err)
 			c.Abort()
 			return
 		}
+
+		// Check if user can request
+		if user.Status != models.STATUS_ACTIVE {
+			c.Error(errs.New(errs.Forbidden, "User is inactivated, please check with support", nil))
+			c.Abort()
+			return
+		} else if user.Verified != true {
+			c.Error(errs.New(errs.Forbidden, "Your email is not verified, please verify email first", nil))
+			c.Abort()
+			return
+		}
+
+		claims.Roles = user.Roles
 
 		c.Set("user", claims)
 		c.Next()

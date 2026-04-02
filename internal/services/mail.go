@@ -12,6 +12,12 @@ import (
 	"time"
 )
 
+type IMailService interface {
+	SendUsersEmails(e models.UsersEmails) error
+	SendVerificationCode(to string, data models.VerifyEmail) error
+	SendEmail(e models.Email) error
+}
+
 type MailService struct {
 	UserService *UserService
 

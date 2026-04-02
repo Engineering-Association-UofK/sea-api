@@ -11,12 +11,12 @@ import (
 )
 
 type CmsService struct {
-	CmsRepo        *repositories.CmsRepository
+	CmsRepo        repositories.ICmsRepository
 	UserService    *UserService
 	GalleryService *GalleryService
 }
 
-func NewCmsService(CmsRepo *repositories.CmsRepository, userService *UserService, galleryService *GalleryService) *CmsService {
+func NewCmsService(CmsRepo repositories.ICmsRepository, userService *UserService, galleryService *GalleryService) *CmsService {
 	return &CmsService{
 		CmsRepo:        CmsRepo,
 		UserService:    userService,

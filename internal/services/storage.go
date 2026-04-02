@@ -13,6 +13,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
+type IS3StorageService interface {
+	Upload(ctx context.Context, key string, data []byte, contentType string) (int64, error)
+	Download(ctx context.Context, id int64) ([]byte, error)
+	Delete(ctx context.Context, id int64) error
+	GenerateDownloadUrlByID(ctx context.Context, id int64) (string, error)
+	GenerateDownloadUrlByKey(ctx context.Context, key string) (string, error)
+}
+
 type S3StorageService struct {
 	FilesRepo     *repositories.FileRepository
 	Client        *s3.Client

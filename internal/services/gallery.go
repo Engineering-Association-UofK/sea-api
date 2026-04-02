@@ -12,13 +12,13 @@ import (
 )
 
 type GalleryService struct {
-	Repo      *repositories.GalleryRepository
-	S3Service *S3StorageService
+	Repo      repositories.IGalleryRepository
+	S3Service IS3StorageService
 
 	path string
 }
 
-func NewGalleryService(galleryRepo *repositories.GalleryRepository, s3Service *S3StorageService) *GalleryService {
+func NewGalleryService(galleryRepo repositories.IGalleryRepository, s3Service IS3StorageService) *GalleryService {
 	return &GalleryService{
 		Repo:      galleryRepo,
 		S3Service: s3Service,

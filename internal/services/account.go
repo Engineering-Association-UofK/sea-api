@@ -10,6 +10,7 @@ import (
 	"sea-api/internal/config"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
 	"strings"
 	"time"
@@ -17,17 +18,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9._]+$`)
+
 type AccountService struct {
-	UserRepo IUserRepository
-	store    IS3StorageService
+	UserRepo           repositories.IUserRepository
+	store              IS3StorageService
+	certificateService *CertificateService
 
 	profilePath string
 }
 
-func NewAccountService(UserRepo IUserRepository, store IS3StorageService) *AccountService {
+func NewAccountService(UserRepo repositories.IUserRepository, store IS3StorageService, certificateService *CertificateService) *AccountService {
 	return &AccountService{
-		UserRepo:    UserRepo,
-		store:       store,
+		UserRepo:           UserRepo,
+		store:              store,
+		certificateService: certificateService,
+
 		profilePath: "public/profiles",
 	}
 }
@@ -58,6 +64,8 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 		ProfilePic: url,
 	}, nil
 }
+
+// ====== UPDATE ======
 
 func (s *AccountService) UpdateProfile(claims *models.ManagedClaims, req models.UpdateProfileRequest) error {
 	user, err := s.UserRepo.GetByUserID(req.ID)
@@ -179,6 +187,8 @@ func (s *AccountService) UpdateUsername(claims *models.ManagedClaims, req models
 	return s.UserRepo.Update(user, nil)
 }
 
+// ====== CHECKS ======
+
 func (s *AccountService) IsUsernameAvailable(req models.UpdateUsernameRequest) bool {
 	_, err := s.UserRepo.GetByUsername(req.Username)
 	return err != nil
@@ -210,8 +220,6 @@ func isPasswordStrongEnough(password string) bool {
 	return hasUpper && hasLower && hasNumber && hasSpecial
 
 }
-
-var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9._]+$`)
 
 func ValidateUsername(username string) error {
 	// Length check

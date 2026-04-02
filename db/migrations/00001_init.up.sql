@@ -320,3 +320,13 @@ CREATE TABLE form_answers (
     FOREIGN KEY (response_id) REFERENCES form_responses(id) ON DELETE CASCADE,
     FOREIGN KEY (question_id) REFERENCES form_questions(id) ON DELETE CASCADE
 );
+
+-- -------- SECRETARIAT SCHEMA
+
+CREATE TABLE secretariats (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    department VARCHAR(255) NOT 
+);

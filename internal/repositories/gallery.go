@@ -6,6 +6,33 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type IGalleryRepository interface {
+	// CREATE
+	CreateAsset(asset *models.GalleryAssetModel) (int64, error)
+	CreateReference(ref *models.GalleryReferenceModel) (int64, error)
+
+	// UPDATE
+	UpdateAsset(asset *models.GalleryAssetModel) error
+
+	// GET One
+	GetAssetByID(id int64) (*models.GalleryAssetModel, error)
+	GetReferenceByID(id int64) (*models.GalleryReferenceModel, error)
+	GetReferenceByObject(objectType models.ObjectType, objectID int64) (*models.GalleryReferenceModel, error)
+
+	// GET Many
+	GetAllAssets() ([]models.GalleryAssetModel, error)
+	GetAllGallery() ([]models.GallerySqlModel, error)
+	GetUnreferencedAssetIDs() ([]models.GalleryAssetModel, error)
+	GetReferencesByAssetID(assetID int64) ([]models.GalleryReferenceModel, error)
+	GetReferencesByObjectType(objectType models.ObjectType) ([]models.GalleryReferenceModel, error)
+
+	// DELETE
+	DeleteAsset(id int64) error
+	DeleteReferencesByAsset(assetID int64) error
+	DeleteReferencesByObject(objectType models.ObjectType, objectID int64) error
+	DeleteReference(id int64) error
+}
+
 type GalleryRepository struct {
 	db *sqlx.DB
 }

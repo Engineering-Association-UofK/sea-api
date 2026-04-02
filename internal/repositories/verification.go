@@ -7,6 +7,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type IVerificationRepo interface {
+	Create(verification *models.VerificationCodeModel) error
+	GetByCode(code string) (*models.VerificationCodeModel, error)
+	GetByUserID(user_id int64) (*models.VerificationCodeModel, error)
+	Delete(id int64) error
+	Clean() error
+}
+
 type VerificationRepo struct {
 	db *sqlx.DB
 }

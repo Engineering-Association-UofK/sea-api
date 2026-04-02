@@ -7,6 +7,53 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type IEventRepository interface {
+	// CREATE
+	CreateEvent(event *models.EventModel) (int64, error)
+	CreateComponent(component *models.EventComponentModel) (int64, error)
+	MassCreateComponent(components []models.EventComponentModel, tx *sqlx.Tx) error
+	CreateParticipant(participant *models.EventParticipantModel) (int64, error)
+	MassCreateParticipant(participants []models.EventParticipantModel, tx *sqlx.Tx) error
+	CreateScore(score *models.ComponentScoreModel) (int64, error)
+	MassCreateScore(scores []models.ComponentScoreModel, tx *sqlx.Tx) error
+
+	// UPDATE
+	UpdateEvent(event *models.EventModel) error
+	UpdateComponent(component *models.EventComponentModel) error
+	MassUpdateComponent(components []models.EventComponentModel) error
+	UpdateParticipant(participant *models.EventParticipantModel) error
+	MassUpdateParticipant(participants []models.EventParticipantModel) error
+	UpdateScore(score *models.ComponentScoreModel) error
+	MassUpdateScore(scores []models.ComponentScoreModel) error
+
+	// GET One
+	GetEventByID(id int64) (*models.EventModel, error)
+	GetComponentByID(id int64) (*models.EventComponentModel, error)
+	GetParticipantByID(id int64) (*models.EventParticipantModel, error)
+	GetParticipantByEventAndUserIDs(eventID int64, user_id int64) (*models.EventParticipantModel, error)
+	GetScoreByID(id int64) (*models.ComponentScoreModel, error)
+	GetParticipantByUserAndEventIDs(user_id int, eventID int64) (*models.EventParticipantModel, error)
+
+	// GET Many
+	GetComponentsByEventID(eventID int64) ([]models.EventComponentModel, error)
+	GetParticipantByEventID(eventID int64) ([]models.EventParticipantModel, error)
+	GetEligibleParticipantByEventID(eventID int64) ([]models.EventParticipantModel, error)
+	GetScoresByParticipantID(participantID int64) ([]models.ComponentScoreModel, error)
+	GetParticipantsByEventAndUserIDs(eventID int64, userIDs []int64) ([]models.EventParticipantModel, error)
+	GetScoresByParticipantIDs(participantIDs []int64) ([]models.ComponentScoreModel, error)
+	GetParticipantByUserID(user_id int) ([]models.EventParticipantModel, error)
+	GetAllEvents() ([]models.EventModel, error)
+
+	// DELETE
+	DeleteEvent(id int64) error
+	DeleteComponent(id int64) error
+	MassDeleteComponent(ids []int64) error
+	DeleteParticipant(id int64) error
+	MassDeleteParticipant(ids []int64) error
+	DeleteScore(id int64) error
+	MassDeleteScore(ids []int64) error
+}
+
 type EventRepository struct {
 	db *sqlx.DB
 }

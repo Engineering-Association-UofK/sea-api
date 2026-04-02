@@ -7,6 +7,51 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type IUserRepository interface {
+	// CREATE
+	Create(user *models.UserModel, tx *sqlx.Tx) error
+	CreateRole(role *models.UserRole) error
+	// GET ALL
+	GetAll(limit int, page int) ([]models.UserModel, error)
+	GetAllTempUsers(limit int, page int) ([]models.TempUserModel, error)
+	GetTempUsersWithNullPasswords() ([]models.TempUserModel, error)
+	GetPagesCount(limit int, isTempUser bool) (int, error)
+	GetAllByIndices(indices []int64) ([]models.UserModel, error)
+	GetAllRolesByUserIDs(ids []int64) ([]models.UserRole, error)
+	GetRolesByUserID(id int64) ([]models.UserRole, error)
+	GetAdmins() ([]models.UserModel, error)
+
+	// GET
+	GetByUserID(id int64) (*models.UserModel, error)
+	GetByUsername(username string) (*models.UserModel, error)
+	GetByEmail(email string) (*models.UserModel, error)
+	GetByUniID(uniID int64) (*models.UserModel, error)
+	GetTempUser(id int64) (*models.TempUserModel, error)
+
+	// UPDATE
+	Update(user *models.UserModel, tx *sqlx.Tx) error
+	UpdateWithID(user *models.UserModel, tx *sqlx.Tx) error
+	UpdateTempPasscode(id int64, passcode string) error
+	UpdateRole(role *models.UserRole, tx *sqlx.Tx) error
+	RemoveRole(id int64, role models.Role, tx *sqlx.Tx) error
+	ReplaceRoles(id int64, roles []models.Role, tx *sqlx.Tx) error
+	AddAdmin(id int64) error
+	RemoveAdmin(id int64) error
+
+	// DELETE
+	Delete(id int64, tx *sqlx.Tx) error
+	DeleteTempUser(id int64, tx *sqlx.Tx) error
+	DeleteRole(id int64, role models.Role, tx *sqlx.Tx) error
+	DeleteRolesByUserID(id int64, tx *sqlx.Tx) error
+
+	// SPECIAL
+	Verify(id int64) error
+	Suspend(id int64, tx *sqlx.Tx) error
+	Activate(id int64) error
+	RemoveSuspensionState(id int64) error
+	GetTransaction() (*sqlx.Tx, error)
+}
+
 type UserRepository struct {
 	DB *sqlx.DB
 }
@@ -389,6 +434,6 @@ func (r *UserRepository) RemoveSuspensionState(id int64) error {
 	return err
 }
 
-func (r *UserRepository) BeginTransaction() (*sqlx.Tx, error) {
+func (r *UserRepository) GetTransaction() (*sqlx.Tx, error) {
 	return r.DB.Beginx()
 }

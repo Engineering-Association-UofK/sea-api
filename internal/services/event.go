@@ -23,11 +23,11 @@ import (
 )
 
 type EventService struct {
-	EventRepo *repositories.EventRepository
-	UserRepo  *repositories.UserRepository
+	EventRepo repositories.IEventRepository
+	UserRepo  repositories.IUserRepository
 }
 
-func NewEventService(EventRepo *repositories.EventRepository, UserRepo *repositories.UserRepository) *EventService {
+func NewEventService(EventRepo repositories.IEventRepository, UserRepo repositories.IUserRepository) *EventService {
 	return &EventService{
 		EventRepo: EventRepo,
 		UserRepo:  UserRepo,
@@ -264,7 +264,7 @@ func (s *EventService) ImportUsers(eventID int64, file io.Reader) error {
 
 	existingMap := utils.FromSlice(existing, func(u models.UserModel) int64 { return u.ID })
 
-	tx, err := s.UserRepo.DB.Beginx()
+	tx, err := s.UserRepo.GetTransaction()
 	if err != nil {
 		return err
 	}

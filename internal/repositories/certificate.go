@@ -6,6 +6,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type ICertificateRepository interface {
+	Create(item models.CertificateModel) (int64, error)
+	CreateFile(item models.CertificateFileModel) (int64, error)
+	GetAll() ([]models.CertificateModel, error)
+	GetByID(id int64) (*models.CertificateModel, error)
+	GetByHash(hash string) (*models.CertificateModel, error)
+	GetByUserIDAndEventID(user_id, eventID int64) (*models.CertificateModel, error)
+	GetByEventIDAndUserIDs(eventID int64, userIDs []int64) ([]models.CertificateModel, error)
+	GetAllFiles() ([]models.CertificateFileModel, error)
+	GetFileById(id int64) (*models.CertificateFileModel, error)
+	GetFilesByCertificateID(certificateID int64) ([]models.CertificateFileModel, error)
+	GetFileByCertificateIDAndLang(certificateID int64, lang string) (*models.CertificateFileModel, error)
+	Update(item *models.CertificateModel) error
+	UpdateFile(id int64, storeID int64) error
+	Delete(id int64) error
+}
+
 type CertificateRepository struct {
 	DB *sqlx.DB
 }

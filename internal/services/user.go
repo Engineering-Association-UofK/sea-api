@@ -18,13 +18,17 @@ import (
 )
 
 type UserService struct {
-	repo             *repositories.UserRepository
-	suspensionsRepo  *repositories.SuspensionsRepo
-	S3StorageService *S3StorageService
+	repo             repositories.IUserRepository
+	suspensionsRepo  repositories.ISuspensionsRepo
+	S3StorageService IS3StorageService
 }
 
-func NewUserService(repo *repositories.UserRepository, suspensionsRepo *repositories.SuspensionsRepo, s3StorageService *S3StorageService) *UserService {
-	return &UserService{repo: repo, suspensionsRepo: suspensionsRepo, S3StorageService: s3StorageService}
+func NewUserService(repo repositories.IUserRepository, suspensionsRepo repositories.ISuspensionsRepo, s3StorageService IS3StorageService) *UserService {
+	return &UserService{
+		repo:             repo,
+		suspensionsRepo:  suspensionsRepo,
+		S3StorageService: s3StorageService,
+	}
 }
 
 // ======== GET ALL ========
@@ -315,7 +319,7 @@ func (s *UserService) Suspend(req *models.SuspensionRequest, adminId int64) erro
 			return errs.New(errs.Forbidden, "Cannot suspend a Super Admin", nil)
 		}
 	}
-	tx, err := s.repo.BeginTransaction()
+	tx, err := s.repo.GetTransaction()
 	if err != nil {
 		return err
 	}

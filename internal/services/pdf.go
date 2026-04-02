@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+type IPDFService interface {
+	GeneratePDFFromHTML(ctx context.Context, html string) ([]byte, error)
+}
+
 type PDFService struct {
 	workerSem chan struct{}
 }

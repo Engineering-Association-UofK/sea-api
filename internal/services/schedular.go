@@ -7,13 +7,13 @@ import (
 )
 
 type SchedularService struct {
-	UserRepo         *repositories.UserRepository
-	VerificationRepo *repositories.VerificationRepo
-	SuspensionsRepo  *repositories.SuspensionsRepo
-	MailService      *MailService
+	UserRepo         repositories.IUserRepository
+	VerificationRepo repositories.IVerificationRepo
+	SuspensionsRepo  repositories.ISuspensionsRepo
+	MailService      IMailService
 }
 
-func NewSchedularService(userRepo *repositories.UserRepository, verificationRepo *repositories.VerificationRepo, suspensionsRepo *repositories.SuspensionsRepo, mailService *MailService) *SchedularService {
+func NewSchedularService(userRepo repositories.IUserRepository, verificationRepo repositories.IVerificationRepo, suspensionsRepo repositories.ISuspensionsRepo, mailService IMailService) *SchedularService {
 	return &SchedularService{
 		UserRepo:         userRepo,
 		VerificationRepo: verificationRepo,

@@ -58,7 +58,6 @@ func Init() {
 	collaboratorService := services.NewCollaboratorService(collaboratorRepository, s3StorageService)
 
 	eventService := services.NewEventService(eventRepository, userRepository)
-	accountService := services.NewAccountService(userRepository, s3StorageService)
 
 	userService := services.NewUserService(userRepository, suspensionsRepo, s3StorageService)
 	mailService := services.NewMailService(userService)
@@ -68,6 +67,7 @@ func Init() {
 	FormService := services.NewFormService(formRepository, galleryService)
 
 	certificateService := services.NewCertificateService(userRepository, eventService, s3StorageService, pdfService, mailService, collaboratorService, certificateRepository)
+	accountService := services.NewAccountService(userRepository, s3StorageService, certificateService)
 	schedularService := services.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService)
 	schedularService.Run()
 

@@ -22,19 +22,19 @@ import (
 const VERIFICATION_PATH = `https://sea.uofk.edu/cert/verify/`
 
 type CertificateService struct {
-	userRepo            *repositories.UserRepository
+	userRepo            repositories.IUserRepository
 	eventService        *EventService
-	S3StoreService      *S3StorageService
-	pdfService          *PDFService
-	mailService         *MailService
+	S3StoreService      IS3StorageService
+	pdfService          IPDFService
+	mailService         IMailService
 	CollaboratorService *CollaboratorService
 
-	certificateRepository *repositories.CertificateRepository
+	certificateRepository repositories.ICertificateRepository
 
 	storePath string
 }
 
-func NewCertificateService(userRepo *repositories.UserRepository, eventService *EventService, S3StoreService *S3StorageService, pdfService *PDFService, mailService *MailService, CollaboratorService *CollaboratorService, CertificateRepository *repositories.CertificateRepository) *CertificateService {
+func NewCertificateService(userRepo repositories.IUserRepository, eventService *EventService, S3StoreService IS3StorageService, pdfService IPDFService, mailService IMailService, CollaboratorService *CollaboratorService, CertificateRepository repositories.ICertificateRepository) *CertificateService {
 	return &CertificateService{
 		userRepo:              userRepo,
 		pdfService:            pdfService,
