@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
@@ -19,7 +20,7 @@ func NewAuthHandler(authService services.Auth) *AuthHandler {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req models.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -35,7 +36,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req models.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -51,7 +52,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 func (h *AuthHandler) Verify(c *gin.Context) {
 	var req models.VerifyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -67,7 +68,7 @@ func (h *AuthHandler) Verify(c *gin.Context) {
 func (h *AuthHandler) SendVerificationCode(c *gin.Context) {
 	var req models.VerifyEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 

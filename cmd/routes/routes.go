@@ -3,32 +3,40 @@ package routes
 import (
 	"time"
 
-	h "sea-api/internal/handlers"
-	m "sea-api/internal/models"
+	"sea-api/internal/handlers"
+	"sea-api/internal/handlers/middleware"
+	"sea-api/internal/models"
 	"sea-api/internal/response"
+	"sea-api/internal/services"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 )
 
 var (
-	UserHandler         *h.UserHandler
-	EventHandler        *h.EventHandler
-	MailHandler         *h.MailHandler
-	CertificateHandler  *h.CertificateHandler
-	AuthHandler         *h.AuthHandler
-	AccountHandler      *h.AccountHandler
-	GalleryHandler      *h.GalleryHandler
-	CmsHandler          *h.CmsHandler
-	FormHandler         *h.FormHandler
-	CollaboratorHandler *h.CollaboratorHandler
+	UserHandler         *handlers.UserHandler
+	EventHandler        *handlers.EventHandler
+	MailHandler         *handlers.MailHandler
+	CertificateHandler  *handlers.CertificateHandler
+	AuthHandler         *handlers.AuthHandler
+	AccountHandler      *handlers.AccountHandler
+	GalleryHandler      *handlers.GalleryHandler
+	CmsHandler          *handlers.CmsHandler
+	FormHandler         *handlers.FormHandler
+	CollaboratorHandler *handlers.CollaboratorHandler
+
+	basicLimit  = middleware.RateLimiter(rate.Every(time.Second), 5)
+	midLimit    = middleware.RateLimiter(rate.Every(30*time.Second), 3)
+	highLimit   = middleware.RateLimiter(rate.Every(time.Minute), 3)
+	strictLimit = middleware.RateLimiter(rate.Every(time.Minute), 1)
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitService) *gin.Engine {
 	r := gin.New()
 	{ // ==== Config ====
 		r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
-			response.InternalServerError(c)
+			response.BaseErrorResponse(500, "Internal Server Error", c)
 			c.Abort()
 		}), gin.Logger())
 		r.Use(cors.New(cors.Config{
@@ -39,36 +47,37 @@ func SetupRouter() *gin.Engine {
 			AllowCredentials: false,
 			MaxAge:           12 * time.Hour,
 		}))
-		r.Use(h.ErrorHandlerMiddleware())
+		r.Use(middleware.ErrorHandlerMiddleware())
 		r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"status": 200}) })
 	}
 	apiV1 := r.Group("/api/v1")
+	apiV1.Use(basicLimit)
 
 	{ // ==== CERTIFICATES
 		cert := apiV1.Group("/cert")
 		cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
-		cert.GET("/download/:hash", CertificateHandler.GetCertificates)
+		cert.GET("/download/:hash", midLimit, CertificateHandler.GetCertificates)
 	}
 
 	{ // ==== AUTHENTICATION
 		auth := apiV1.Group("/auth")
-		auth.POST("/send-verification-code", AuthHandler.SendVerificationCode)
+		auth.POST("/send-verification-code", middleware.StatefulRateLimiter(models.LimitSendCode, rateLimitService), AuthHandler.SendVerificationCode)
 		auth.POST("/verify", AuthHandler.Verify)
-		auth.POST("/login", AuthHandler.Login)
-		auth.POST("/register", AuthHandler.Register)
+		auth.POST("/login", highLimit, AuthHandler.Login)
+		auth.POST("/register", highLimit, AuthHandler.Register)
 	}
 
 	{ // ==== ACCOUNT
 		account := apiV1.Group("/account")
-		account.Use(UserHandler.AuthMiddleware())
+		account.Use(middleware.AuthMiddleware(u))
 
 		{ // ==== PROFILE
 			account.GET("", AccountHandler.GetProfile)
 			account.PUT("", AccountHandler.UpdateProfile)
 			account.PUT("/picture", AccountHandler.UpdatePicture)
 			account.PUT("/password", AccountHandler.UpdatePassword)
-			account.PUT("/email", AccountHandler.UpdateEmail)
-			account.PUT("/username", AccountHandler.UpdateUsername)
+			account.PUT("/email", middleware.StatefulRateLimiter(models.LimitUpdateEmail, rateLimitService), AccountHandler.UpdateEmail)
+			account.PUT("/username", middleware.StatefulRateLimiter(models.LimitUpdateUsername, rateLimitService), AccountHandler.UpdateUsername)
 			account.POST("/check-username", AccountHandler.CheckUsernameAvailability)
 		}
 
@@ -80,11 +89,11 @@ func SetupRouter() *gin.Engine {
 
 	{ // ###### Administration Endpoints ######
 		admin := apiV1.Group("/admin")
-		admin.Use(UserHandler.AuthMiddleware(), h.RequireRole(m.RoleSystemAdmin))
+		admin.Use(middleware.AuthMiddleware(u), middleware.RequireRole(models.RoleSystemAdmin))
 
 		{ // ==== USERS
 			user := admin.Group("/user")
-			user.Use(h.RequireAnyRole(m.RoleSystemUserMgr, m.RoleSystemSuperAdmin))
+			user.Use(middleware.RequireAnyRole(models.RoleSystemUserMgr, models.RoleSystemSuperAdmin))
 			user.GET("/:id", UserHandler.GetByID)
 			user.POST("/all", UserHandler.GetAll)
 			user.POST("/temp-users", UserHandler.GetAllTempUsers)
@@ -97,17 +106,17 @@ func SetupRouter() *gin.Engine {
 		}
 
 		{ // ==== ADMIN
-			admin.Use(h.RequireAnyRole(m.RoleSystemAdminManager, m.RoleSystemSuperAdmin))
+			admin.Use(middleware.RequireAnyRole(models.RoleSystemAdminManager, models.RoleSystemSuperAdmin))
 			admin.GET("", UserHandler.GetAdmins)
 			admin.POST("/:id", UserHandler.MakeAdmin)
 			admin.PUT("/", UserHandler.UpdateAdmin)
 			admin.DELETE("/:id", UserHandler.DeleteAdmin)
-			admin.POST("/add-manager/:id", h.RequireRole(m.RoleSystemSuperAdmin), UserHandler.MakeAdminManager)
+			admin.POST("/add-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), UserHandler.MakeAdminManager)
 		}
 
 		{ // ==== BLOG POSTS
 			blog := admin.Group("/blog")
-			blog.Use(h.RequireAnyRole(m.RoleContentBlogMgr, m.RoleSystemSuperAdmin))
+			blog.Use(middleware.RequireAnyRole(models.RoleContentBlogMgr, models.RoleSystemSuperAdmin))
 			blog.GET("", CmsHandler.GetAllBlogPosts)
 			blog.GET("/:id", CmsHandler.GetBlogPostById)
 			blog.GET("/slug/:slug", CmsHandler.GetBlogPostBySlug)
@@ -118,7 +127,7 @@ func SetupRouter() *gin.Engine {
 
 		{ // ==== GALLERY
 			gallery := admin.Group("/gallery")
-			gallery.Use(h.RequireAnyRole(m.RoleContentEditor, m.RoleSystemSuperAdmin))
+			gallery.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
 			gallery.POST("", GalleryHandler.Upload)
 			gallery.GET("", GalleryHandler.GetAll)
 			gallery.GET("/:id", GalleryHandler.GetByID)
@@ -129,7 +138,7 @@ func SetupRouter() *gin.Engine {
 
 		{ // ==== FORMS
 			form := admin.Group("/form")
-			form.Use(h.RequireAnyRole(m.RoleContentFormMgr, m.RoleSystemSuperAdmin))
+			form.Use(middleware.RequireAnyRole(models.RoleContentFormMgr, models.RoleSystemSuperAdmin))
 
 			form.GET("", FormHandler.GetAllForms)
 			form.POST("", FormHandler.CreateForm)
@@ -161,7 +170,7 @@ func SetupRouter() *gin.Engine {
 
 		{ // ==== TEAM MEMBERS
 			team := admin.Group("/team")
-			team.Use(h.RequireAnyRole(m.RoleContentEditor, m.RoleSystemSuperAdmin))
+			team.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
 			team.POST("", CmsHandler.CreateTeamMember)
 			team.GET("", CmsHandler.GetAllTeamMembers)
 			team.GET("/:id", CmsHandler.GetTeamMemberByID)
@@ -171,19 +180,19 @@ func SetupRouter() *gin.Engine {
 
 		{ // ==== EVENTS
 			event := admin.Group("/event")
-			event.Use(h.RequireAnyRole(m.RoleContentEventMgr, m.RoleSystemSuperAdmin))
+			event.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
 			event.GET("", EventHandler.GetAllEvents)
 			event.GET("/:id", EventHandler.GetEventByID)
 			event.POST("", EventHandler.CreateEvent)
 			event.PUT("", EventHandler.UpdateEvent)
 			event.DELETE("/:id", EventHandler.DeleteEvent)
-			event.GET("/send-all-emails", CertificateHandler.SendCertificatesEmailsForEvent)
+			event.GET("/send-all-emails", strictLimit, CertificateHandler.SendCertificatesEmailsForEvent)
 			event.POST("/import-users/:id", EventHandler.ImportUsers)
 		}
 
 		{ // ==== Collaborators
 			collabs := admin.Group("/collabs")
-			collabs.Use(h.RequireAnyRole(m.RoleContentEventMgr, m.RoleSystemSuperAdmin))
+			collabs.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
 			collabs.GET("", CollaboratorHandler.GetAll)
 			collabs.GET("/:id", CollaboratorHandler.GetByID)
 			collabs.POST("", CollaboratorHandler.Create)
@@ -193,8 +202,8 @@ func SetupRouter() *gin.Engine {
 
 		{ // ==== CERTIFICATES
 			certificate := admin.Group("/certificate")
-			certificate.Use(h.RequireAnyRole(m.RoleCertifier, m.RoleSystemSuperAdmin))
-			certificate.GET("/generate-all-for-event", CertificateHandler.MakeCertificatesForEvent)
+			certificate.Use(middleware.RequireAnyRole(models.RoleCertifier, models.RoleSystemSuperAdmin))
+			certificate.GET("/generate-all-for-event", strictLimit, CertificateHandler.MakeCertificatesForEvent)
 		}
 
 		{ // ==== MAIL

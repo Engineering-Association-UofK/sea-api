@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
-	"sea-api/internal/response"
 	"sea-api/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +19,7 @@ func NewMailHandler(mailService *services.MailService) *MailHandler {
 func (h *MailHandler) SendMail(ctx *gin.Context) {
 	var email models.UsersEmails
 	if err := ctx.ShouldBindJSON(&email); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 

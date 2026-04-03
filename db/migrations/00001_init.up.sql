@@ -320,3 +320,15 @@ CREATE TABLE form_answers (
     FOREIGN KEY (response_id) REFERENCES form_responses(id) ON DELETE CASCADE,
     FOREIGN KEY (question_id) REFERENCES form_questions(id) ON DELETE CASCADE
 );
+
+-- RATE LIMIT SCHEMA
+
+CREATE TABLE rate_limits (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL,
+    endpoint VARCHAR(255) NOT NULL,
+    request_count INT DEFAULT 1,
+    last_request TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    UNIQUE (ip_address, endpoint)
+);

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
@@ -22,14 +23,14 @@ func NewCmsHandler(cmsService *services.CmsService) *CmsHandler {
 func (h *CmsHandler) CreateBlogPost(ctx *gin.Context) {
 	var req models.BlogPostRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
 	value, exists := ctx.Get("user")
 	claims, ok := value.(*models.ManagedClaims)
 	if !exists || !ok {
-		response.Unauthorized(ctx)
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
 	}
 
@@ -82,7 +83,7 @@ func (h *CmsHandler) GetAllBlogPosts(ctx *gin.Context) {
 func (h *CmsHandler) UpdateBlogPost(ctx *gin.Context) {
 	var req models.BlogPostUpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -99,7 +100,7 @@ func (h *CmsHandler) DeleteBlogPost(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -115,7 +116,7 @@ func (h *CmsHandler) DeleteBlogPost(ctx *gin.Context) {
 func (h *CmsHandler) CreateTeamMember(ctx *gin.Context) {
 	var req models.TeamMemberRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -132,7 +133,7 @@ func (h *CmsHandler) GetTeamMemberByID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -161,7 +162,7 @@ func (h *CmsHandler) GetAllTeamMembers(ctx *gin.Context) {
 func (h *CmsHandler) UpdateTeamMember(ctx *gin.Context) {
 	var req models.TeamMemberUpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -178,7 +179,7 @@ func (h *CmsHandler) DeleteTeamMember(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 

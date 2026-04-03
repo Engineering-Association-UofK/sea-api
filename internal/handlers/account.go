@@ -40,7 +40,7 @@ func (a *AccountHandler) GetProfile(c *gin.Context) {
 func (a *AccountHandler) UpdateProfile(c *gin.Context) {
 	var req models.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -89,7 +89,7 @@ func (a *AccountHandler) UpdatePicture(c *gin.Context) {
 func (a *AccountHandler) UpdatePassword(c *gin.Context) {
 	var req models.UpdatePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	value, exists := c.Get("user")
@@ -109,7 +109,7 @@ func (a *AccountHandler) UpdatePassword(c *gin.Context) {
 func (a *AccountHandler) UpdateEmail(c *gin.Context) {
 	var req models.UpdateEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	value, exists := c.Get("user")
@@ -130,7 +130,7 @@ func (a *AccountHandler) UpdateEmail(c *gin.Context) {
 func (a *AccountHandler) UpdateUsername(c *gin.Context) {
 	var req models.UpdateUsernameRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	value, exists := c.Get("user")
@@ -150,7 +150,7 @@ func (a *AccountHandler) UpdateUsername(c *gin.Context) {
 func (a *AccountHandler) CheckUsernameAvailability(c *gin.Context) {
 	var req models.UpdateUsernameRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	available := a.AccountService.IsUsernameAvailable(req)

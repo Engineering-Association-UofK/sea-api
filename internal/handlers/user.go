@@ -24,7 +24,8 @@ func NewUserHandler(service *services.UserService) *UserHandler {
 func (u *UserHandler) GetAll(c *gin.Context) {
 	var req models.UserListRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+
 		return
 	}
 	resp, err := u.service.GetAll(&req)
@@ -38,7 +39,7 @@ func (u *UserHandler) GetAll(c *gin.Context) {
 func (u *UserHandler) GetAllTempUsers(c *gin.Context) {
 	var req models.UserListRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	resp, err := u.service.GetAllTempUsers(&req)
@@ -66,7 +67,7 @@ func (u *UserHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -94,7 +95,7 @@ func (u *UserHandler) GetTempUserPasscode(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -112,7 +113,7 @@ func (u *UserHandler) GetTempUserPasscode(c *gin.Context) {
 func (u *UserHandler) Update(c *gin.Context) {
 	var req models.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	err := u.service.Update(&req)
@@ -128,7 +129,7 @@ func (u *UserHandler) MakeAdmin(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	err = u.service.AddAdmin(intId)
@@ -144,7 +145,7 @@ func (u *UserHandler) MakeAdminManager(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	err = u.service.MakeAdminManager(intId)
@@ -159,7 +160,7 @@ func (u *UserHandler) MakeAdminManager(c *gin.Context) {
 func (u *UserHandler) UpdateAdmin(c *gin.Context) {
 	var req models.AdminRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	err := u.service.UpdateAdminRoles(&req)
@@ -175,7 +176,7 @@ func (u *UserHandler) DeleteAdmin(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	err = u.service.RemoveAdmin(intId)
@@ -192,7 +193,7 @@ func (u *UserHandler) DeleteAdmin(c *gin.Context) {
 func (u *UserHandler) Suspend(c *gin.Context) {
 	var req models.SuspensionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -237,7 +238,7 @@ func (u *UserHandler) AssignPasscodes(c *gin.Context) {
 func (u *UserHandler) UpdateUsersImport(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")
 	if err != nil {
-		response.BadRequest(c)
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
@@ -32,7 +33,7 @@ func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -47,7 +48,7 @@ func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 	var event models.EventDTO
 	if err := ctx.ShouldBindJSON(&event); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -63,7 +64,7 @@ func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
 	var event models.EventDTO
 	if err := ctx.ShouldBindJSON(&event); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -79,7 +80,7 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	if err := h.EventService.DeleteEvent(int64(intId)); err != nil {
@@ -93,13 +94,13 @@ func (h *EventHandler) ImportUsers(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
 	file, _, err := ctx.Request.FormFile("file")
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	defer file.Close()

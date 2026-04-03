@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
@@ -23,7 +24,7 @@ func (h *FormHandler) GetFormAnalysis(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -42,7 +43,7 @@ func (h *FormHandler) GetEntireForEditForm(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -59,7 +60,7 @@ func (h *FormHandler) GetEntireForUserForm(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -75,14 +76,14 @@ func (h *FormHandler) GetEntireForUserForm(ctx *gin.Context) {
 func (h *FormHandler) SubmitForm(ctx *gin.Context) {
 	var req models.SubmitFormRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
 	value, exists := ctx.Get("user")
 	claims, ok := value.(*models.ManagedClaims)
 	if !exists || !ok {
-		response.Unauthorized(ctx)
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
 	}
 
@@ -100,14 +101,14 @@ func (h *FormHandler) SubmitForm(ctx *gin.Context) {
 func (h *FormHandler) CreateForm(ctx *gin.Context) {
 	var req models.CreateFormRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
 	value, exists := ctx.Get("user")
 	claims, ok := value.(*models.ManagedClaims)
 	if !exists || !ok {
-		response.Unauthorized(ctx)
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
 	}
 
@@ -123,7 +124,7 @@ func (h *FormHandler) CreateForm(ctx *gin.Context) {
 func (h *FormHandler) CreatePage(ctx *gin.Context) {
 	var req models.CreatePageRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -139,7 +140,7 @@ func (h *FormHandler) CreatePage(ctx *gin.Context) {
 func (h *FormHandler) CreateQuestion(ctx *gin.Context) {
 	var req models.CreateQuestionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -157,7 +158,7 @@ func (h *FormHandler) CreateQuestion(ctx *gin.Context) {
 func (h *FormHandler) UpdateForm(ctx *gin.Context) {
 	var req models.UpdateFormRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -173,7 +174,7 @@ func (h *FormHandler) UpdateForm(ctx *gin.Context) {
 func (h *FormHandler) UpdatePage(ctx *gin.Context) {
 	var req models.UpdatePageRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -189,7 +190,7 @@ func (h *FormHandler) UpdatePage(ctx *gin.Context) {
 func (h *FormHandler) UpdateQuestion(ctx *gin.Context) {
 	var req models.UpdateQuestionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -205,7 +206,7 @@ func (h *FormHandler) UpdateQuestion(ctx *gin.Context) {
 func (h *FormHandler) UpdateResponseStatus(ctx *gin.Context) {
 	var req models.UpdateResponseStatusRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -224,7 +225,7 @@ func (h *FormHandler) GetResponseByID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -253,7 +254,7 @@ func (h *FormHandler) GetResponsesByFormID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -270,14 +271,14 @@ func (h *FormHandler) GetUserResponsesForForm(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
 	value, exists := ctx.Get("user")
 	claims, ok := value.(*models.ManagedClaims)
 	if !exists || !ok {
-		response.Unauthorized(ctx)
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
 	}
 
@@ -296,7 +297,7 @@ func (h *FormHandler) DeleteForm(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -313,7 +314,7 @@ func (h *FormHandler) DeletePage(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -330,7 +331,7 @@ func (h *FormHandler) DeleteQuestion(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -347,7 +348,7 @@ func (h *FormHandler) DeleteResponse(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 

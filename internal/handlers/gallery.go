@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
@@ -23,13 +24,13 @@ func NewGalleryHandler(galleryService *services.GalleryService) *GalleryHandler 
 func (h *GalleryHandler) Upload(ctx *gin.Context) {
 	var req models.NewGalleryAssetRequest
 	if err := ctx.ShouldBind(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
 	file, err := ctx.FormFile("file")
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	req.File = file
@@ -37,7 +38,7 @@ func (h *GalleryHandler) Upload(ctx *gin.Context) {
 	value, exists := ctx.Get("user")
 	claims, ok := value.(*models.ManagedClaims)
 	if !exists || !ok {
-		response.Unauthorized(ctx)
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
 	}
 
@@ -63,7 +64,7 @@ func (h *GalleryHandler) GetByID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 

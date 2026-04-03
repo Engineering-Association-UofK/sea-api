@@ -32,7 +32,7 @@ func (h *CollaboratorHandler) GetByID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -59,7 +59,7 @@ func (h *CollaboratorHandler) Create(ctx *gin.Context) {
 
 	file, _, err := ctx.Request.FormFile("file")
 	if err != nil || req.NameAr == "" || req.NameEn == "" {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	defer file.Close()
@@ -85,7 +85,7 @@ func (h *CollaboratorHandler) Update(ctx *gin.Context) {
 	idStr := ctx.PostForm("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -94,7 +94,7 @@ func (h *CollaboratorHandler) Update(ctx *gin.Context) {
 	req.NameEn = ctx.PostForm("name_en")
 	req.Email = models.TrimmedString(ctx.PostForm("email"))
 	if id == 0 || req.NameAr == "" || req.NameEn == "" {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h *CollaboratorHandler) Delete(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 

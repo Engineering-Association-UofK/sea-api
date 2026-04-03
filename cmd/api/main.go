@@ -8,6 +8,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
+	"sea-api/internal/services/schedular"
 	"sea-api/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -21,17 +22,10 @@ func main() {
 		panic(err)
 	}
 
-	Init()
-
-	r := routes.SetupRouter()
-	slog.Info("Starting server on port " + config.App.Port)
-	err = r.Run("0.0.0.0:" + config.App.Port)
-	if err != nil {
-		panic(err)
-	}
+	Go()
 }
 
-func Init() {
+func Go() {
 	gin.SetMode(gin.ReleaseMode)
 	logger := config.NewMultiHandlerLog()
 	slog.SetDefault(logger)
@@ -50,11 +44,13 @@ func Init() {
 	CmsRepository := repositories.NewCmsRepository(db)
 	formRepository := repositories.NewFormRepository(db)
 	collaboratorRepository := repositories.NewCollaboratorRepo(db)
+	rateLimitRepository := repositories.NewRateLimitRepository(db)
 
 	// Initialize services
 	pdfService := services.NewPDFService(10)
 	s3StorageService := services.NewS3Service(fileRepo)
 	galleryService := services.NewGalleryService(galleryRepository, s3StorageService)
+	rateLimitService := services.NewRateLimitService(rateLimitRepository)
 	collaboratorService := services.NewCollaboratorService(collaboratorRepository, s3StorageService)
 
 	eventService := services.NewEventService(eventRepository, userRepository)
@@ -68,7 +64,7 @@ func Init() {
 	FormService := services.NewFormService(formRepository, galleryService)
 
 	certificateService := services.NewCertificateService(userRepository, eventService, s3StorageService, pdfService, mailService, collaboratorService, certificateRepository)
-	schedularService := services.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService)
+	schedularService := schedular.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService, rateLimitService)
 	schedularService.Run()
 
 	// Initialize handlers
@@ -82,4 +78,11 @@ func Init() {
 	routes.CmsHandler = handlers.NewCmsHandler(CmsService)
 	routes.FormHandler = handlers.NewFormHandler(FormService)
 	routes.CollaboratorHandler = handlers.NewCollaboratorHandler(collaboratorService)
+
+	r := routes.SetupRouter(userService, rateLimitService)
+	slog.Info("Starting server on port " + config.App.Port)
+	err := r.Run("0.0.0.0:" + config.App.Port)
+	if err != nil {
+		panic(err)
+	}
 }

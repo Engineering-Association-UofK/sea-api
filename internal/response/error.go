@@ -18,7 +18,12 @@ type ErrorResponse struct {
 	Errors map[string]string `json:"errors"`
 }
 
-func NewBaseError(status int, msg string, c *gin.Context) {
+type TooManyResponse struct {
+	BaseError
+	TimeRemaining time.Duration `json:"time_remaining"`
+}
+
+func BaseErrorResponse(status int, msg string, c *gin.Context) {
 	c.JSON(status, BaseError{
 		Status:    status,
 		Message:   msg,
@@ -26,7 +31,7 @@ func NewBaseError(status int, msg string, c *gin.Context) {
 	})
 }
 
-func NewErrorResponse(status int, msg string, c *gin.Context, errors map[string]string) {
+func ListErrorResponse(status int, msg string, c *gin.Context, errors map[string]string) {
 	c.JSON(status, ErrorResponse{
 		BaseError: BaseError{
 			Status:    status,
@@ -37,34 +42,13 @@ func NewErrorResponse(status int, msg string, c *gin.Context, errors map[string]
 	})
 }
 
-func InternalServerError(c *gin.Context) {
-	c.JSON(http.StatusInternalServerError, BaseError{
-		Status:    500,
-		Message:   "Internal Server Error",
-		Timestamp: time.Now(),
-	})
-}
-
-func NotFound(c *gin.Context) {
-	c.JSON(http.StatusNotFound, BaseError{
-		Status:    404,
-		Message:   "Not Found",
-		Timestamp: time.Now(),
-	})
-}
-
-func Unauthorized(c *gin.Context) {
-	c.JSON(http.StatusUnauthorized, BaseError{
-		Status:    401,
-		Message:   "Unauthorized",
-		Timestamp: time.Now(),
-	})
-}
-
-func BadRequest(c *gin.Context) {
-	c.JSON(http.StatusBadRequest, BaseError{
-		Status:    400,
-		Message:   "Bad Request",
-		Timestamp: time.Now(),
+func TooManyRequestsErrorResponse(timeRemaining time.Duration, msg string, c *gin.Context) {
+	c.JSON(http.StatusTooManyRequests, TooManyResponse{
+		BaseError: BaseError{
+			Status:    http.StatusTooManyRequests,
+			Message:   msg,
+			Timestamp: time.Now(),
+		},
+		TimeRemaining: timeRemaining,
 	})
 }

@@ -3,8 +3,8 @@ package handlers
 import (
 	"archive/zip"
 	"io"
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
-	"sea-api/internal/response"
 	"sea-api/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -34,7 +34,7 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 	var req models.MakeCertificatesForEventRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *CertificateHandler) SendCertificatesEmailsForEvent(ctx *gin.Context) {
 	var req models.CertificateSendEmailData
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(ctx)
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
