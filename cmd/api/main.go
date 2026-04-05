@@ -45,6 +45,7 @@ func Go() {
 	formRepository := repositories.NewFormRepository(db)
 	collaboratorRepository := repositories.NewCollaboratorRepo(db)
 	rateLimitRepository := repositories.NewRateLimitRepository(db)
+	documentRepository := repositories.NewDocumentRepository(db)
 
 	// Initialize services
 	pdfService := services.NewPDFService(10)
@@ -63,7 +64,7 @@ func Go() {
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
 	FormService := services.NewFormService(formRepository, galleryService)
 
-	certificateService := services.NewCertificateService(userRepository, eventService, s3StorageService, pdfService, mailService, collaboratorService, certificateRepository)
+	certificateService := services.NewCertificateService(userRepository, eventService, s3StorageService, pdfService, mailService, collaboratorService, certificateRepository, documentRepository)
 	schedularService := schedular.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService, rateLimitService)
 	schedularService.Run()
 

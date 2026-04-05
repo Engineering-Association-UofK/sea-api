@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -17,9 +18,13 @@ import (
 	"sea-api/internal/utils"
 	"strings"
 	"time"
+
+	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 )
 
-const VERIFICATION_PATH = `https://sea.uofk.edu/cert/verify/`
+const CERT_VERIFICATION_PATH = `https://sea.uofk.edu/cert/verify/`
+const DOC_VERIFICATION_PATH = `https://sea.uofk.edu/doc/verify/`
 
 type CertificateService struct {
 	userRepo            *repositories.UserRepository
@@ -30,11 +35,21 @@ type CertificateService struct {
 	CollaboratorService *CollaboratorService
 
 	certificateRepository *repositories.CertificateRepository
+	documentRepository    *repositories.DocumentRepository
 
 	storePath string
 }
 
-func NewCertificateService(userRepo *repositories.UserRepository, eventService *EventService, S3StoreService *S3StorageService, pdfService *PDFService, mailService *MailService, CollaboratorService *CollaboratorService, CertificateRepository *repositories.CertificateRepository) *CertificateService {
+func NewCertificateService(
+	userRepo *repositories.UserRepository,
+	eventService *EventService,
+	S3StoreService *S3StorageService,
+	pdfService *PDFService,
+	mailService *MailService,
+	CollaboratorService *CollaboratorService,
+	CertificateRepository *repositories.CertificateRepository,
+	DocumentRepository *repositories.DocumentRepository,
+) *CertificateService {
 	return &CertificateService{
 		userRepo:              userRepo,
 		pdfService:            pdfService,
@@ -43,8 +58,118 @@ func NewCertificateService(userRepo *repositories.UserRepository, eventService *
 		mailService:           mailService,
 		CollaboratorService:   CollaboratorService,
 		certificateRepository: CertificateRepository,
-		storePath:             "public/certificates",
+		documentRepository:    DocumentRepository,
+
+		storePath: "public/certificates",
 	}
+}
+
+func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequest) ([]byte, error) {
+	event, err := c.eventService.GetEventByID(req.EventID)
+	if err != nil {
+		return nil, err
+	}
+	collab, err := c.CollaboratorService.GetByID(ctx, req.CollabID)
+	if err != nil {
+		return nil, err
+	}
+
+	stringToHash := collab.NameEn + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
+	hash := sha256.Sum256([]byte(stringToHash))
+	hashString := hex.EncodeToString(hash[:])
+	url := DOC_VERIFICATION_PATH + hashString
+
+	qr, err := utils.GenerateGearQR(url, 512, 512)
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := req.File.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	var output bytes.Buffer
+	rs := bytes.NewReader(data)
+
+	QrS := req.QrS
+	QrX := req.QrX
+	QrY := -req.QrY
+
+	desc := fmt.Sprintf("pos:tl, off: %.2f %.2f, scale:%.2f rel, op: 1.0, rot: 0.0", QrX, QrY, QrS/100)
+
+	wm, err := api.ImageWatermarkForReader(
+		bytes.NewReader(qr),
+		desc,
+		true,
+		false,
+		types.POINTS,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create watermark: %w", err)
+	}
+
+	err = api.AddWatermarks(rs, &output, []string{"1-"}, wm, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stamp PDF: %w", err)
+	}
+
+	storeId, err := c.S3StoreService.Upload(ctx, c.storePath+"/direct/"+hashString+".pdf", output.Bytes(), "application/pdf")
+	if err != nil {
+		slog.Error("error uploading file", "error", err, "s3 stored file", storeId)
+		return nil, err
+	}
+
+	tx, err := c.documentRepository.DB.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	id, err := c.documentRepository.Create(&models.DocumentModel{
+		DocHash:  hashString,
+		FileID:   storeId,
+		Type:     req.Type,
+		CreateAt: time.Now(),
+	}, tx)
+	if err != nil {
+		c.S3StoreService.Delete(ctx, storeId)
+		slog.Error("error creating certificate", "error", err, "stored file", storeId)
+		return nil, err
+	}
+
+	_, err = c.documentRepository.CreateRelation(&models.DocumentRelationModel{
+		DocumentID:  id,
+		Description: "Certificate of gratitude for event",
+		ObjectType:  models.ObjEvent,
+		ObjectID:    req.EventID,
+	}, tx)
+	if err != nil {
+		c.S3StoreService.Delete(ctx, storeId)
+		return nil, err
+	}
+	_, err = c.documentRepository.CreateRelation(&models.DocumentRelationModel{
+		DocumentID:  id,
+		Description: "Certificate of gratitude for collaborator",
+		ObjectType:  models.ObjCollaborator,
+		ObjectID:    req.CollabID,
+	}, tx)
+	if err != nil {
+		c.S3StoreService.Delete(ctx, storeId)
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		c.S3StoreService.Delete(ctx, storeId)
+		return nil, err
+	}
+
+	return output.Bytes(), nil
 }
 
 func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, eventId int64, progressChan chan string) error {
@@ -137,7 +262,7 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 			Username:  name[0] + " " + name[1],
 			EventName: event.Name,
 			EventType: string(event.EventType),
-			CertURL:   VERIFICATION_PATH + certificate.Hash,
+			CertURL:   CERT_VERIFICATION_PATH + certificate.Hash,
 			Year:      time.Now().Year(),
 		}
 		temp, err := utils.GetTemplate(string(utils.EmailCertificateAr), data)
@@ -203,7 +328,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	stringToHash := user.NameEn + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
 	hash := sha256.Sum256([]byte(stringToHash))
 	hashString := hex.EncodeToString(hash[:])
-	url := VERIFICATION_PATH + hashString
+	url := CERT_VERIFICATION_PATH + hashString
 
 	qr, err := utils.GenerateGearQR(url, 512, 512)
 	if err != nil {
@@ -331,6 +456,53 @@ func (c *CertificateService) VerifyCertificate(hash string) (*models.Certificate
 		Outcomes:  event.Outcomes,
 		EndDate:   event.EndDate,
 		IssueDate: cert.IssueDate,
+	}, nil
+}
+
+func (c *CertificateService) VerifyDocument(hash string) (*models.DocumentVerifyResponse, error) {
+	doc, err := c.documentRepository.GetByHash(hash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &models.DocumentVerifyResponse{
+				Valid: false,
+			}, nil
+		}
+		return nil, err
+	}
+
+	relations, err := c.documentRepository.GetRelationsByDocumentID(doc.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var Map []models.DocumentMetadata
+	for _, relation := range relations {
+		switch relation.ObjectType {
+		case models.ObjEvent:
+			event, err := c.eventService.GetEventByID(relation.ObjectID)
+			if err != nil {
+				return nil, err
+			}
+			Map = append(Map, models.DocumentMetadata{
+				Label: "Event",
+				Value: event.Name,
+			})
+		case models.ObjCollaborator:
+			collab, err := c.CollaboratorService.GetByID(context.Background(), relation.ObjectID)
+			if err != nil {
+				return nil, err
+			}
+			Map = append(Map, models.DocumentMetadata{
+				Label: "Collaborator",
+				Value: collab.NameEn,
+			})
+		}
+	}
+	return &models.DocumentVerifyResponse{
+		Valid:     true,
+		Type:      doc.Type,
+		CreatedAt: doc.CreateAt,
+		Details:   Map,
 	}, nil
 }
 

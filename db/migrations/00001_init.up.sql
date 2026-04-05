@@ -332,3 +332,29 @@ CREATE TABLE rate_limits (
     
     UNIQUE (ip_address, endpoint)
 );
+
+-- DOCUMENT SCHEMA
+
+CREATE TABLE documents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    doc_hash VARCHAR(255) UNIQUE NOT NULL,
+    file_id INT NOT NULL UNIQUE,
+    type VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
+);
+
+CREATE TABLE document_relations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    description TEXT NOT NULL,
+    document_id INT NOT NULL,
+    object_type TINYINT NOT NULL,
+    object_id INT NOT NULL,
+
+    UNIQUE (document_id, object_type, object_id),
+    INDEX idx_object (object_type, object_id),
+    INDEX idx_document (document_id),
+
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+);

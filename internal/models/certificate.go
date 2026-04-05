@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"mime/multipart"
+	"time"
+)
 
 type CertStatus string
 
@@ -67,4 +70,16 @@ type CertificateSendEmailData struct {
 	EventID int64    `json:"event_id" binding:"required"`
 	Cc      []string `json:"cc"`
 	Bcc     []string `json:"bcc"`
+}
+
+type SignPdfRequest struct {
+	EventID  int64        `form:"event_id" binding:"required"`
+	CollabID int64        `form:"collab_id" binding:"required"`
+	Type     DocumentType `form:"type" binding:"required"`
+
+	QrX float64 `form:"qr_x"`
+	QrY float64 `form:"qr_y"`
+	QrS float64 `form:"qr_s" binding:"required"`
+
+	File *multipart.FileHeader `form:"file" binding:"required"`
 }

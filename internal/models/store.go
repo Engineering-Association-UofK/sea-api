@@ -11,10 +11,11 @@ const (
 type ObjectType int
 
 const (
-	BlogPost ObjectType = iota
-	News
-	Form
-	Event
+	ObjBlogPost ObjectType = iota
+	ObjNews
+	ObjForm
+	ObjEvent
+	ObjCollaborator
 )
 
 type StoreModel struct {

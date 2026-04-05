@@ -232,7 +232,7 @@ func (s *FormService) CreateForm(userID int64, req *models.CreateFormRequest) (i
 		return 0, err
 	}
 	if form.HeaderImageID.Valid {
-		s.galleryService.AttachAssetToObject(req.HeaderImageID, models.Form, id)
+		s.galleryService.AttachAssetToObject(req.HeaderImageID, models.ObjForm, id)
 	}
 	return s.CreatePage(&models.CreatePageRequest{
 		FormID:     id,
@@ -288,13 +288,13 @@ func (s *FormService) UpdateForm(req *models.UpdateFormRequest) error {
 	// Options for if there is an image attached or not
 	if req.HeaderImageID == 0 {
 		if form.HeaderImageID.Valid {
-			s.galleryService.RemoveReference(models.Form, form.HeaderImageID.Int64)
+			s.galleryService.RemoveReference(models.ObjForm, form.HeaderImageID.Int64)
 		}
 	} else if form.HeaderImageID.Valid {
-		s.galleryService.RemoveReference(models.Form, form.HeaderImageID.Int64)
-		s.galleryService.AttachAssetToObject(req.HeaderImageID, models.Form, req.ID)
+		s.galleryService.RemoveReference(models.ObjForm, form.HeaderImageID.Int64)
+		s.galleryService.AttachAssetToObject(req.HeaderImageID, models.ObjForm, req.ID)
 	} else {
-		s.galleryService.AttachAssetToObject(req.HeaderImageID, models.Form, req.ID)
+		s.galleryService.AttachAssetToObject(req.HeaderImageID, models.ObjForm, req.ID)
 	}
 
 	form.Title = req.Title
@@ -494,7 +494,7 @@ func (s *FormService) DeleteForm(id int64) error {
 	if _, err := s.formRepo.GetFormByID(id); err != nil {
 		return errs.New(errs.NotFound, "form not found", nil)
 	}
-	s.galleryService.RemoveReference(models.Form, id)
+	s.galleryService.RemoveReference(models.ObjForm, id)
 	return s.formRepo.DeleteForm(id)
 }
 

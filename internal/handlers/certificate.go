@@ -30,6 +30,18 @@ func (h *CertificateHandler) VerifyCertificate(ctx *gin.Context) {
 	ctx.JSON(200, cert)
 }
 
+func (h *CertificateHandler) VerifyDocument(ctx *gin.Context) {
+
+	hash := ctx.Param("hash")
+	doc, err := h.service.VerifyDocument(hash)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, doc)
+}
+
 func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 	var req models.MakeCertificatesForEventRequest
 
@@ -55,6 +67,23 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 		ctx.SSEvent("message", msg)
 		return true
 	})
+}
+
+func (h *CertificateHandler) SignPDF(ctx *gin.Context) {
+	var req models.SignPdfRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+	signedPdf, err := h.service.SignPDF(ctx.Request.Context(), req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.Header("Content-Disposition", "attachment; filename=signed_certificate.pdf")
+	ctx.Header("Content-Type", "application/pdf")
+	ctx.Data(200, "application/pdf", signedPdf)
 }
 
 func (h *CertificateHandler) SendCertificatesEmailsForEvent(ctx *gin.Context) {

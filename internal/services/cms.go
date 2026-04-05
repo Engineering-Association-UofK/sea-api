@@ -51,7 +51,7 @@ func (s *CmsService) CreateBlogPost(userId int64, post *models.BlogPostRequest) 
 	if err != nil {
 		return 0, err
 	}
-	err = s.GalleryService.AttachAssetToObject(post.CoverImageID, models.BlogPost, id)
+	err = s.GalleryService.AttachAssetToObject(post.CoverImageID, models.ObjBlogPost, id)
 	if err != nil {
 		return 0, err
 	}
@@ -149,8 +149,8 @@ func (s *CmsService) UpdateBlogPost(req *models.BlogPostUpdateRequest) error {
 		return err
 	}
 	if req.CoverImageID != post.CoverImageID && req.CoverImageID != 0 {
-		s.GalleryService.RemoveReference(models.BlogPost, post.ID)
-		s.GalleryService.AttachAssetToObject(req.CoverImageID, models.BlogPost, req.ID)
+		s.GalleryService.RemoveReference(models.ObjBlogPost, post.ID)
+		s.GalleryService.AttachAssetToObject(req.CoverImageID, models.ObjBlogPost, req.ID)
 	}
 
 	post.CoverImageID = req.CoverImageID
@@ -173,7 +173,7 @@ func (s *CmsService) DeleteBlogPost(id int64) error {
 	if _, err := s.CmsRepo.GetBlogPostByID(id); err != nil {
 		return err
 	}
-	s.GalleryService.RemoveReference(models.BlogPost, id)
+	s.GalleryService.RemoveReference(models.ObjBlogPost, id)
 	return s.CmsRepo.DeleteBlogPost(id)
 }
 

@@ -14,6 +14,7 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token      string `json:"token"`
 	UserID     int64  `json:"user_id"`
+	Roles      []Role `json:"roles"`
 	IsVerified bool   `json:"is_verified"`
 }
 

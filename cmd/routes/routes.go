@@ -57,6 +57,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 		cert := apiV1.Group("/cert")
 		cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
 		cert.GET("/download/:hash", midLimit, CertificateHandler.GetCertificates)
+		cert.GET("/verify-document/:hash", CertificateHandler.VerifyDocument)
 	}
 
 	{ // ==== AUTHENTICATION
@@ -204,6 +205,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			certificate := admin.Group("/certificate")
 			certificate.Use(middleware.RequireAnyRole(models.RoleCertifier, models.RoleSystemSuperAdmin))
 			certificate.GET("/generate-all-for-event", strictLimit, CertificateHandler.MakeCertificatesForEvent)
+			certificate.POST("/sign", midLimit, CertificateHandler.SignPDF)
 		}
 
 		{ // ==== MAIL

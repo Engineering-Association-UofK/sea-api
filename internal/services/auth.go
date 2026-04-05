@@ -97,6 +97,7 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 	return &models.LoginResponse{
 		Token:      tokenString,
 		UserID:     user.ID,
+		Roles:      roles,
 		IsVerified: user.Verified,
 	}, nil
 }
