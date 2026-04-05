@@ -394,6 +394,10 @@ func (s *FormService) GetAllForms() ([]models.FormSummaryResponse, error) {
 		return nil, err
 	}
 
+	if len(forms) == 0 {
+		return []models.FormSummaryResponse{}, nil
+	}
+
 	var responses []models.FormSummaryResponse
 	for _, f := range forms {
 		responses = append(responses, models.FormSummaryResponse{
@@ -413,6 +417,11 @@ func (s *FormService) GetResponsesByFormID(formID int64) ([]models.FormResponseD
 	if err != nil {
 		return nil, err
 	}
+
+	if len(responses) == 0 {
+		return []models.FormResponseDTO{}, nil
+	}
+
 	ids := utils.ExtractField(responses, func(r models.FormResponseModel) int64 { return r.ID })
 	allAnswers, err := s.formRepo.GetAnswersByResponseIDs(ids)
 	if err != nil {
@@ -453,6 +462,11 @@ func (s *FormService) GetUserResponsesForForm(userID, formID int64) ([]models.Fo
 	if err != nil {
 		return nil, err
 	}
+
+	if len(responses) == 0 {
+		return []models.FormResponseDTO{}, nil
+	}
+
 	ids := utils.ExtractField(responses, func(r models.FormResponseModel) int64 { return r.ID })
 	allAnswers, err := s.formRepo.GetAnswersByResponseIDs(ids)
 	if err != nil {

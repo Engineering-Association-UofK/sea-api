@@ -138,8 +138,9 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 		// TODO: Add bot commands
 
 		{ // ==== FORMS
-			form := admin.Group("/form")
-			form.Use(middleware.RequireAnyRole(models.RoleContentFormMgr, models.RoleSystemSuperAdmin))
+			// form := admin.Group("/form")
+			form := apiV1.Group("/form")
+			// form.Use(middleware.RequireAnyRole(models.RoleContentFormMgr, models.RoleSystemSuperAdmin))
 
 			form.GET("", FormHandler.GetAllForms)
 			form.POST("", FormHandler.CreateForm)

@@ -35,6 +35,10 @@ func (s *CollaboratorService) GetAll(ctx context.Context) ([]models.Collaborator
 		return nil, err
 	}
 
+	if len(collaborators) == 0 {
+		return []models.CollaboratorResponse{}, nil
+	}
+
 	var collaboratorResponses []models.CollaboratorResponse
 	for _, collaborator := range collaborators {
 		url := ""
