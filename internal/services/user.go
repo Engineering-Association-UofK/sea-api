@@ -514,16 +514,40 @@ func (s *UserService) MakeAdminManager(ID int64) error {
 	return nil
 }
 
+func (s *UserService) RemoveAdminManager(ID int64) error {
+	roles, err := s.GetRolesByUserID(ID)
+	if err != nil {
+		return err
+	}
+	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
+		return errs.New(errs.Forbidden, "Cannot remove a Super Admin as an admin manager", nil)
+	}
+	if !slices.Contains(roles, models.RoleSystemAdminManager) {
+		return errs.New(errs.NotFound, "User is not an admin manager", nil)
+	}
+	err = s.repo.RemoveRole(ID, models.RoleSystemAdminManager, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *UserService) UpdateAdminRoles(req *models.AdminRequest) error {
 	roles, err := s.GetRolesByUserID(req.ID)
 	if err != nil {
 		return err
 	}
+	specialRoles := []models.Role{}
+	for _, role := range roles {
+		if role == models.RoleSystemSuperAdmin {
+			return errs.New(errs.Forbidden, "Cannot update a Super Admin's roles", nil)
+		}
+		if models.SpecialAdminRoles[role] {
+			specialRoles = append(specialRoles, role)
+		}
+	}
 	if !slices.Contains(roles, models.RoleSystemAdmin) {
 		return errs.New(errs.NotFound, "User is not an admin", nil)
-	}
-	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
-		return errs.New(errs.Forbidden, "Cannot update a Super Admin's roles", nil)
 	}
 
 	for _, role := range req.Roles {
@@ -532,9 +556,10 @@ func (s *UserService) UpdateAdminRoles(req *models.AdminRequest) error {
 		}
 	}
 
-	if !slices.Contains(req.Roles, models.RoleSystemAdmin) {
-		req.Roles = append(req.Roles, models.RoleSystemAdmin)
+	for _, role := range specialRoles {
+		req.Roles = append(req.Roles, role)
 	}
+
 	err = s.repo.ReplaceRoles(req.ID, req.Roles, nil)
 	if err != nil {
 		return err

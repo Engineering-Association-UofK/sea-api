@@ -157,6 +157,22 @@ func (u *UserHandler) MakeAdminManager(c *gin.Context) {
 	response.NewTransactionResponse(200, "User added as admin manager successfully", intId, c)
 }
 
+func (u *UserHandler) RemoveAdminManager(c *gin.Context) {
+	id := c.Param("id")
+	intId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+	err = u.service.RemoveAdminManager(intId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "User removed as admin manager successfully", intId, c)
+}
+
 func (u *UserHandler) UpdateAdmin(c *gin.Context) {
 	var req models.AdminRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

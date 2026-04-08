@@ -297,6 +297,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 
 	participant, err := c.eventService.EventRepo.GetParticipantByEventAndUserIDs(eventId, userUserID)
 	if err != nil {
+		slog.Error("error getting participant", "error", err, "user_id", userUserID, "event_id", eventId)
 		return 0, err
 	}
 	if !participant.Completed {
@@ -304,15 +305,18 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	}
 	event, err := c.eventService.GetEventByID(eventId)
 	if err != nil {
+		slog.Error("error getting event", "error", err, "event_id", eventId)
 		return 0, err
 	}
 	user, err := c.userRepo.GetByUserID(userUserID)
 	if err != nil {
+		slog.Error("error getting user", "error", err, "user_id", userUserID)
 		return 0, err
 	}
 
 	collab, err := c.CollaboratorService.repo.GetByID(event.PresenterID)
 	if err != nil {
+		slog.Error("error getting collaborator", "error", err, "collaborator_id", event.PresenterID)
 		return 0, err
 	}
 
@@ -320,6 +324,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	if collab.SignatureID.Valid {
 		signatureImage, err := c.S3StoreService.Download(ctx, collab.SignatureID.Int64)
 		if err != nil {
+			slog.Error("error getting signature", "error", err, "signature_id", collab.SignatureID.Int64)
 			return 0, err
 		}
 		signature = base64.StdEncoding.EncodeToString(signatureImage)
@@ -332,6 +337,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 
 	qr, err := utils.GenerateGearQR(url, 512, 512)
 	if err != nil {
+		slog.Error("error generating qr", "error", err)
 		return 0, err
 	}
 
@@ -350,6 +356,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		utils.GetTemplate,
 	)
 	if err != nil {
+		slog.Error("error generating ar pdf", "error", err)
 		return 0, err
 	}
 
@@ -359,8 +366,8 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		base64.StdEncoding.EncodeToString(qr),
 		collab.NameEn,
 		signature,
-		event.StartDate.Format("January 01, 2006"),
-		event.EndDate.Format("January 01, 2006"),
+		event.StartDate.Format("January 02, 2006"),
+		event.EndDate.Format("January 02, 2006"),
 		time.Now().Format("Monday, Jan 02, 2006"),
 		event.Outcomes,
 		participant.Grade,
@@ -368,17 +375,19 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		utils.GetTemplate,
 	)
 	if err != nil {
+		slog.Error("error generating en pdf", "error", err)
 		return 0, err
 	}
 
 	storeIdAr, err := c.S3StoreService.Upload(ctx, c.storePath+"/ar/"+hashString+".pdf", pdfAr, "application/pdf")
 	if err != nil {
+		slog.Error("error uploading ar file", "error", err, "s3 stored file", storeIdAr)
 		return 0, err
 	}
 	storeIdEn, err := c.S3StoreService.Upload(ctx, c.storePath+"/en/"+hashString+".pdf", pdfEn, "application/pdf")
 	if err != nil {
 		c.S3StoreService.Delete(ctx, storeIdAr)
-		slog.Error("error uploading file", "error", err, "s3 stored file", storeIdEn)
+		slog.Error("error uploading en file", "error", err, "s3 stored file", storeIdEn)
 		return 0, err
 	}
 
@@ -405,6 +414,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	if err != nil {
 		c.S3StoreService.Delete(ctx, storeIdAr)
 		c.S3StoreService.Delete(ctx, storeIdEn)
+		slog.Error("error creating ar certificate file", "error", err, "stored file", storeIdAr, "stored file", storeIdEn)
 		return 0, err
 	}
 
@@ -414,6 +424,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		Lang:          "en",
 	})
 	if err != nil {
+		slog.Error("error creating en certificate file", "error", err, "stored file", storeIdEn)
 		c.S3StoreService.Delete(ctx, storeIdEn)
 		return 0, err
 	}

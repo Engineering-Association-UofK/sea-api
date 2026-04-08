@@ -113,6 +113,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			admin.PUT("/", UserHandler.UpdateAdmin)
 			admin.DELETE("/:id", UserHandler.DeleteAdmin)
 			admin.POST("/add-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), UserHandler.MakeAdminManager)
+			admin.DELETE("/remove-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), UserHandler.RemoveAdminManager)
 		}
 
 		{ // ==== BLOG POSTS

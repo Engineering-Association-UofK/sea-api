@@ -265,7 +265,7 @@ func (r *UserRepository) UpdateTempPasscode(id int64, passcode string) error {
 }
 
 func (r *UserRepository) UpdateRole(role *models.UserRole, tx *sqlx.Tx) error {
-	query := `UPDATE user_roles SET role = :role WHERE id = :id`
+	query := `UPDATE user_roles SET role = :role WHERE user_id = :id`
 	if tx != nil {
 		_, err := tx.NamedExec(query, role)
 		return err
@@ -275,7 +275,7 @@ func (r *UserRepository) UpdateRole(role *models.UserRole, tx *sqlx.Tx) error {
 }
 
 func (r *UserRepository) RemoveRole(id int64, role models.Role, tx *sqlx.Tx) error {
-	query := `DELETE FROM user_roles WHERE id = ? AND role = ?`
+	query := `DELETE FROM user_roles WHERE user_id = ? AND role = ?`
 	if tx != nil {
 		_, err := tx.Exec(query, id, role)
 		return err
@@ -350,7 +350,7 @@ func (r *UserRepository) DeleteTempUser(id int64, tx *sqlx.Tx) error {
 }
 
 func (r *UserRepository) DeleteRole(id int64, role models.Role, tx *sqlx.Tx) error {
-	query := `DELETE FROM user_roles WHERE id = ? AND role = ?`
+	query := `DELETE FROM user_roles WHERE user_id = ? AND role = ?`
 	if tx != nil {
 		_, err := tx.Exec(query, id, role)
 		return err

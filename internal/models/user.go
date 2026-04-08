@@ -36,6 +36,11 @@ var AllowedAdminRoles = map[Role]bool{
 	RolePaperViewer:     true,
 }
 
+var SpecialAdminRoles = map[Role]bool{
+	RoleSystemAdmin:        true,
+	RoleSystemAdminManager: true,
+}
+
 var AdminRoles = []Role{
 	RoleSystemUserMgr,
 	RoleSystemSupport,
