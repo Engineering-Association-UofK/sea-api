@@ -121,6 +121,10 @@ type UserModel struct {
 	Password string `db:"password"`
 	Verified bool   `db:"verified"`
 	Status   Status `db:"status"`
+
+	IsEditable  bool `db:"is_editable"`
+	IsLoggable  bool `db:"is_loggable"`
+	IsAnonymous bool `db:"is_anonymous"`
 }
 
 type TempUserModel struct {

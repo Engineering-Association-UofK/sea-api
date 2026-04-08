@@ -32,11 +32,11 @@ type NewsGalleryModel struct {
 // DTOs
 
 type BlogPostRequest struct {
-	CoverImageID int64  `json:"cover_image_id" binding:"required"`
+	CoverImageID int64  `json:"cover_image_id"`
 	Title        string `json:"title" binding:"required,min=3,max=255"`
 	Slug         string `json:"slug"`
 	Content      string `json:"content" binding:"required"`
-	IsPublished  bool   `json:"is_published" binding:"required"`
+	IsPublished  bool   `json:"is_published"`
 }
 
 type BlogPostUpdateRequest struct {

@@ -40,6 +40,18 @@ func AuthMiddleware(s *services.UserService) gin.HandlerFunc {
 			return
 		}
 
+		u, err := s.GetByUserID(c.Request.Context(), claims.UserID)
+		if err != nil {
+			c.Error(err)
+			c.Abort()
+			return
+		}
+		if !u.Verified {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not verified"})
+			c.Abort()
+			return
+		}
+
 		claims.Roles, err = s.GetRolesByUserID(claims.UserID)
 		if err != nil {
 			c.Error(err)

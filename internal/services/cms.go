@@ -148,8 +148,11 @@ func (s *CmsService) UpdateBlogPost(req *models.BlogPostUpdateRequest) error {
 	if err != nil {
 		return err
 	}
-	if req.CoverImageID != post.CoverImageID && req.CoverImageID != 0 {
+	if req.CoverImageID != post.CoverImageID {
 		s.GalleryService.RemoveReference(models.ObjBlogPost, post.ID)
+		if _, err := s.GalleryService.GetAssetByID(req.CoverImageID); err != nil {
+			return errs.New(errs.BadRequest, "invalid image ID provided", nil)
+		}
 		s.GalleryService.AttachAssetToObject(req.CoverImageID, models.ObjBlogPost, req.ID)
 	}
 

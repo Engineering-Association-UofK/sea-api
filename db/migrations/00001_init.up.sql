@@ -27,6 +27,10 @@ CREATE TABLE users (
     verified tinyint NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'active',
 
+    is_loggable TINYINT DEFAULT 1,
+    is_editable TINYINT DEFAULT 1,
+    anonymous TINYINT DEFAULT 0,
+
     UNIQUE (profile_image_id),
     FOREIGN KEY (profile_image_id) REFERENCES files(id)
 );

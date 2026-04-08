@@ -76,7 +76,8 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 	if err != nil {
 		return nil, err
 	}
-	roles := utils.ExtractField(rolesModels, func(r models.UserRole) models.Role { return r.Role })
+	roles := []models.Role{}
+	roles = utils.ExtractField(rolesModels, func(r models.UserRole) models.Role { return r.Role })
 
 	claims := &models.ManagedClaims{
 		UserID:   user.ID,

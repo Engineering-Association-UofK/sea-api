@@ -147,6 +147,19 @@ func (r *FileRepository) UpdateFile(item *models.FileModel) error {
 	return err
 }
 
+func (r *FileRepository) UpdateID(id int64, fileKey string) error {
+	query := `
+	UPDATE files
+	SET id = :id
+	WHERE file_key = :file_key
+	`
+	_, err := r.DB.NamedExec(query, map[string]interface{}{
+		"id":       id,
+		"file_key": fileKey,
+	})
+	return err
+}
+
 func (r *FileRepository) DeleteFile(id int64) error {
 	_, err := r.DB.Exec(`DELETE FROM files WHERE id = ?`, id)
 	return err

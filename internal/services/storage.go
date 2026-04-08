@@ -21,6 +21,7 @@ type S3StorageService struct {
 }
 
 func NewS3Service(repo *repositories.FileRepository) *S3StorageService {
+	bucket := "sea-api"
 	internalClient := s3.New(s3.Options{
 		Region:       "us-east-1",
 		BaseEndpoint: &config.App.StoreS3ApiUrl,
@@ -37,7 +38,7 @@ func NewS3Service(repo *repositories.FileRepository) *S3StorageService {
 		FilesRepo:     repo,
 		Client:        internalClient,
 		PresignClient: s3.NewPresignClient(externalClient),
-		Bucket:        "sea-api",
+		Bucket:        bucket,
 	}
 }
 

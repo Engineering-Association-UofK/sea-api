@@ -132,14 +132,17 @@ func (s *GalleryService) CleanGallery() (int, error) {
 	for _, asset := range assets {
 		err := s.S3Service.Delete(context.Background(), asset.FileID)
 		if err != nil {
-			slog.Error("Failed to delete asset", "Asset ID", asset.ID, "File ID", asset.FileID, "error", err)
+			slog.Error("Failed to delete asset file", "Asset ID", asset.ID, "File ID", asset.FileID, "error", err)
 		} else {
 			idsToDelete = append(idsToDelete, asset.ID)
 		}
 	}
 
 	for _, id := range idsToDelete {
-		s.Repo.DeleteAsset(id)
+		err = s.Repo.DeleteAsset(id)
+		if err != nil {
+			slog.Error("Failed to delete asset record", "Asset ID", id, "error", err)
+		}
 	}
 
 	return len(idsToDelete), nil

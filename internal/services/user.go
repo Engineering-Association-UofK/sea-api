@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -24,6 +25,30 @@ type UserService struct {
 }
 
 func NewUserService(repo *repositories.UserRepository, suspensionsRepo *repositories.SuspensionsRepo, s3StorageService *S3StorageService) *UserService {
+	if _, err := repo.GetByUserID(0); err != nil {
+		err = repo.DetailedCreate(&models.UserModel{
+			ID:             0,
+			UniID:          0,
+			ProfileImageID: sql.NullInt64{Int64: 0, Valid: false},
+			Username:       "system",
+			NameAr:         "النظام",
+			NameEn:         "System",
+			Email:          "system@sea.uofk.edu",
+			Phone:          "0000000000",
+			Department:     "IT",
+			Gender:         models.MALE,
+			Verified:       true,
+			Password:       "",
+			Status:         models.STATUS_ACTIVE,
+			IsEditable:     false,
+			IsLoggable:     false,
+			IsAnonymous:    true,
+		}, nil)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	return &UserService{repo: repo, suspensionsRepo: suspensionsRepo, S3StorageService: s3StorageService}
 }
 
@@ -119,6 +144,10 @@ func (s *UserService) GetAllUserDetailsByIndices(indices []int64) ([]models.User
 	users, err := s.repo.GetAllByIndices(indices)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(users) == 0 {
+		return []models.UserDetails{}, nil
 	}
 
 	var userResponses []models.UserDetails
@@ -269,7 +298,14 @@ func (s *UserService) GetRolesByUserID(userID int64) ([]models.Role, error) {
 	if err != nil {
 		return nil, err
 	}
-	return utils.ExtractField(rolesModels, func(u models.UserRole) models.Role { return u.Role }), nil
+	if len(rolesModels) == 0 {
+		return []models.Role{}, nil
+	}
+	var roles []models.Role
+	for _, r := range rolesModels {
+		roles = append(roles, r.Role)
+	}
+	return roles, nil
 }
 
 // ======== UPDATE ========
@@ -400,7 +436,9 @@ func (s *UserService) UpdateUsersImport(file io.Reader) error {
 	return nil
 }
 
-// ###### ADMIN MANAGEMENT ######
+// ############################################################
+// ##################    ADMIN MANAGEMENT    ##################
+// ############################################################
 
 func (s *UserService) GetAdmins() ([]models.AdminResponse, error) {
 	admins, err := s.repo.GetAdmins()
@@ -481,13 +519,21 @@ func (s *UserService) UpdateAdminRoles(req *models.AdminRequest) error {
 	if err != nil {
 		return err
 	}
+	if !slices.Contains(roles, models.RoleSystemAdmin) {
+		return errs.New(errs.NotFound, "User is not an admin", nil)
+	}
 	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot update a Super Admin's roles", nil)
 	}
+
 	for _, role := range req.Roles {
 		if !models.AllowedAdminRoles[role] {
 			return errs.New(errs.BadRequest, "Invalid role", nil)
 		}
+	}
+
+	if !slices.Contains(req.Roles, models.RoleSystemAdmin) {
+		req.Roles = append(req.Roles, models.RoleSystemAdmin)
 	}
 	err = s.repo.ReplaceRoles(req.ID, req.Roles, nil)
 	if err != nil {
@@ -497,16 +543,10 @@ func (s *UserService) UpdateAdminRoles(req *models.AdminRequest) error {
 }
 
 func (s *UserService) RemoveAdmin(ID int64) error {
-	roles, err := s.GetRolesByUserID(ID)
-	if err != nil {
-		return err
-	}
-	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
-		return errs.New(errs.Forbidden, "Cannot remove a Super Admin as an admin", nil)
-	}
-	if !slices.Contains(roles, models.RoleSystemAdmin) {
-		return errs.New(errs.Conflict, "User is not an admin", nil)
-	}
+	err := s.UpdateAdminRoles(&models.AdminRequest{
+		ID:    ID,
+		Roles: []models.Role{},
+	})
 	err = s.repo.RemoveAdmin(ID)
 	if err != nil {
 		return err
