@@ -17,6 +17,7 @@ type Auth interface {
 type IUserRepository interface {
 	GetByUserID(id int64) (*models.UserModel, error)
 	GetByUsername(username string) (*models.UserModel, error)
+	IsUsernameAvailable(username string) (bool, error)
 	GetByEmail(email string) (*models.UserModel, error)
 	GetByUniID(uniID int64) (*models.UserModel, error)
 	Update(user *models.UserModel, tx *sqlx.Tx) error

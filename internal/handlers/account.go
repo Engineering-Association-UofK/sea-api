@@ -153,6 +153,11 @@ func (a *AccountHandler) CheckUsernameAvailability(c *gin.Context) {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
-	available := a.AccountService.IsUsernameAvailable(req)
+	available, err := a.AccountService.IsUsernameAvailable(req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.JSON(http.StatusOK, models.CheckUsername{Available: available})
 }

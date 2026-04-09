@@ -88,7 +88,7 @@ func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequ
 	url := DOC_VERIFICATION_PATH + hashString
 
 	if _, err := c.documentRepository.GetByHash(hashString); err == nil {
-		return nil, errs.New(errs.BadRequest, "certificate already exists", nil)
+		return nil, errs.New(errs.BadRequest, "Document already exists", nil)
 	}
 
 	qr, err := utils.GenerateGearQR(url, 512, 512)

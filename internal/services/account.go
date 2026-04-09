@@ -167,7 +167,9 @@ func (s *AccountService) UpdateUsername(claims *models.ManagedClaims, req models
 	if err := ValidateUsername(string(req.Username)); err != nil {
 		return err
 	}
-	if !s.IsUsernameAvailable(req) {
+	if b, err := s.IsUsernameAvailable(req); err != nil {
+		return err
+	} else if !b {
 		return errs.New(errs.Conflict, "Username is already in use", nil)
 	}
 
@@ -179,9 +181,12 @@ func (s *AccountService) UpdateUsername(claims *models.ManagedClaims, req models
 	return s.UserRepo.Update(user, nil)
 }
 
-func (s *AccountService) IsUsernameAvailable(req models.UpdateUsernameRequest) bool {
-	_, err := s.UserRepo.GetByUsername(string(req.Username))
-	return err != nil
+func (s *AccountService) IsUsernameAvailable(req models.UpdateUsernameRequest) (bool, error) {
+	available, err := s.UserRepo.IsUsernameAvailable(string(req.Username))
+	if err != nil {
+		return false, err
+	}
+	return available, nil
 }
 
 // ====== HELPERS ======

@@ -66,6 +66,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 		auth.POST("/verify", AuthHandler.Verify)
 		auth.POST("/login", highLimit, AuthHandler.Login)
 		auth.POST("/register", highLimit, AuthHandler.Register)
+		auth.POST("/check-username", AccountHandler.CheckUsernameAvailability)
 	}
 
 	{ // ==== ACCOUNT
@@ -79,7 +80,6 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			account.PUT("/password", AccountHandler.UpdatePassword)
 			account.PUT("/email", middleware.StatefulRateLimiter(models.LimitUpdateEmail, rateLimitService), AccountHandler.UpdateEmail)
 			account.PUT("/username", middleware.StatefulRateLimiter(models.LimitUpdateUsername, rateLimitService), AccountHandler.UpdateUsername)
-			account.POST("/check-username", AccountHandler.CheckUsernameAvailability)
 		}
 
 		{ // ==== EVENTS & FORMS

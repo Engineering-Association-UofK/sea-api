@@ -148,6 +148,15 @@ func (r *UserRepository) GetByUsername(username string) (*models.UserModel, erro
 	return &user, nil
 }
 
+func (r *UserRepository) IsUsernameAvailable(username string) (bool, error) {
+	var count int
+	err := r.DB.Get(&count, `SELECT COUNT(*) FROM users WHERE username = ?`, username)
+	if err != nil {
+		return false, err
+	}
+	return count == 0, nil
+}
+
 func (r *UserRepository) GetByEmail(email string) (*models.UserModel, error) {
 	var user models.UserModel
 	err := r.DB.Get(&user, `SELECT * FROM users WHERE email = ? AND is_anonymous = false`, email)
