@@ -71,10 +71,25 @@ func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequ
 		return nil, err
 	}
 
-	stringToHash := req.File.Filename + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
+	metadataMap := make(map[string]string)
+	if req.Metadata != "" {
+		err = json.Unmarshal([]byte(req.Metadata), &metadataMap)
+		if err != nil {
+			return nil, errs.New(errs.BadRequest, "invalid json in metadata: "+err.Error(), nil)
+		}
+	}
+	if len(metadataMap) == 0 {
+		return nil, errs.New(errs.BadRequest, "no metadata provided", nil)
+	}
+
+	stringToHash := req.File.Filename + "|" + fmt.Sprint(req.File.Size) + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
 	hash := sha256.Sum256([]byte(stringToHash))
 	hashString := hex.EncodeToString(hash[:])
 	url := DOC_VERIFICATION_PATH + hashString
+
+	if _, err := c.documentRepository.GetByHash(hashString); err == nil {
+		return nil, errs.New(errs.BadRequest, "certificate already exists", nil)
+	}
 
 	qr, err := utils.GenerateGearQR(url, 512, 512)
 	if err != nil {
@@ -147,12 +162,6 @@ func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequ
 	}, tx)
 	if err != nil {
 		c.S3StoreService.Delete(ctx, storeId)
-		return nil, err
-	}
-
-	metadataMap := make(map[string]string)
-	err = json.Unmarshal(req.Metadata, &metadataMap)
-	if err != nil {
 		return nil, err
 	}
 

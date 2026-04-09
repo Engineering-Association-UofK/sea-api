@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"mime/multipart"
+	"time"
+)
 
 type DocumentType string
 
@@ -42,4 +45,17 @@ type DocumentVerifyResponse struct {
 	CreatedAt time.Time    `json:"created_at"`
 
 	Details []DocumentMetadata `json:"details"`
+}
+
+type SignPdfRequest struct {
+	EventID int64        `form:"event_id" binding:"required"`
+	Type    DocumentType `form:"type" binding:"required"`
+
+	Metadata string `form:"metadata" binding:"required"`
+
+	QrX float64 `form:"qr_x"`
+	QrY float64 `form:"qr_y"`
+	QrS float64 `form:"qr_s" binding:"required"`
+
+	File *multipart.FileHeader `form:"file" binding:"required"`
 }
