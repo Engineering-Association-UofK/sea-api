@@ -69,12 +69,8 @@ func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequ
 	if err != nil {
 		return nil, err
 	}
-	collab, err := c.CollaboratorService.GetByID(ctx, req.CollabID)
-	if err != nil {
-		return nil, err
-	}
 
-	stringToHash := collab.NameEn + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
+	stringToHash := req.File.Filename + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
 	hash := sha256.Sum256([]byte(stringToHash))
 	hashString := hex.EncodeToString(hash[:])
 	url := DOC_VERIFICATION_PATH + hashString
@@ -152,15 +148,18 @@ func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequ
 		c.S3StoreService.Delete(ctx, storeId)
 		return nil, err
 	}
-	_, err = c.documentRepository.CreateRelation(&models.DocumentRelationModel{
-		DocumentID:  id,
-		Description: "Certificate of gratitude for collaborator",
-		ObjectType:  models.ObjCollaborator,
-		ObjectID:    req.CollabID,
-	}, tx)
-	if err != nil {
-		c.S3StoreService.Delete(ctx, storeId)
-		return nil, err
+
+	if len(req.Metadata) > 0 {
+		for key, value := range req.Metadata {
+			_, err := c.documentRepository.CreateMetadata(&models.DocumentMetadataModel{
+				DocumentID: id,
+				Key:        key,
+				Value:      value,
+			}, tx)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	err = tx.Commit()
@@ -486,6 +485,11 @@ func (c *CertificateService) VerifyDocument(hash string) (*models.DocumentVerify
 		return nil, err
 	}
 
+	metadata, err := c.documentRepository.GetMetadataByDocumentID(doc.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	var Map []models.DocumentMetadata
 	for _, relation := range relations {
 		switch relation.ObjectType {
@@ -509,6 +513,13 @@ func (c *CertificateService) VerifyDocument(hash string) (*models.DocumentVerify
 			})
 		}
 	}
+	for _, meta := range metadata {
+		Map = append(Map, models.DocumentMetadata{
+			Label: meta.Key,
+			Value: meta.Value,
+		})
+	}
+
 	return &models.DocumentVerifyResponse{
 		Valid:     true,
 		Type:      doc.Type,

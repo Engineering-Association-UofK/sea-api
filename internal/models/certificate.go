@@ -76,8 +76,7 @@ type SignPdfRequest struct {
 	EventID int64        `form:"event_id" binding:"required"`
 	Type    DocumentType `form:"type" binding:"required"`
 
-	CollabID int64 `form:"collab_id" binding:"required"`
-	// Metadata map[string]string `form:"metadata" binding:"required"`
+	Metadata map[string]string `form:"metadata"`
 
 	QrX float64 `form:"qr_x"`
 	QrY float64 `form:"qr_y"`

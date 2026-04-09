@@ -362,3 +362,14 @@ CREATE TABLE document_relations (
 
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 );
+
+CREATE TABLE document_metadata (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    document_id INT NOT NULL,
+    d_key VARCHAR(255) NOT NULL,
+    d_value TEXT NOT NULL,
+    
+    UNIQUE (document_id, d_key),
+
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+);

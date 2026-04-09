@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -25,29 +24,29 @@ type UserService struct {
 }
 
 func NewUserService(repo *repositories.UserRepository, suspensionsRepo *repositories.SuspensionsRepo, s3StorageService *S3StorageService) *UserService {
-	if _, err := repo.GetByUserID(0); err != nil {
-		err = repo.DetailedCreate(&models.UserModel{
-			ID:             0,
-			UniID:          0,
-			ProfileImageID: sql.NullInt64{Int64: 0, Valid: false},
-			Username:       "system",
-			NameAr:         "النظام",
-			NameEn:         "System",
-			Email:          "system@sea.uofk.edu",
-			Phone:          "0000000000",
-			Department:     "IT",
-			Gender:         models.MALE,
-			Verified:       true,
-			Password:       "",
-			Status:         models.STATUS_ACTIVE,
-			IsEditable:     false,
-			IsLoggable:     false,
-			IsAnonymous:    true,
-		}, nil)
-		if err != nil {
-			panic(err)
-		}
-	}
+	// if _, err := repo.GetByUserID(0); err != nil {
+	// 	err = repo.DetailedCreate(&models.UserModel{
+	// 		ID:             0,
+	// 		UniID:          1000000000,
+	// 		ProfileImageID: sql.NullInt64{Int64: 0, Valid: false},
+	// 		Username:       "system",
+	// 		NameAr:         "النظام",
+	// 		NameEn:         "System",
+	// 		Email:          "system@sea.uofk.edu",
+	// 		Phone:          "0000000000",
+	// 		Department:     "IT",
+	// 		Gender:         models.MALE,
+	// 		Verified:       true,
+	// 		Password:       "",
+	// 		Status:         models.STATUS_ACTIVE,
+	// 		IsEditable:     false,
+	// 		IsLoggable:     false,
+	// 		IsAnonymous:    true,
+	// 	}, nil)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// }
 
 	return &UserService{repo: repo, suspensionsRepo: suspensionsRepo, S3StorageService: s3StorageService}
 }

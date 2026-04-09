@@ -24,6 +24,13 @@ type DocumentRelationModel struct {
 	ObjectID    int64      `db:"object_id"`
 }
 
+type DocumentMetadataModel struct {
+	ID         int64  `db:"id"`
+	DocumentID int64  `db:"document_id"`
+	Key        string `db:"d_key"`
+	Value      string `db:"d_value"`
+}
+
 type DocumentMetadata struct {
 	Label string `json:"label"`
 	Value string `json:"value"`
