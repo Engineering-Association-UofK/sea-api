@@ -102,3 +102,68 @@ func (r *DocumentRepository) DeleteRelationsByObject(objectType models.ObjectTyp
 	_, err := r.DB.Exec(`DELETE FROM document_relations WHERE object_type = ? AND object_id = ?`, objectType, objectID)
 	return err
 }
+
+// =========================================
+// ==========  document metadata  ==========
+// =========================================
+
+func (d *DocumentRepository) CreateMetadata(item *models.DocumentMetadataModel, tx *sqlx.Tx) (int64, error) {
+	query := `
+	INSERT INTO document_metadata (document_id, d_key, d_value)
+	VALUES (:document_id, :d_key, :d_value)
+	`
+	if tx != nil {
+		res, err := tx.NamedExec(query, item)
+		if err != nil {
+			return 0, err
+		}
+		return res.LastInsertId()
+	}
+	res, err := d.DB.NamedExec(query, item)
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
+func (d *DocumentRepository) GetMetadataByDocumentID(documentID int64) ([]models.DocumentMetadataModel, error) {
+	items := []models.DocumentMetadataModel{}
+	err := d.DB.Select(&items, `SELECT * FROM document_metadata WHERE document_id = ?`, documentID)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (d *DocumentRepository) GetMetadataByID(id int64) (*models.DocumentMetadataModel, error) {
+	var item models.DocumentMetadataModel
+	err := d.DB.Get(&item, `SELECT * FROM document_metadata WHERE id = ?`, id)
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (d *DocumentRepository) UpdateMetadata(item *models.DocumentMetadataModel, tx *sqlx.Tx) error {
+	query := `
+	UPDATE document_metadata
+	SET document_id = :document_id, d_key = :d_key, d_value = :d_value
+	WHERE id = :id
+	`
+	if tx != nil {
+		_, err := tx.NamedExec(query, item)
+		return err
+	}
+	_, err := d.DB.NamedExec(query, item)
+	return err
+}
+
+func (d *DocumentRepository) DeleteMetadata(id int64, tx *sqlx.Tx) error {
+	query := `DELETE FROM document_metadata WHERE id = ?`
+	if tx != nil {
+		_, err := tx.Exec(query, id)
+		return err
+	}
+	_, err := d.DB.Exec(query, id)
+	return err
+}
