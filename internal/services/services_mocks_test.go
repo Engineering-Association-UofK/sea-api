@@ -28,6 +28,11 @@ func (m *MockUserRepository) GetByUsername(username string) (*models.UserModel, 
 	return args.Get(0).(*models.UserModel), args.Error(1)
 }
 
+func (m *MockUserRepository) IsUsernameAvailable(username string) (bool, error) {
+	args := m.Called(username)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *MockUserRepository) GetByEmail(email string) (*models.UserModel, error) {
 	args := m.Called(email)
 	if args.Get(0) == nil {

@@ -143,12 +143,14 @@ func TestIsUsernameAvailable(t *testing.T) {
 
 	// Case 1: Username is available
 	mockUserRepo.On("GetByUsername", req.Username).Return(nil, assert.AnError).Once()
-	available := accountService.IsUsernameAvailable(req)
+	available, err := accountService.IsUsernameAvailable(req)
+	assert.NoError(t, err)
 	assert.True(t, available)
 
 	// Case 2: Username is not available
 	mockUserRepo.On("GetByUsername", req.Username).Return(&models.UserModel{}, nil).Once()
-	available = accountService.IsUsernameAvailable(req)
+	available, err = accountService.IsUsernameAvailable(req)
+	assert.NoError(t, err)
 	assert.False(t, available)
 
 	mockUserRepo.AssertExpectations(t)

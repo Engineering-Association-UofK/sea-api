@@ -22,7 +22,7 @@ func NewUserHandler(service *services.UserService) *UserHandler {
 // ======== GET ALL ========
 
 func (u *UserHandler) GetAll(c *gin.Context) {
-	var req models.UserListRequest
+	var req models.ListRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 
@@ -37,7 +37,7 @@ func (u *UserHandler) GetAll(c *gin.Context) {
 	c.JSON(200, resp)
 }
 func (u *UserHandler) GetAllTempUsers(c *gin.Context) {
-	var req models.UserListRequest
+	var req models.ListRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return

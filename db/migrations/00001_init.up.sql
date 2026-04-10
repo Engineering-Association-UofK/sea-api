@@ -221,13 +221,14 @@ CREATE TABLE gallery_references (
 
 -- -------- CMS SCHEMA
 
-CREATE TABLE blog_posts (
+CREATE TABLE posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255) NOT NULL UNIQUE,
     content LONGTEXT NOT NULL,
     cover_image_id INT NOT NULL,
     author_id INT NOT NULL,
+    post_type VARCHAR(50) NOT NULL,
     is_published BOOLEAN DEFAULT FALSE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

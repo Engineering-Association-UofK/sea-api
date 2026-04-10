@@ -2,12 +2,26 @@ package models
 
 import "time"
 
+type PostType string
+
+const (
+	PostNews         PostType = "NEWS"
+	PostIssues       PostType = "ISSUES"
+	PostAnnouncement PostType = "ANNOUNCEMENT"
+	PostEvent        PostType = "EVENT"
+	PostBlog         PostType = "BLOG"
+	PostPhilosophy   PostType = "PHILANTHROPY"
+)
+
+// Models
+
 type BlogPostModel struct {
 	ID           int64     `db:"id" json:"id"`
 	CoverImageID int64     `db:"cover_image_id" json:"cover_image_id"`
 	Title        string    `db:"title" json:"title"`
 	Slug         string    `db:"slug" json:"slug"`
 	Content      string    `db:"content" json:"content"`
+	PostType     PostType  `db:"post_type" json:"post_type"`
 	AuthorID     int64     `db:"author_id" json:"author_id"`
 	IsPublished  bool      `db:"is_published" json:"is_published"`
 	CreatedAt    time.Time `db:"created_at" json:"created_at"`
@@ -22,11 +36,6 @@ type TeamMemberModel struct {
 	DisplayOrder int       `db:"display_order" json:"display_order"`
 	IsActive     bool      `db:"is_active" json:"is_active"`
 	CreatedAt    time.Time `db:"created_at" json:"created_at"`
-}
-
-type NewsGalleryModel struct {
-	ID      int64  `db:"id" json:"id"`
-	AssetID string `db:"asset_id" json:"asset_id"`
 }
 
 // DTOs
@@ -58,6 +67,26 @@ type BlogPostResponse struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+type BlogPostViewResponse struct {
+	ImageUrl   string    `json:"image_url"`
+	Title      string    `json:"title"`
+	Content    string    `json:"content"`
+	AuthorName string    `json:"author_name"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+type BlogPostListViewResponse struct {
+	ImageUrl   string    `json:"image_url"`
+	Title      string    `json:"title"`
+	AuthorName string    `json:"author_name"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+type PostListViewResponse struct {
+	Posts []BlogPostListViewResponse `json:"posts"`
+	Pages int                        `json:"pages"`
+}
+
 type TeamMemberRequest struct {
 	UserID       int64  `json:"user_id" binding:"required"`
 	Role         string `json:"role" binding:"required"`
@@ -83,7 +112,12 @@ type TeamMemberResponse struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-type NewsGalleryResponse struct {
-	URL     string `json:"url"`
-	AltText string `json:"alt_text"`
+type TeamMemberViewResponse struct {
+	UserID       int64  `json:"user_id"`
+	NameAr       string `json:"name_ar"`
+	NameEn       string `json:"name_en"`
+	Role         string `json:"role"`
+	Bio          string `json:"bio"`
+	ProfilePic   string `json:"profile_pic"`
+	DisplayOrder int    `json:"display_order"`
 }

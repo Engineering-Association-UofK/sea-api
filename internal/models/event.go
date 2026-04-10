@@ -121,3 +121,17 @@ type ComponentScoreRequest struct {
 type MakeCertificatesForEventRequest struct {
 	EventID int64 `json:"event_id" binding:"required"`
 }
+
+// Open Endpoints
+
+type EventViewResponse struct {
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	HeaderImageUrl string    `json:"header_image_url"`
+	PresenterName  string    `json:"presenter_name"`
+	EventType      EventType `json:"event_type"`
+	StartDate      time.Time `json:"start_date"`
+	EndDate        time.Time `json:"end_date"`
+}
+
+type EventViewListResponse struct{}

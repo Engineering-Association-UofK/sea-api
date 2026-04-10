@@ -53,7 +53,7 @@ func NewUserService(repo *repositories.UserRepository, suspensionsRepo *reposito
 
 // ======== GET ALL ========
 
-func (s *UserService) GetAllTempUsers(req *models.UserListRequest) (*models.TempUserListResponse, error) {
+func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUserListResponse, error) {
 	if err := isValidGetListRequest(req); err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (s *UserService) GetAllTempUsers(req *models.UserListRequest) (*models.Temp
 	}, nil
 }
 
-func (s *UserService) GetAll(req *models.UserListRequest) (*models.UserListResponse, error) {
+func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse, error) {
 	if err := isValidGetListRequest(req); err != nil {
 		return nil, err
 	}
@@ -634,7 +634,7 @@ func generatePasscode(length int) (string, error) {
 
 // ======== VALIDATION ========
 
-func isValidGetListRequest(req *models.UserListRequest) error {
+func isValidGetListRequest(req *models.ListRequest) error {
 	if req.Page < 1 || req.Limit < 1 {
 		return errs.New(errs.BadRequest, "Given page and limit must be greater than 0", nil)
 	}

@@ -210,11 +210,6 @@ type TempUserResponse struct {
 	Passcode string `json:"passcode"`
 }
 
-type UserListRequest struct {
-	Limit int `json:"limit" binding:"required"`
-	Page  int `json:"page" binding:"required"`
-}
-
 type UserListResponse struct {
 	Users []UserListItemResponse `json:"users"`
 	Pages int                    `json:"pages"`

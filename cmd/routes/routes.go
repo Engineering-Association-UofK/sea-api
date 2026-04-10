@@ -69,6 +69,13 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 		auth.POST("/check-username", AccountHandler.CheckUsernameAvailability)
 	}
 
+	{
+		cms := apiV1.Group("/cms")
+		cms.GET("/blogs/:slug", CmsHandler.GetViewBlogPostBySlug)
+		cms.GET("/blogs", CmsHandler.GetBlogPostsList)
+		cms.GET("/team", CmsHandler.GetViewTeamMembers)
+	}
+
 	{ // ==== ACCOUNT
 		account := apiV1.Group("/account")
 		account.Use(middleware.AuthMiddleware(u))
@@ -121,7 +128,6 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			blog.Use(middleware.RequireAnyRole(models.RoleContentBlogMgr, models.RoleSystemSuperAdmin))
 			blog.GET("", CmsHandler.GetAllBlogPosts)
 			blog.GET("/:id", CmsHandler.GetBlogPostById)
-			blog.GET("/slug/:slug", CmsHandler.GetBlogPostBySlug)
 			blog.POST("", CmsHandler.CreateBlogPost)
 			blog.PUT("", CmsHandler.UpdateBlogPost)
 			blog.DELETE("/:id", CmsHandler.DeleteBlogPost)

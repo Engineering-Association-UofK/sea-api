@@ -67,13 +67,70 @@ func (s *CmsService) GetBlogPostById(id int64) (*models.BlogPostResponse, error)
 	return s.getBlogPost(post)
 }
 
-func (s *CmsService) GetBlogPostBySlug(slug string) (*models.BlogPostResponse, error) {
+func (s *CmsService) GetViewBlogPostBySlug(slug string) (*models.BlogPostViewResponse, error) {
 	post, err := s.CmsRepo.GetBlogPostBySlug(slug)
 	if err != nil {
-		slog.Info("Post not found using slug")
 		return nil, err
 	}
-	return s.getBlogPost(post)
+	if !post.IsPublished {
+		return nil, errs.New(errs.NotFound, "post not found", nil)
+	}
+	model, err := s.getBlogPost(post)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.BlogPostViewResponse{
+		ImageUrl:   model.ImageUrl,
+		Title:      model.Title,
+		Content:    model.Content,
+		UpdatedAt:  model.UpdatedAt,
+		AuthorName: model.AuthorName,
+	}, nil
+}
+
+func (s *CmsService) GetViewBlogPostList(req models.ListRequest) (*models.PostListViewResponse, error) {
+	posts, total, err := s.CmsRepo.GetPostsListByType(req, models.PostBlog)
+	if err != nil {
+		return nil, err
+	}
+	response := models.PostListViewResponse{}
+	if len(posts) == 0 {
+		return &response, nil
+	}
+
+	var usersIds []int64
+	for _, post := range posts {
+		usersIds = append(usersIds, post.AuthorID)
+	}
+
+	authors, err := s.UserService.GetAllUserDetailsByIndices(usersIds)
+	if err != nil {
+		return nil, err
+	}
+	authorsMap := utils.FromSlice(authors, func(u models.UserDetails) int64 { return u.ID })
+
+	responses := []models.BlogPostListViewResponse{}
+	for _, post := range posts {
+		url, err := s.GalleryService.GetLinkByAssetID(post.CoverImageID)
+		if err != nil {
+			slog.Info("Failed to generate url", "store id", post.CoverImageID)
+			return nil, err
+		}
+		responses = append(responses, models.BlogPostListViewResponse{
+			ImageUrl:   url,
+			Title:      post.Title,
+			AuthorName: authorsMap[post.AuthorID].NameAr,
+			UpdatedAt:  post.UpdatedAt,
+		})
+	}
+
+	response = models.PostListViewResponse{
+		Posts: responses,
+		Pages: total / req.Limit,
+	}
+
+	return &response, nil
 }
 
 func (s *CmsService) getBlogPost(post *models.BlogPostModel) (*models.BlogPostResponse, error) {
@@ -255,6 +312,43 @@ func (s *CmsService) GetAllTeamMembers(activeOnly bool) ([]models.TeamMemberResp
 			Bio:          m.Bio,
 			DisplayOrder: m.DisplayOrder,
 			CreatedAt:    m.CreatedAt,
+		})
+	}
+
+	return dtos, nil
+}
+
+func (s *CmsService) GetViewTeamMembers() ([]models.TeamMemberViewResponse, error) {
+	members, err := s.CmsRepo.GetAllTeamMembers(true)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(members) == 0 {
+		return []models.TeamMemberViewResponse{}, nil
+	}
+
+	var usersIds []int64
+	for _, member := range members {
+		usersIds = append(usersIds, member.UserID)
+	}
+
+	users, err := s.UserService.GetAllUserDetailsByIndices(usersIds)
+	if err != nil {
+		return nil, err
+	}
+	usersMap := utils.FromSlice(users, func(u models.UserDetails) int64 { return u.ID })
+
+	var dtos []models.TeamMemberViewResponse
+	for _, m := range members {
+		dtos = append(dtos, models.TeamMemberViewResponse{
+			UserID:       m.UserID,
+			NameAr:       usersMap[m.UserID].NameAr,
+			NameEn:       usersMap[m.UserID].NameEn,
+			Role:         m.Role,
+			Bio:          m.Bio,
+			DisplayOrder: m.DisplayOrder,
+			ProfilePic:   usersMap[m.UserID].ProfilePic,
 		})
 	}
 

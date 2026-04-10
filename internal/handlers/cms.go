@@ -59,15 +59,31 @@ func (h *CmsHandler) GetBlogPostById(ctx *gin.Context) {
 	ctx.PureJSON(200, post)
 }
 
-func (h *CmsHandler) GetBlogPostBySlug(ctx *gin.Context) {
+func (h *CmsHandler) GetViewBlogPostBySlug(ctx *gin.Context) {
 	slug := ctx.Param("slug")
-	post, err := h.CmsService.GetBlogPostBySlug(slug)
+	post, err := h.CmsService.GetViewBlogPostBySlug(slug)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
 
 	ctx.PureJSON(200, post)
+}
+
+func (h *CmsHandler) GetBlogPostsList(ctx *gin.Context) {
+	var req models.ListRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	posts, err := h.CmsService.GetViewBlogPostList(req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.PureJSON(200, posts)
 }
 
 func (h *CmsHandler) GetAllBlogPosts(ctx *gin.Context) {
@@ -151,6 +167,16 @@ func (h *CmsHandler) GetAllTeamMembers(ctx *gin.Context) {
 	activeOnly, _ := strconv.ParseBool(activeOnlyStr)
 
 	members, err := h.CmsService.GetAllTeamMembers(activeOnly)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.PureJSON(200, members)
+}
+
+func (h *CmsHandler) GetViewTeamMembers(ctx *gin.Context) {
+	members, err := h.CmsService.GetViewTeamMembers()
 	if err != nil {
 		ctx.Error(err)
 		return
