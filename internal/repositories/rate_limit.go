@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"sea-api/internal/models"
 
 	"github.com/jmoiron/sqlx"
@@ -16,7 +17,7 @@ func NewRateLimitRepository(db *sqlx.DB) *RateLimitRepository {
 
 func (r *RateLimitRepository) GetRateLimit(ip string, endpoint models.RateLimitEndpoints) (*models.RateLimitModel, error) {
 	var limit models.RateLimitModel
-	query := `SELECT * FROM rate_limits WHERE ip_address = ? AND endpoint = ?`
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE ip_address = ? AND endpoint = ?`, models.TableRateLimits)
 	err := r.db.Get(&limit, query, ip, endpoint)
 	if err != nil {
 		return nil, err
@@ -25,29 +26,29 @@ func (r *RateLimitRepository) GetRateLimit(ip string, endpoint models.RateLimitE
 }
 
 func (r *RateLimitRepository) UpsertRateLimit(limit *models.RateLimitModel) error {
-	query := `
-	INSERT INTO rate_limits (ip_address, endpoint, request_count, last_request)
+	query := fmt.Sprintf(`
+	INSERT INTO %s (ip_address, endpoint, request_count, last_request)
 	VALUES (:ip_address, :endpoint, :request_count, :last_request)
 	ON DUPLICATE KEY UPDATE 
 		request_count = VALUES(request_count),
 		last_request = VALUES(last_request)
-	`
+	`, models.TableRateLimits)
 	_, err := r.db.NamedExec(query, limit)
 	return err
 }
 
 func (r *RateLimitRepository) ResetRateLimit(ip string, endpoint models.RateLimitEndpoints) error {
-	query := `DELETE FROM rate_limits WHERE ip_address = ? AND endpoint = ?`
+	query := fmt.Sprintf(`DELETE FROM %s WHERE ip_address = ? AND endpoint = ?`, models.TableRateLimits)
 	_, err := r.db.Exec(query, ip, endpoint)
 	return err
 }
 
 func (r *RateLimitRepository) CleanExpired(endpoint models.RateLimitEndpoints, multiplier int) error {
-	query := `
-	DELETE FROM rate_limits 
+	query := fmt.Sprintf(`
+	DELETE FROM %s 
 	WHERE endpoint = ? 
 	  AND last_request < NOW() - (POW(2, request_count - 1) * ? * INTERVAL '1 minute');
-	`
+	`, models.TableRateLimits)
 	_, err := r.db.Exec(query, endpoint, multiplier)
 	return err
 }

@@ -16,9 +16,9 @@ func NewSuspensionsRepo(db *sqlx.DB) *SuspensionsRepo {
 }
 
 func (r *SuspensionsRepo) Create(suspension *models.SuspensionModel, tx *sqlx.Tx, isHistory bool) (int64, error) {
-	table := "suspensions"
+	table := models.TableSuspensions
 	if isHistory {
-		table = "suspension_history"
+		table = models.TableSuspensionHistory
 	}
 	query := fmt.Sprintf(`
 	INSERT INTO %s (user_id, admin_id, reason, started_at, ended_at)
@@ -40,7 +40,7 @@ func (r *SuspensionsRepo) Create(suspension *models.SuspensionModel, tx *sqlx.Tx
 
 func (r *SuspensionsRepo) GetByUserID(user_id int64) (*models.SuspensionModel, error) {
 	var suspension models.SuspensionModel
-	err := r.db.Get(&suspension, `SELECT * FROM suspensions WHERE user_id = ?`, user_id)
+	err := r.db.Get(&suspension, fmt.Sprintf(`SELECT * FROM %s WHERE user_id = ?`, models.TableSuspensions), user_id)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (r *SuspensionsRepo) GetByUserID(user_id int64) (*models.SuspensionModel, e
 }
 
 func (r *SuspensionsRepo) Delete(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM suspensions WHERE id = ?`, id)
+	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableSuspensions), id)
 	return err
 }
 
@@ -61,7 +61,7 @@ func (r *SuspensionsRepo) CleanExpired() ([]int64, error) {
 	}
 	defer tx.Rollback()
 
-	err = tx.Select(&ids, `SELECT id FROM suspensions WHERE ended_at < NOW() FOR UPDATE`)
+	err = tx.Select(&ids, fmt.Sprintf(`SELECT id FROM %s WHERE ended_at < NOW() FOR UPDATE`, models.TableSuspensions))
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (r *SuspensionsRepo) CleanExpired() ([]int64, error) {
 		return ids, err
 	}
 
-	query, args, err := sqlx.In(`DELETE FROM suspensions WHERE id IN (?)`, ids)
+	query, args, err := sqlx.In(fmt.Sprintf(`DELETE FROM %s WHERE id IN (?)`, models.TableSuspensions), ids)
 	if err != nil {
 		return nil, err
 	}

@@ -72,7 +72,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 	{
 		cms := apiV1.Group("/cms")
 		cms.GET("/blogs/:slug", CmsHandler.GetViewBlogPostBySlug)
-		cms.GET("/blogs", CmsHandler.GetBlogPostsList)
+		cms.POST("/blogs", CmsHandler.GetBlogPostsList)
 		cms.GET("/team", CmsHandler.GetViewTeamMembers)
 	}
 

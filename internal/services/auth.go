@@ -18,6 +18,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type IAuthService interface {
+	Login(req models.LoginRequest) (*models.LoginResponse, error)
+	Register(req models.RegisterRequest) error
+	Verify(req models.VerifyRequest) error
+	SendVerificationCode(userID int64) error
+}
+
 type AuthService struct {
 	UserRepo         IUserRepository
 	MailService      IMailService

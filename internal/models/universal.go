@@ -5,20 +5,19 @@ type TableName string
 const (
 	// Users
 
-	TableUsers       TableName = "users"
-	TableTempUsers   TableName = "temp_users"
-	TableUserRoles   TableName = "user_roles"
-	TableSuspensions TableName = "suspensions"
-	TableRateLimits  TableName = "rate_limits"
+	TableUsers     TableName = "users"
+	TableTempUsers TableName = "users_temp"
+	TableUserRoles TableName = "user_roles"
+
+	// Suspensions
+
+	TableSuspensions       TableName = "suspensions"
+	TableSuspensionHistory TableName = "suspension_history"
 
 	// CMS
 
 	TableBlogPosts   TableName = "blog_posts"
 	TableTeamMembers TableName = "team_members"
-
-	// Files
-
-	TableFiles TableName = "files"
 
 	// Gallery
 
@@ -51,9 +50,39 @@ const (
 	TableEventParticipants TableName = "event_participant"
 	TableComponentScores   TableName = "component_score"
 	TableCollaborators     TableName = "collaborators"
+	TableEventForms        TableName = "event_form"
+	TableEventApplications TableName = "event_applications"
+
+	// Bot
+
+	TableBotCommands            TableName = "bot_commands"
+	TableBotCommandTranslations TableName = "bot_command_translations"
+	TableBotCommandTriggers     TableName = "bot_command_triggers"
+	TableBotCommandOptions      TableName = "bot_command_options"
+
+	// Notifications
+
+	TableNotifications TableName = "notifications"
+
+	// Logs
+
+	TableLogs TableName = "logs"
+
+	// Verification Code
+
+	TableVerificationCode TableName = "verification_code"
+
+	// Files
+
+	TableFiles TableName = "files"
+
+	// Rate Limit
+
+	TableRateLimits TableName = "rate_limits"
 )
 
 type ListRequest struct {
-	Limit int `json:"limit" binding:"required"`
-	Page  int `json:"page" binding:"required"`
+	Limit int    `form:"limit" binding:"required"`
+	Page  int    `form:"page" binding:"required"`
+	Type  string `form:"type"`
 }

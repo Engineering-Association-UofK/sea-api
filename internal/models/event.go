@@ -58,6 +58,20 @@ type ComponentScoreModel struct {
 	Score         float64 `db:"score"`
 }
 
+type EventFormModel struct {
+	ID      int64 `db:"id"`
+	FormID  int64 `db:"form_id"`
+	EventID int64 `db:"event_id"`
+}
+
+type EventApplicationModel struct {
+	ID          int64     `db:"id"`
+	EventID     int64     `db:"event_id"`
+	UserID      int64     `db:"user_id"`
+	Status      string    `db:"status"`
+	SubmittedAt time.Time `db:"submitted_at"`
+}
+
 // ====== DTOs ======
 
 type EventDTO struct {
@@ -134,4 +148,11 @@ type EventViewResponse struct {
 	EndDate        time.Time `json:"end_date"`
 }
 
-type EventViewListResponse struct{}
+type EventViewListResponse struct {
+	Name           string `json:"name"`
+	HeaderImageUrl string `json:"header_image_url"`
+	PresenterName  string `json:"presenter_name"`
+	EventType      string `json:"event_type"`
+	StartDate      string `json:"start_date"`
+	EndDate        string `json:"end_date"`
+}

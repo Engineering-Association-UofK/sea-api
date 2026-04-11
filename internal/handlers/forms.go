@@ -80,14 +80,14 @@ func (h *FormHandler) SubmitForm(ctx *gin.Context) {
 		return
 	}
 
-	value, exists := ctx.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
-	if !exists || !ok {
-		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
-		return
-	}
+	// value, exists := ctx.Get("user")
+	// claims, ok := value.(*models.ManagedClaims)
+	// if !exists || !ok {
+	// 	ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+	// 	return
+	// }
 
-	id, err := h.service.SubmitForm(claims.UserID, &req)
+	id, err := h.service.SubmitForm(0, &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -105,14 +105,14 @@ func (h *FormHandler) CreateForm(ctx *gin.Context) {
 		return
 	}
 
-	value, exists := ctx.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
-	if !exists || !ok {
-		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
-		return
-	}
+	// value, exists := ctx.Get("user")
+	// claims, ok := value.(*models.ManagedClaims)
+	// if !exists || !ok {
+	// 	ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+	// 	return
+	// }
 
-	id, err := h.service.CreateForm(claims.UserID, &req)
+	id, err := h.service.CreateForm(0, &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -275,14 +275,14 @@ func (h *FormHandler) GetUserResponsesForForm(ctx *gin.Context) {
 		return
 	}
 
-	value, exists := ctx.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
-	if !exists || !ok {
-		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
-		return
-	}
+	// value, exists := ctx.Get("user")
+	// claims, ok := value.(*models.ManagedClaims)
+	// if !exists || !ok {
+	// 	ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+	// 	return
+	// }
 
-	responses, err := h.service.GetUserResponsesForForm(claims.UserID, id)
+	responses, err := h.service.GetUserResponsesForForm(0, id)
 	if err != nil {
 		ctx.Error(err)
 		return

@@ -542,9 +542,9 @@ func (s *FormService) isValidForm(form *models.CreateFormRequest) error {
 	if form.Description == "" {
 		return errs.New(errs.BadRequest, "Description is not provided", nil)
 	}
-	if _, err := s.galleryService.GetAssetByID(form.HeaderImageID); err != nil {
-		return errs.New(errs.BadRequest, "invalid image ID provided", nil)
-	}
+	// if _, err := s.galleryService.GetAssetByID(form.HeaderImageID); err != nil {
+	// 	return errs.New(errs.BadRequest, "invalid image ID provided", nil)
+	// }
 	return nil
 }
 

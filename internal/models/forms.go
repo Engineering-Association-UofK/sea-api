@@ -179,8 +179,8 @@ type FormAnswerDTO struct {
 type CreateFormRequest struct {
 	Title                string `json:"title" binding:"required"`
 	Description          string `json:"description" binding:"required"`
-	AllowMultipleEntries bool   `json:"allow_multiple" binding:"required"`
-	IsActive             bool   `json:"is_active" binding:"required"`
+	AllowMultipleEntries bool   `json:"allow_multiple"`
+	IsActive             bool   `json:"is_active"`
 	HeaderImageID        int64  `json:"header_image_id"`
 }
 
@@ -204,7 +204,7 @@ type CreateQuestionRequest struct {
 	QuestionText string          `json:"question_text" binding:"required"`
 	Type         QuestionType    `json:"type" binding:"required"`
 	Options      json.RawMessage `json:"options"`
-	IsRequired   bool            `json:"is_required" binding:"required"`
+	IsRequired   bool            `json:"is_required"`
 	DisplayOrder int             `json:"display_order" binding:"required"`
 }
 
