@@ -77,7 +77,7 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 	}
 
 	pageMap := make(map[int64]models.UpdatePageRequest)
-	var questions []models.UpdateQuestionRequest
+	questions := []models.UpdateQuestionRequest{}
 
 	for _, row := range rows {
 		if row.PageID == nil {
@@ -109,7 +109,7 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 		}
 	}
 
-	var pages []models.UpdatePageRequest
+	pages := []models.UpdatePageRequest{}
 	for _, p := range pageMap {
 		pages = append(pages, p)
 	}
@@ -194,7 +194,7 @@ func (s *FormService) SubmitForm(userID int64, req *models.SubmitFormRequest) (i
 		return 0, err
 	}
 
-	var answerModels []models.FormAnswerModel
+	var answerModels = []models.FormAnswerModel{}
 	for _, a := range answers {
 		answerModels = append(answerModels, models.FormAnswerModel{
 			ResponseID:  responseID,
@@ -394,11 +394,7 @@ func (s *FormService) GetAllForms() ([]models.FormSummaryResponse, error) {
 		return nil, err
 	}
 
-	if len(forms) == 0 {
-		return []models.FormSummaryResponse{}, nil
-	}
-
-	var responses []models.FormSummaryResponse
+	var responses = []models.FormSummaryResponse{}
 	for _, f := range forms {
 		responses = append(responses, models.FormSummaryResponse{
 			ID:                   f.ID,
@@ -432,7 +428,7 @@ func (s *FormService) GetResponsesByFormID(formID int64) ([]models.FormResponseD
 		answerMap[a.ResponseID] = append(answerMap[a.ResponseID], a)
 	}
 
-	var dtos []models.FormResponseDTO
+	var dtos = []models.FormResponseDTO{}
 	for _, r := range responses {
 		answers := answerMap[r.ID]
 		answerDTOs := make([]models.FormAnswerDTO, len(answers))
@@ -477,7 +473,7 @@ func (s *FormService) GetUserResponsesForForm(userID, formID int64) ([]models.Fo
 		answerMap[a.ResponseID] = append(answerMap[a.ResponseID], a)
 	}
 
-	var dtos []models.FormResponseDTO
+	var dtos = []models.FormResponseDTO{}
 	for _, r := range responses {
 		answers := answerMap[r.ID]
 		answerDTOs := make([]models.FormAnswerDTO, len(answers))
@@ -639,7 +635,7 @@ func (s *FormService) isValidSubmitFormRequest(userID int64, req *models.SubmitF
 		}
 	}
 
-	var answers []models.AnswerRequest
+	var answers = []models.AnswerRequest{}
 	// Checks Answers list
 	checkedMap := map[int64]bool{}
 	for _, a := range req.Answers {
@@ -684,7 +680,7 @@ func (s *FormService) getPerQuestionAnalysisData(formID int64) ([]models.Questio
 	}
 
 	analysisMap := make(map[int64]*models.QuestionAnalysisDTO)
-	var orderedKeys []int64
+	var orderedKeys = []int64{}
 
 	for _, row := range rows {
 		if _, exists := analysisMap[row.QuestionID]; !exists {
@@ -705,7 +701,7 @@ func (s *FormService) getPerQuestionAnalysisData(formID int64) ([]models.Questio
 		}
 	}
 
-	var result []models.QuestionAnalysisDTO
+	var result = []models.QuestionAnalysisDTO{}
 	for _, k := range orderedKeys {
 		result = append(result, *analysisMap[k])
 	}
