@@ -8,6 +8,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
+	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
 	"sea-api/internal/storage"
 
@@ -64,7 +65,7 @@ func Go() {
 	authService := services.NewAuthService(userRepository, mailService, verificationRepo)
 
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
-	FormService := services.NewFormService(formRepository, galleryService)
+	FormService := forms.NewFormService(formRepository, galleryService)
 
 	certificateService := services.NewCertificateService(userRepository, eventService, s3StorageService, pdfService, mailService, collaboratorService, certificateRepository, documentRepository)
 	schedularService := schedular.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService, rateLimitService)
