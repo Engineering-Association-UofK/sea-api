@@ -35,15 +35,15 @@ const (
 
 // 1. The Form Container
 type FormModel struct {
-	ID                   int64         `db:"id" json:"id"`
-	Title                string        `db:"title" json:"title"`
-	Description          string        `db:"description" json:"description"`
-	AllowMultipleEntries bool          `db:"allow_multiple" json:"allow_multiple"`
-	StartDate            time.Time     `db:"start_date" json:"start_date"`
-	EndDate              time.Time     `db:"end_date" json:"end_date"`
-	HeaderImageID        sql.NullInt64 `db:"header_image_id" json:"header_image_id"`
-	CreatedBy            int64         `db:"created_by" json:"created_by"`
-	CreatedAt            time.Time     `db:"created_at" json:"created_at"`
+	ID                   int64     `db:"id" json:"id"`
+	Title                string    `db:"title" json:"title"`
+	Description          string    `db:"description" json:"description"`
+	AllowMultipleEntries bool      `db:"allow_multiple" json:"allow_multiple"`
+	StartDate            time.Time `db:"start_date" json:"start_date"`
+	EndDate              time.Time `db:"end_date" json:"end_date"`
+	Type                 string    `db:"type" json:"type"`
+	CreatedBy            int64     `db:"created_by" json:"created_by"`
+	CreatedAt            time.Time `db:"created_at" json:"created_at"`
 }
 
 type FormPageModel struct {
@@ -93,20 +93,20 @@ type Options []string
 // Helpers
 
 type FormRow struct {
-	FormID        int64         `db:"form_id"`
-	Title         string        `db:"title"`
-	Description   string        `db:"description"`
-	AllowMultiple bool          `db:"allow_multiple"`
-	StartDate     time.Time     `db:"start_date"`
-	EndDate       time.Time     `db:"end_date"`
-	HeaderImageID sql.NullInt64 `db:"header_image_id"`
+	FormID        int64     `db:"form_id"`
+	Title         string    `db:"title"`
+	Description   string    `db:"description"`
+	AllowMultiple bool      `db:"allow_multiple"`
+	StartDate     time.Time `db:"start_date"`
+	EndDate       time.Time `db:"end_date"`
+	Type          string    `db:"type"`
 
 	PageID  *int64 `db:"page_id"`
 	PageNum *int   `db:"page_num"`
 
 	QuestionID   *int64           `db:"question_id"`
 	QuestionText *string          `db:"question_text"`
-	Type         *QuestionType    `db:"type"`
+	QType        *QuestionType    `db:"question_type"`
 	Options      *json.RawMessage `db:"options"`
 	IsRequired   *bool            `db:"is_required"`
 	DisplayOrder *int             `db:"display_order"`
@@ -124,7 +124,7 @@ type FormAnalysisRow struct {
 // Full render DTOs
 
 type FormForEditDTO struct {
-	Url       string                  `json:"url"`
+	Type      string                  `json:"type"`
 	Form      UpdateFormRequest       `json:"form"`
 	Pages     []UpdatePageRequest     `json:"pages"`
 	Questions []UpdateQuestionRequest `json:"questions"`
@@ -139,10 +139,10 @@ type FormForUserDTO struct {
 // DTOs
 
 type FormDTO struct {
-	ID             int64  `json:"id"`
-	Title          string `json:"title"`
-	Description    string `json:"description"`
-	HeaderImageUrl string `json:"header_image_url"`
+	ID          int64  `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Type        string `json:"type"`
 }
 
 type FormPageDTO struct {
@@ -185,7 +185,7 @@ type CreateFormRequest struct {
 	AllowMultipleEntries bool      `json:"allow_multiple"`
 	StartDate            time.Time `json:"start_date"`
 	EndDate              time.Time `json:"end_date"`
-	HeaderImageID        int64     `json:"header_image_id"`
+	Type                 string    `json:"type"`
 }
 
 type UpdateFormRequest struct {
@@ -240,6 +240,7 @@ type FormSummaryResponse struct {
 	Description          string    `json:"description"`
 	StartDate            time.Time `json:"start_date"`
 	EndDate              time.Time `json:"end_date"`
+	Type                 string    `json:"type"`
 	AllowMultipleEntries bool      `json:"allow_multiple"`
 	CreatedAt            time.Time `json:"created_at"`
 }

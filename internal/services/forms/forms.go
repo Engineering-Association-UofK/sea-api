@@ -1,7 +1,6 @@
 package forms
 
 import (
-	"database/sql"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
@@ -32,7 +31,7 @@ func (s *FormService) CreateForm(userID int64, req *models.CreateFormRequest) (i
 		AllowMultipleEntries: req.AllowMultipleEntries,
 		StartDate:            req.StartDate,
 		EndDate:              req.EndDate,
-		HeaderImageID:        sql.NullInt64{Int64: req.HeaderImageID, Valid: req.HeaderImageID != 0},
+		Type:                 req.Type,
 		CreatedBy:            userID,
 		CreatedAt:            time.Now(),
 	}
@@ -40,9 +39,7 @@ func (s *FormService) CreateForm(userID int64, req *models.CreateFormRequest) (i
 	if err != nil {
 		return 0, err
 	}
-	if form.HeaderImageID.Valid {
-		s.galleryService.AttachAssetToObject(req.HeaderImageID, models.ObjForm, id)
-	}
+
 	return s.CreatePage(&models.CreatePageRequest{
 		FormID:     id,
 		PageNumber: 1,
@@ -60,24 +57,12 @@ func (s *FormService) UpdateForm(req *models.UpdateFormRequest) error {
 		return err
 	}
 
-	// Options for if there is an image attached or not
-	if req.HeaderImageID == 0 {
-		if form.HeaderImageID.Valid {
-			s.galleryService.RemoveReference(models.ObjForm, form.HeaderImageID.Int64)
-		}
-	} else if form.HeaderImageID.Valid {
-		s.galleryService.RemoveReference(models.ObjForm, form.HeaderImageID.Int64)
-		s.galleryService.AttachAssetToObject(req.HeaderImageID, models.ObjForm, req.ID)
-	} else {
-		s.galleryService.AttachAssetToObject(req.HeaderImageID, models.ObjForm, req.ID)
-	}
-
 	form.Title = req.Title
 	form.Description = req.Description
 	form.AllowMultipleEntries = req.AllowMultipleEntries
 	form.StartDate = req.StartDate
 	form.EndDate = req.EndDate
-	form.HeaderImageID = sql.NullInt64{Int64: req.HeaderImageID, Valid: req.HeaderImageID != 0}
+	form.Type = req.Type
 
 	return s.formRepo.UpdateForm(form)
 }
@@ -105,6 +90,7 @@ func (s *FormService) GetAllForms() ([]models.FormSummaryResponse, error) {
 			StartDate:            f.StartDate,
 			EndDate:              f.EndDate,
 			AllowMultipleEntries: f.AllowMultipleEntries,
+			Type:                 f.Type,
 			CreatedAt:            f.CreatedAt,
 		})
 	}

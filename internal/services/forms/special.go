@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/utils"
@@ -21,14 +20,6 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 		return nil, err
 	}
 
-	url := ""
-	if rows[0].HeaderImageID.Valid {
-		url, err = s.galleryService.GetLinkByAssetID(rows[0].HeaderImageID.Int64)
-		if err != nil {
-			slog.Error("Unable to get form image url", "error", err, "Form ID", formID)
-		}
-	}
-
 	form := models.UpdateFormRequest{
 		ID: rows[0].FormID,
 		CreateFormRequest: models.CreateFormRequest{
@@ -37,7 +28,7 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 			AllowMultipleEntries: rows[0].AllowMultiple,
 			StartDate:            rows[0].StartDate,
 			EndDate:              rows[0].EndDate,
-			HeaderImageID:        rows[0].HeaderImageID.Int64,
+			Type:                 rows[0].Type,
 		},
 	}
 
@@ -65,7 +56,7 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 				CreateQuestionRequest: models.CreateQuestionRequest{
 					FormPageID:   *row.PageID,
 					QuestionText: *row.QuestionText,
-					Type:         *row.Type,
+					Type:         *row.QType,
 					Options:      *row.Options,
 					IsRequired:   *row.IsRequired,
 					DisplayOrder: *row.DisplayOrder,
@@ -80,7 +71,7 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 	}
 
 	return &models.FormForEditDTO{
-		Url:       url,
+		Type:      rows[0].Type,
 		Form:      form,
 		Pages:     pages,
 		Questions: questions,
@@ -93,19 +84,12 @@ func (s *FormService) GetFormForUser(formID int64) (*models.FormForUserDTO, erro
 		return nil, err
 	}
 
-	url := ""
-	if rows[0].HeaderImageID.Valid {
-		url, err = s.galleryService.GetLinkByAssetID(rows[0].HeaderImageID.Int64)
-		if err != nil {
-			slog.Error("Unable to get form image url", "error", err, "Form ID", formID)
-		}
-	}
 	dto := &models.FormForUserDTO{
 		Form: models.FormDTO{
-			ID:             rows[0].FormID,
-			Title:          rows[0].Title,
-			Description:    rows[0].Description,
-			HeaderImageUrl: url,
+			ID:          rows[0].FormID,
+			Title:       rows[0].Title,
+			Description: rows[0].Description,
+			Type:        rows[0].Type,
 		},
 		Pages:     []models.FormPageDTO{},
 		Questions: []models.FormQuestionDTO{},
@@ -129,7 +113,7 @@ func (s *FormService) GetFormForUser(formID int64) (*models.FormForUserDTO, erro
 				ID:           *row.QuestionID,
 				FormPageID:   *row.PageID,
 				QuestionText: *row.QuestionText,
-				Type:         *row.Type,
+				Type:         *row.QType,
 				Options:      *row.Options,
 				IsRequired:   *row.IsRequired,
 				DisplayOrder: *row.DisplayOrder,

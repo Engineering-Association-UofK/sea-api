@@ -84,9 +84,9 @@ func (r *FormRepository) GetFormWithQuestions(formID int64) ([]models.FormRow, e
 	var rows []models.FormRow
 	query := fmt.Sprintf(`
 	SELECT 
-		f.id AS form_id, f.title, f.description, f.allow_multiple, f.start_date, f.end_date, f.header_image_id,
+		f.id AS form_id, f.title, f.description, f.allow_multiple, f.start_date, f.end_date, f.type,
 		p.id AS page_id, p.page_num,
-		q.id AS question_id, q.question_text, q.type, q.options, q.is_required, q.display_order
+		q.id AS question_id, q.question_text, q.type AS question_type, q.options, q.is_required, q.display_order
 	FROM %s f
 	LEFT JOIN %s p ON f.id = p.form_id
 	LEFT JOIN %s q ON p.id = q.form_page_id
@@ -129,8 +129,8 @@ func (r *FormRepository) CreateAnswersBatch(answers []models.FormAnswerModel) er
 // ======== CREATE ========
 
 func (r *FormRepository) CreateForm(form *models.FormModel) (int64, error) {
-	query := fmt.Sprintf(`INSERT INTO %s (title, description, header_image_id, allow_multiple, start_date, end_date, created_by, created_at)
-	VALUES (:title, :description, :header_image_id, :allow_multiple, :start_date, :end_date, :created_by, :created_at)
+	query := fmt.Sprintf(`INSERT INTO %s (title, description, type, allow_multiple, start_date, end_date, created_by, created_at)
+	VALUES (:title, :description, :type, :allow_multiple, :start_date, :end_date, :created_by, :created_at)
 	`, models.TableForms)
 	res, err := r.db.NamedExec(query, form)
 	if err != nil {
@@ -362,7 +362,7 @@ func (r *FormRepository) GetUserResponsesForForm(userID, formID int64) ([]models
 func (r *FormRepository) UpdateForm(form *models.FormModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
-	SET title = :title, description = :description, allow_multiple = :allow_multiple, header_image_id = :header_image_id, start_date = :start_date, end_date = :end_date
+	SET title = :title, description = :description, allow_multiple = :allow_multiple, type = :type, start_date = :start_date, end_date = :end_date
 	WHERE id = :id
 	`, models.TableForms)
 	_, err := r.db.NamedExec(query, form)

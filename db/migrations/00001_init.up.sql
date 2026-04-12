@@ -271,12 +271,9 @@ CREATE TABLE forms (
     allow_multiple BOOLEAN DEFAULT FALSE,
     start_date DATETIME NOT NULL,
     end_date DATETIME NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    header_image_id INT, 
+    type VARCHAR(50) NOT NULL,
     created_by INT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-    INDEX idx_is_active (is_active),
 
     FOREIGN KEY (header_image_id) REFERENCES gallery_assets(id),
     FOREIGN KEY (created_by) REFERENCES users(id) ON UPDATE CASCADE
