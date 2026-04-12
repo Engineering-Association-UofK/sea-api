@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type TableName string
 
 const (
@@ -85,4 +87,20 @@ type ListRequest struct {
 	Limit int    `form:"limit" binding:"required"`
 	Page  int    `form:"page" binding:"required"`
 	Type  string `form:"type"`
+}
+
+var AllowedListLimit = map[int]bool{
+	10:  true,
+	25:  true,
+	50:  true,
+	100: true,
+}
+
+type Progress struct {
+	Total     int       `json:"total"`
+	Current   int       `json:"current"`
+	ID        int64     `json:"id"`
+	Success   bool      `json:"success"`
+	Timestamp time.Time `json:"timestamp"`
+	Name      string    `json:"name"`
 }

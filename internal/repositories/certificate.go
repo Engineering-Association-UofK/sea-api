@@ -57,6 +57,15 @@ func (r *CertificateRepository) GetByID(id int64) (*models.CertificateModel, err
 	return &model, nil
 }
 
+func (r *CertificateRepository) GetByUserID(userID int64) ([]models.CertificateModel, error) {
+	var items = []models.CertificateModel{}
+	err := r.DB.Select(&items, fmt.Sprintf(`SELECT * FROM %s WHERE user_id = ? ORDER BY issue_date DESC`, models.TableCertificates), userID)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 func (r *CertificateRepository) GetByHash(hash string) (*models.CertificateModel, error) {
 	var item models.CertificateModel
 	err := r.DB.Get(&item, fmt.Sprintf(`SELECT * FROM %s WHERE cert_hash = ?`, models.TableCertificates), hash)

@@ -56,17 +56,19 @@ type CertificateVerify struct {
 	IssueDate time.Time  `json:"issue_date"`
 }
 
-type Progress struct {
-	Total     int       `json:"total"`
-	Current   int       `json:"current"`
-	ID        int64     `json:"id"`
-	Success   bool      `json:"success"`
-	Timestamp time.Time `json:"timestamp"`
-	Name      string    `json:"name"`
-}
-
 type CertificateSendEmailData struct {
 	EventID int64    `json:"event_id" binding:"required"`
 	Cc      []string `json:"cc"`
 	Bcc     []string `json:"bcc"`
+}
+
+// DTOs
+
+type CertificateListResponse struct {
+	Hash      string     `db:"cert_hash"`
+	UserID    int64      `db:"user_id"`
+	EventID   int64      `db:"event_id"`
+	Grade     float64    `db:"grade"`
+	IssueDate time.Time  `db:"issue_date"`
+	Status    CertStatus `db:"status"`
 }

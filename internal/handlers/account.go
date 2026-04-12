@@ -37,6 +37,23 @@ func (a *AccountHandler) GetProfile(c *gin.Context) {
 	c.PureJSON(http.StatusOK, profile)
 }
 
+func (a *AccountHandler) GetCertificates(c *gin.Context) {
+	value, exists := c.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	certs, err := a.AccountService.GetCertificates(c.Request.Context(), claims)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.PureJSON(http.StatusOK, certs)
+}
+
 func (a *AccountHandler) UpdateProfile(c *gin.Context) {
 	var req models.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
