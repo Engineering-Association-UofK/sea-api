@@ -121,7 +121,7 @@ func (r *UserRepository) GetAdmins() ([]models.UserModel, error) {
 		SELECT u.* FROM %s u
 		JOIN %s ur ON u.id = ur.user_id
 		WHERE ur.role = ?
-	`, models.TableUserRoles, models.TableUserRoles), models.RoleSystemAdmin)
+	`, models.TableUsers, models.TableUserRoles), models.RoleSystemAdmin)
 	if err != nil {
 		return nil, err
 	}
