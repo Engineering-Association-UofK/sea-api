@@ -32,7 +32,13 @@ func (r *FormRepository) GetFormAnalysisData(formID int64) ([]models.FormAnalysi
     LEFT JOIN %s a ON q.id = a.question_id
     LEFT JOIN %s r ON a.response_id = r.id
     WHERE p.form_id = ? AND r.status = 'SUBMITTED'
-    GROUP BY q.id, a.answer_value
+    GROUP BY 
+		p.page_num,
+        q.display_order,
+		q.id, 
+        q.question_text, 
+        q.type, 
+        a.answer_value
     ORDER BY p.page_num, q.display_order
     `, models.TableFormQuestions, models.TableFormPages, models.TableFormAnswers, models.TableFormResponses)
 
