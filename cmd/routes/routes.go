@@ -129,7 +129,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			admin.Use(middleware.RequireAnyRole(models.RoleSystemAdminManager, models.RoleSystemSuperAdmin))
 			admin.GET("", UserHandler.GetAdmins)
 			admin.POST("/:id", UserHandler.MakeAdmin)
-			admin.PUT("/", UserHandler.UpdateAdmin)
+			admin.PUT("", UserHandler.UpdateAdmin)
 			admin.DELETE("/:id", UserHandler.DeleteAdmin)
 			admin.POST("/add-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), UserHandler.MakeAdminManager)
 			admin.DELETE("/remove-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), UserHandler.RemoveAdminManager)
