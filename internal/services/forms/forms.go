@@ -40,10 +40,15 @@ func (s *FormService) CreateForm(userID int64, req *models.CreateFormRequest) (i
 		return 0, err
 	}
 
-	return s.CreatePage(&models.CreatePageRequest{
+	_, err = s.CreatePage(&models.CreatePageRequest{
 		FormID:     id,
 		PageNumber: 1,
 	})
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 // ======== UPDATE ========

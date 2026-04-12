@@ -19,8 +19,7 @@ func (s *FormService) CreatePage(req *models.CreatePageRequest) (int64, error) {
 		FormID:     req.FormID,
 		PageNumber: req.PageNumber,
 	}
-	_, err := s.formRepo.CreatePage(page)
-	return page.ID, err
+	return s.formRepo.CreatePage(page)
 }
 
 func (s *FormService) UpdatePage(req *models.UpdatePageRequest) error {
