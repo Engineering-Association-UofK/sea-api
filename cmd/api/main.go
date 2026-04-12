@@ -46,6 +46,7 @@ func Go() {
 	collaboratorRepository := repositories.NewCollaboratorRepo(db)
 	rateLimitRepository := repositories.NewRateLimitRepository(db)
 	documentRepository := repositories.NewDocumentRepository(db)
+	notificationRepository := repositories.NewNotificationRepository(db)
 
 	// Initialize services
 	pdfService := services.NewPDFService(10)
@@ -53,9 +54,10 @@ func Go() {
 	galleryService := services.NewGalleryService(galleryRepository, s3StorageService)
 	rateLimitService := services.NewRateLimitService(rateLimitRepository)
 	collaboratorService := services.NewCollaboratorService(collaboratorRepository, s3StorageService)
+	notificationService := services.NewNotificationService(notificationRepository)
 
-	eventService := services.NewEventService(eventRepository, userRepository)
-	accountService := services.NewAccountService(userRepository, s3StorageService)
+	eventService := services.NewEventService(notificationService, eventRepository, userRepository)
+	accountService := services.NewAccountService(userRepository, s3StorageService, certificateRepository)
 
 	userService := services.NewUserService(userRepository, suspensionsRepo, s3StorageService)
 	mailService := services.NewMailService(userService)
@@ -79,6 +81,7 @@ func Go() {
 	routes.CmsHandler = handlers.NewCmsHandler(CmsService)
 	routes.FormHandler = handlers.NewFormHandler(FormService)
 	routes.CollaboratorHandler = handlers.NewCollaboratorHandler(collaboratorService)
+	routes.NotificationHandler = handlers.NewNotificationHandler(notificationService)
 
 	r := routes.SetupRouter(userService, rateLimitService)
 	slog.Info("Starting server on port " + config.App.Port)

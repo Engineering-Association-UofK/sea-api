@@ -25,7 +25,10 @@ var (
 	CmsHandler          *handlers.CmsHandler
 	FormHandler         *handlers.FormHandler
 	CollaboratorHandler *handlers.CollaboratorHandler
+	NotificationHandler *handlers.NotificationHandler
+)
 
+var (
 	basicLimit  = middleware.RateLimiter(rate.Every(time.Second), 5)
 	midLimit    = middleware.RateLimiter(rate.Every(30*time.Second), 3)
 	highLimit   = middleware.RateLimiter(rate.Every(time.Minute), 3)
@@ -83,6 +86,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 		{ // ==== PROFILE
 			account.GET("", AccountHandler.GetProfile)
 			account.PUT("", AccountHandler.UpdateProfile)
+			account.GET("/certificates", AccountHandler.GetCertificates)
 			account.PUT("/picture", AccountHandler.UpdatePicture)
 			account.PUT("/password", AccountHandler.UpdatePassword)
 			account.PUT("/email", middleware.StatefulRateLimiter(models.LimitUpdateEmail, rateLimitService), AccountHandler.UpdateEmail)
@@ -92,6 +96,14 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 		{ // ==== EVENTS & FORMS
 			event := account.Group("/event")
 			event.GET("/form/:id", FormHandler.GetEntireForUserForm) // <------------------- New
+		}
+
+		{ // ==== Notifications
+			notification := account.Group("/notifications")
+			notification.GET("", NotificationHandler.GetNotifications)
+			notification.POST("/:id", NotificationHandler.MarkAsRead)
+			notification.POST("", NotificationHandler.MarkAllAsRead)
+			notification.DELETE("/:id", NotificationHandler.Delete)
 		}
 	}
 
