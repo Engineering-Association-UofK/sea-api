@@ -72,12 +72,10 @@ func (h *CmsHandler) GetViewBlogPostBySlug(ctx *gin.Context) {
 
 func (h *CmsHandler) GetBlogPostsList(ctx *gin.Context) {
 	var req models.ListRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
-
-	
 
 	posts, err := h.CmsService.GetViewBlogPostList(req)
 	if err != nil {

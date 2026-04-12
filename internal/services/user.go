@@ -638,7 +638,7 @@ func isValidGetListRequest(req *models.ListRequest) error {
 	if req.Page < 1 || req.Limit < 1 {
 		return errs.New(errs.BadRequest, "Given page and limit must be greater than 0", nil)
 	}
-	if !models.ListLimit[req.Limit] {
+	if !models.AllowedListLimit[req.Limit] {
 		return errs.New(errs.BadRequest, "Given limit is not valid", nil)
 	}
 	return nil

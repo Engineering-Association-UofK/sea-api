@@ -9,6 +9,7 @@ import (
 	"sea-api/internal/config"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
 	"strconv"
 	"strings"
@@ -26,16 +27,16 @@ type IAuthService interface {
 }
 
 type AuthService struct {
-	UserRepo         IUserRepository
-	MailService      IMailService
-	VerificationRepo IVerificationRepo
+	UserRepo         *repositories.UserRepository
+	MailService      *MailService
+	VerificationRepo *repositories.VerificationRepo
 
 	SecretKey  []byte
 	Issuer     string
 	ExpiryTime time.Duration
 }
 
-func NewAuthService(userRepo IUserRepository, mailService IMailService, verificationRepo IVerificationRepo) *AuthService {
+func NewAuthService(userRepo *repositories.UserRepository, mailService *MailService, verificationRepo *repositories.VerificationRepo) *AuthService {
 	return &AuthService{
 		UserRepo:         userRepo,
 		MailService:      mailService,

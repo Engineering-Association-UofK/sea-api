@@ -10,6 +10,7 @@ import (
 	"sea-api/internal/config"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
 	"strings"
 	"time"
@@ -18,17 +19,19 @@ import (
 )
 
 type AccountService struct {
-	UserRepo IUserRepository
-	store    IS3StorageService
+	UserRepo              *repositories.UserRepository
+	store                 *S3StorageService
+	certificateRepository *repositories.CertificateRepository
 
 	profilePath string
 }
 
-func NewAccountService(UserRepo IUserRepository, store IS3StorageService) *AccountService {
+func NewAccountService(UserRepo *repositories.UserRepository, store *S3StorageService, certificateRepository *repositories.CertificateRepository) *AccountService {
 	return &AccountService{
-		UserRepo:    UserRepo,
-		store:       store,
-		profilePath: "public/profiles",
+		UserRepo:              UserRepo,
+		store:                 store,
+		certificateRepository: certificateRepository,
+		profilePath:           "public/profiles",
 	}
 }
 
@@ -57,6 +60,27 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 		Department: user.Department,
 		ProfilePic: url,
 	}, nil
+}
+
+func (s *AccountService) GetCertificates(ctx context.Context, claims *models.ManagedClaims) ([]models.CertificateListResponse, error) {
+	certs, err := s.certificateRepository.GetByUserID(claims.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	var responses = []models.CertificateListResponse{}
+	for _, cert := range certs {
+		responses = append(responses, models.CertificateListResponse{
+			Hash:      cert.Hash,
+			UserID:    cert.UserID,
+			EventID:   cert.EventID,
+			Grade:     cert.Grade,
+			IssueDate: cert.IssueDate,
+			Status:    cert.Status,
+		})
+	}
+
+	return responses, nil
 }
 
 func (s *AccountService) UpdateProfile(claims *models.ManagedClaims, req models.UpdateProfileRequest) error {

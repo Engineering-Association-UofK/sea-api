@@ -17,13 +17,6 @@ func (ts *TrimmedString) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var ListLimit = map[int]bool{
-	10:  true,
-	25:  true,
-	50:  true,
-	100: true,
-}
-
 var AllowedAdminRoles = map[Role]bool{
 	RoleSystemUserMgr:   true,
 	RoleSystemSupport:   true,
