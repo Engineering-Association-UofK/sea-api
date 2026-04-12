@@ -549,17 +549,22 @@ func (s *UserService) UpdateAdminRoles(req *models.AdminRequest) error {
 		return errs.New(errs.NotFound, "User is not an admin", nil)
 	}
 
+	var rolesToAdd = []models.Role{}
 	for _, role := range req.Roles {
-		if !models.AllowedAdminRoles[role] {
-			return errs.New(errs.BadRequest, "Invalid role", nil)
+		if models.AllowedAdminRoles[role] {
+			rolesToAdd = append(rolesToAdd, role)
 		}
 	}
 
-	for _, role := range specialRoles {
-		req.Roles = append(req.Roles, role)
+	if len(rolesToAdd) == 0 {
+		return nil
 	}
 
-	err = s.repo.ReplaceRoles(req.ID, req.Roles, nil)
+	for _, role := range specialRoles {
+		rolesToAdd = append(rolesToAdd, role)
+	}
+
+	err = s.repo.ReplaceRoles(req.ID, rolesToAdd, nil)
 	if err != nil {
 		return err
 	}
