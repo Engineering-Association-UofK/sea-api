@@ -23,14 +23,17 @@ import (
 )
 
 type EventService struct {
+	NotificationService *NotificationService
+
 	EventRepo *repositories.EventRepository
 	UserRepo  *repositories.UserRepository
 }
 
-func NewEventService(EventRepo *repositories.EventRepository, UserRepo *repositories.UserRepository) *EventService {
+func NewEventService(NotificationService *NotificationService, EventRepo *repositories.EventRepository, UserRepo *repositories.UserRepository) *EventService {
 	return &EventService{
-		EventRepo: EventRepo,
-		UserRepo:  UserRepo,
+		NotificationService: NotificationService,
+		EventRepo:           EventRepo,
+		UserRepo:            UserRepo,
 	}
 }
 

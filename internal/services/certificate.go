@@ -34,6 +34,7 @@ type CertificateService struct {
 	pdfService          *PDFService
 	mailService         *MailService
 	CollaboratorService *CollaboratorService
+	NotificationService *NotificationService
 
 	certificateRepository *repositories.CertificateRepository
 	documentRepository    *repositories.DocumentRepository
@@ -191,6 +192,11 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, event
 	defer close(progressChan)
 	progressChan <- "started"
 
+	event, err := c.eventService.GetEventByID(eventId)
+	if err != nil {
+		return err
+	}
+
 	participants, err := c.eventService.EventRepo.GetParticipantByEventID(eventId)
 	if err != nil {
 		slog.Error("error getting participants", "error", err, "event_id", eventId)
@@ -213,13 +219,23 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, event
 	}
 
 	for i, user := range users {
-		_, err := c.CreateWorkshopCertificate(ctx, user.ID, eventId)
+		hash, _, err := c.CreateWorkshopCertificate(ctx, user.ID, eventId)
 		if err != nil {
 			slog.Error("error creating certificate", "error", err, "user_id", user.ID, "event_id", eventId)
 			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, user.NameAr, progressChan)
 			continue
 		}
 		utils.ParseProgressStruct(len(ids), i+1, user.ID, true, user.NameAr, progressChan)
+		c.NotificationService.CreateNotification(&models.NotificationRequest{
+			UserID:  user.ID,
+			Title:   "Your certificate is ready",
+			Message: "Your certificate for the event " + event.Name + " is ready.",
+			Type:    models.NotifyCertificate,
+			Data: models.NotifyCertificateData{
+				EventID:         eventId,
+				CertificateHash: hash,
+			},
+		})
 	}
 	progressChan <- "done"
 	return nil
@@ -304,35 +320,35 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 	return nil
 }
 
-func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, userUserID, eventId int64) (int64, error) {
+func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, userUserID, eventId int64) (string, int64, error) {
 	cert, err := c.certificateRepository.GetByUserIDAndEventID(userUserID, eventId)
 	if err == nil {
-		return cert.ID, nil
+		return cert.Hash, cert.ID, nil
 	}
 
 	participant, err := c.eventService.EventRepo.GetParticipantByEventAndUserIDs(eventId, userUserID)
 	if err != nil {
 		slog.Error("error getting participant", "error", err, "user_id", userUserID, "event_id", eventId)
-		return 0, err
+		return "", 0, err
 	}
 	if !participant.Completed {
-		return 0, errs.New(errs.NotFound, fmt.Sprintf("Participant %d did not complete event %d yet", userUserID, eventId), nil)
+		return "", 0, errs.New(errs.NotFound, fmt.Sprintf("Participant %d did not complete event %d yet", userUserID, eventId), nil)
 	}
 	event, err := c.eventService.GetEventByID(eventId)
 	if err != nil {
 		slog.Error("error getting event", "error", err, "event_id", eventId)
-		return 0, err
+		return "", 0, err
 	}
 	user, err := c.userRepo.GetByUserID(userUserID)
 	if err != nil {
 		slog.Error("error getting user", "error", err, "user_id", userUserID)
-		return 0, err
+		return "", 0, err
 	}
 
 	collab, err := c.CollaboratorService.repo.GetByID(event.PresenterID)
 	if err != nil {
 		slog.Error("error getting collaborator", "error", err, "collaborator_id", event.PresenterID)
-		return 0, err
+		return "", 0, err
 	}
 
 	signature := ""
@@ -340,7 +356,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		signatureImage, err := c.S3StoreService.Download(ctx, collab.SignatureID.Int64)
 		if err != nil {
 			slog.Error("error getting signature", "error", err, "signature_id", collab.SignatureID.Int64)
-			return 0, err
+			return "", 0, err
 		}
 		signature = base64.StdEncoding.EncodeToString(signatureImage)
 	}
@@ -353,7 +369,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	qr, err := utils.GenerateGearQR(url, 512, 512)
 	if err != nil {
 		slog.Error("error generating qr", "error", err)
-		return 0, err
+		return "", 0, err
 	}
 
 	pdfAr, err := c.getFile(
@@ -372,7 +388,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	)
 	if err != nil {
 		slog.Error("error generating ar pdf", "error", err)
-		return 0, err
+		return "", 0, err
 	}
 
 	pdfEn, err := c.getFile(
@@ -391,19 +407,19 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	)
 	if err != nil {
 		slog.Error("error generating en pdf", "error", err)
-		return 0, err
+		return "", 0, err
 	}
 
 	storeIdAr, err := c.S3StoreService.Upload(ctx, c.storePath+"/ar/"+hashString+".pdf", pdfAr, "application/pdf")
 	if err != nil {
 		slog.Error("error uploading ar file", "error", err, "s3 stored file", storeIdAr)
-		return 0, err
+		return "", 0, err
 	}
 	storeIdEn, err := c.S3StoreService.Upload(ctx, c.storePath+"/en/"+hashString+".pdf", pdfEn, "application/pdf")
 	if err != nil {
 		c.S3StoreService.Delete(ctx, storeIdAr)
 		slog.Error("error uploading en file", "error", err, "s3 stored file", storeIdEn)
-		return 0, err
+		return "", 0, err
 	}
 
 	id, err := c.certificateRepository.Create(models.CertificateModel{
@@ -418,7 +434,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		c.S3StoreService.Delete(ctx, storeIdAr)
 		c.S3StoreService.Delete(ctx, storeIdEn)
 		slog.Error("error creating certificate", "error", err, "stored file", storeIdAr, "stored file", storeIdEn)
-		return 0, err
+		return "", 0, err
 	}
 
 	_, err = c.certificateRepository.CreateFile(models.CertificateFileModel{
@@ -430,7 +446,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		c.S3StoreService.Delete(ctx, storeIdAr)
 		c.S3StoreService.Delete(ctx, storeIdEn)
 		slog.Error("error creating ar certificate file", "error", err, "stored file", storeIdAr, "stored file", storeIdEn)
-		return 0, err
+		return "", 0, err
 	}
 
 	_, err = c.certificateRepository.CreateFile(models.CertificateFileModel{
@@ -441,10 +457,10 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	if err != nil {
 		slog.Error("error creating en certificate file", "error", err, "stored file", storeIdEn)
 		c.S3StoreService.Delete(ctx, storeIdEn)
-		return 0, err
+		return "", 0, err
 	}
 
-	return id, nil
+	return hashString, id, nil
 }
 
 func (c *CertificateService) VerifyCertificate(hash string) (*models.CertificateVerify, error) {
