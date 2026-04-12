@@ -39,7 +39,8 @@ type FormModel struct {
 	Title                string        `db:"title" json:"title"`
 	Description          string        `db:"description" json:"description"`
 	AllowMultipleEntries bool          `db:"allow_multiple" json:"allow_multiple"`
-	IsActive             bool          `db:"is_active" json:"is_active"`
+	StartDate            time.Time     `db:"start_date" json:"start_date"`
+	EndDate              time.Time     `db:"end_date" json:"end_date"`
 	HeaderImageID        sql.NullInt64 `db:"header_image_id" json:"header_image_id"`
 	CreatedBy            int64         `db:"created_by" json:"created_by"`
 	CreatedAt            time.Time     `db:"created_at" json:"created_at"`
@@ -96,7 +97,8 @@ type FormRow struct {
 	Title         string        `db:"title"`
 	Description   string        `db:"description"`
 	AllowMultiple bool          `db:"allow_multiple"`
-	IsActive      bool          `db:"is_active"`
+	StartDate     time.Time     `db:"start_date"`
+	EndDate       time.Time     `db:"end_date"`
 	HeaderImageID sql.NullInt64 `db:"header_image_id"`
 
 	PageID  *int64 `db:"page_id"`
@@ -111,11 +113,12 @@ type FormRow struct {
 }
 
 type FormAnalysisRow struct {
-	QuestionID   int64          `db:"question_id"`
-	QuestionText string         `db:"question_text"`
-	Type         QuestionType   `db:"type"`
-	AnswerValue  sql.NullString `db:"answer_value"`
-	AnswerCount  int            `db:"answer_count"`
+	QuestionID   int64           `db:"question_id"`
+	QuestionText string          `db:"question_text"`
+	Options      json.RawMessage `db:"options"`
+	Type         QuestionType    `db:"type"`
+	AnswerValue  sql.NullString  `db:"answer_value"`
+	AnswerCount  int             `db:"answer_count"`
 }
 
 // Full render DTOs
@@ -177,11 +180,12 @@ type FormAnswerDTO struct {
 // Request
 
 type CreateFormRequest struct {
-	Title                string `json:"title" binding:"required"`
-	Description          string `json:"description" binding:"required"`
-	AllowMultipleEntries bool   `json:"allow_multiple"`
-	IsActive             bool   `json:"is_active"`
-	HeaderImageID        int64  `json:"header_image_id"`
+	Title                string    `json:"title" binding:"required"`
+	Description          string    `json:"description" binding:"required"`
+	AllowMultipleEntries bool      `json:"allow_multiple"`
+	StartDate            time.Time `json:"start_date"`
+	EndDate              time.Time `json:"end_date"`
+	HeaderImageID        int64     `json:"header_image_id"`
 }
 
 type UpdateFormRequest struct {
@@ -234,9 +238,47 @@ type FormSummaryResponse struct {
 	ID                   int64     `json:"id"`
 	Title                string    `json:"title"`
 	Description          string    `json:"description"`
-	IsActive             bool      `json:"is_active"`
+	StartDate            time.Time `json:"start_date"`
+	EndDate              time.Time `json:"end_date"`
 	AllowMultipleEntries bool      `json:"allow_multiple"`
 	CreatedAt            time.Time `json:"created_at"`
+}
+
+type FormDerailedResponse struct {
+	ID                   int64     `json:"id"`
+	Title                string    `json:"title"`
+	Description          string    `json:"description"`
+	StartDate            time.Time `json:"start_date"`
+	EndDate              time.Time `json:"end_date"`
+	AllowMultipleEntries bool      `json:"allow_multiple"`
+	CreatedAt            time.Time `json:"created_at"`
+	Responses            []FormDetailedResponseRow
+}
+
+type FormDetailedResponseRow struct {
+	Index  string `json:"index" excel:"index"`
+	NameAr string `json:"name_ar" excel:"name_ar"`
+	NameEn string `json:"name_en" excel:"name_en"`
+	Email  string `json:"email" excel:"email"`
+
+	Questions []ResponseQuestionDetails `json:"questions"`
+}
+
+type ResponseQuestionDetails struct {
+	QuestionText string       `json:"question_text" excel:"question_text"`
+	Type         QuestionType `json:"type" excel:"type"`
+	AnswerValue  string       `json:"answer_value" excel:"answer_value"`
+}
+
+type FormDetailsFlatResponseRow struct {
+	ResponseID   int64        `db:"response_id"`
+	UserIndex    int64        `db:"user_index"`
+	NameAr       string       `db:"name_ar"`
+	NameEn       string       `db:"name_en"`
+	Email        string       `db:"email"`
+	QuestionText string       `db:"question_text"`
+	Type         QuestionType `db:"question_type"`
+	AnswerValue  string       `db:"answer_value"`
 }
 
 // Form analysis details

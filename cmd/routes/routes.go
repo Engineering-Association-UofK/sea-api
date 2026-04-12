@@ -72,7 +72,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 		auth.POST("/check-username", AccountHandler.CheckUsernameAvailability)
 	}
 
-	{
+	{ // ==== CMS
 		cms := apiV1.Group("/cms")
 		cms.GET("/blogs/:slug", CmsHandler.GetViewBlogPostBySlug)
 		cms.POST("/blogs", CmsHandler.GetBlogPostsList)
@@ -179,6 +179,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			form.POST("/submit", FormHandler.SubmitForm)
 
 			form.GET("/analysis/:id", FormHandler.GetFormAnalysis)
+			form.GET("/detailed-responses/:id", FormHandler.GetFormDetailedResponses)
 
 			// form.GET("/user-response/:id", FormHandler.GetResponseByID)
 			// form.GET("/user-responses/:id", FormHandler.GetUserResponsesForForm)

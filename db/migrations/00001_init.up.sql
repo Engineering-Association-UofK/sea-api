@@ -269,6 +269,8 @@ CREATE TABLE forms (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     allow_multiple BOOLEAN DEFAULT FALSE,
+    start_date DATETIME NOT NULL,
+    end_date DATETIME NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     header_image_id INT, 
     created_by INT NOT NULL,

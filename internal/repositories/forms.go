@@ -24,6 +24,7 @@ func (r *FormRepository) GetFormAnalysisData(formID int64) ([]models.FormAnalysi
     SELECT 
         q.id AS question_id,
         q.question_text,
+		q.options,
         q.type,
         a.answer_value,
         COUNT(a.id) as answer_count
@@ -49,13 +50,41 @@ func (r *FormRepository) GetFormAnalysisData(formID int64) ([]models.FormAnalysi
 	return rows, nil
 }
 
+func (r *FormRepository) GetFormDetailedResponses(formID int64) ([]models.FormDetailsFlatResponseRow, error) {
+	query := `
+		SELECT 
+			r.id AS response_id,
+			u.id AS user_index,
+			u.name_ar,
+			u.name_en,
+			u.email,
+			q.question_text,
+			q.type AS question_type,
+			a.answer_value
+		FROM form_responses r
+		JOIN users u ON r.user_id = u.id
+		JOIN form_answers a ON r.id = a.response_id
+		JOIN form_questions q ON a.question_id = q.id
+		JOIN form_pages p ON q.form_page_id = p.id
+		WHERE r.form_id = ? AND r.status = 'SUBMITTED'
+		ORDER BY r.id, p.page_num, q.display_order;
+	`
+
+	var flatRows []models.FormDetailsFlatResponseRow
+	err := r.db.Select(&flatRows, query, formID)
+	if err != nil {
+		return nil, err
+	}
+	return flatRows, nil
+}
+
 // ======== SPECIAL ========
 
 func (r *FormRepository) GetFormWithQuestions(formID int64) ([]models.FormRow, error) {
 	var rows []models.FormRow
 	query := fmt.Sprintf(`
 	SELECT 
-		f.id AS form_id, f.title, f.description, f.allow_multiple, f.is_active, f.header_image_id,
+		f.id AS form_id, f.title, f.description, f.allow_multiple, f.start_date, f.end_date, f.header_image_id,
 		p.id AS page_id, p.page_num,
 		q.id AS question_id, q.question_text, q.type, q.options, q.is_required, q.display_order
 	FROM %s f
@@ -100,8 +129,8 @@ func (r *FormRepository) CreateAnswersBatch(answers []models.FormAnswerModel) er
 // ======== CREATE ========
 
 func (r *FormRepository) CreateForm(form *models.FormModel) (int64, error) {
-	query := fmt.Sprintf(`INSERT INTO %s (title, description, header_image_id, allow_multiple, is_active, created_by, created_at)
-	VALUES (:title, :description, :header_image_id, :allow_multiple, :is_active, :created_by, :created_at)
+	query := fmt.Sprintf(`INSERT INTO %s (title, description, header_image_id, allow_multiple, start_date, end_date, created_by, created_at)
+	VALUES (:title, :description, :header_image_id, :allow_multiple, :start_date, :end_date, :created_by, :created_at)
 	`, models.TableForms)
 	res, err := r.db.NamedExec(query, form)
 	if err != nil {
@@ -333,7 +362,7 @@ func (r *FormRepository) GetUserResponsesForForm(userID, formID int64) ([]models
 func (r *FormRepository) UpdateForm(form *models.FormModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
-	SET title = :title, description = :description, allow_multiple = :allow_multiple, header_image_id = :header_image_id, is_active = :is_active
+	SET title = :title, description = :description, allow_multiple = :allow_multiple, header_image_id = :header_image_id, start_date = :start_date, end_date = :end_date
 	WHERE id = :id
 	`, models.TableForms)
 	_, err := r.db.NamedExec(query, form)

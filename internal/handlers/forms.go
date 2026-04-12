@@ -4,17 +4,17 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
-	"sea-api/internal/services"
+	"sea-api/internal/services/forms"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type FormHandler struct {
-	service *services.FormService
+	service *forms.FormService
 }
 
-func NewFormHandler(service *services.FormService) *FormHandler {
+func NewFormHandler(service *forms.FormService) *FormHandler {
 	return &FormHandler{service: service}
 }
 
@@ -35,6 +35,23 @@ func (h *FormHandler) GetFormAnalysis(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, analysis)
+}
+
+func (h *FormHandler) GetFormDetailedResponses(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	details, err := h.service.GetEntireFormDetails(id)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, details)
 }
 
 // ======== SPECIAL ========
