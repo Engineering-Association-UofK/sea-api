@@ -50,7 +50,7 @@ func (r *UserRepository) GetTempUsersWithNullPasswords() ([]models.TempUserModel
 	return users, nil
 }
 
-func (r *UserRepository) GetPagesCount(limit int, isTempUser bool) (int, error) {
+func (r *UserRepository) GetTotal(limit int, isTempUser bool) (int, error) {
 	table := models.TableUsers
 	if isTempUser {
 		table = models.TableTempUsers
@@ -60,8 +60,7 @@ func (r *UserRepository) GetPagesCount(limit int, isTempUser bool) (int, error) 
 	if err != nil {
 		return 0, err
 	}
-	pages := (count + limit - 1) / limit
-	return pages, nil
+	return count, nil
 }
 
 func (r *UserRepository) GetAllByIndices(indices []int64) ([]models.UserModel, error) {

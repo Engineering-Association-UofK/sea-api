@@ -17,11 +17,11 @@ func NewCmsRepository(db *sqlx.DB) *CmsRepository {
 
 // ======== BLOG POSTS ========
 
-func (r *CmsRepository) CreateBlogPost(post *models.BlogPostModel) (int64, error) {
+func (r *CmsRepository) CreatePost(post *models.PostModel) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (cover_image_id, title, slug, content, author_id, is_published, created_at, updated_at)
 	VALUES (:cover_image_id, :title, :slug, :content, :author_id, :is_published, :created_at, :updated_at)
-	`, models.TableBlogPosts)
+	`, models.TablePosts)
 	res, err := r.db.NamedExec(query, post)
 	if err != nil {
 		return 0, err
@@ -29,77 +29,94 @@ func (r *CmsRepository) CreateBlogPost(post *models.BlogPostModel) (int64, error
 	return res.LastInsertId()
 }
 
-func (r *CmsRepository) GetBlogPostByID(id int64) (*models.BlogPostModel, error) {
-	var post models.BlogPostModel
-	err := r.db.Get(&post, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableBlogPosts), id)
+func (r *CmsRepository) GetPostByID(id int64) (*models.PostModel, error) {
+	var post models.PostModel
+	err := r.db.Get(&post, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TablePosts), id)
 	if err != nil {
 		return nil, err
 	}
 	return &post, nil
 }
 
-func (r *CmsRepository) GetBlogPostBySlug(slug string) (*models.BlogPostModel, error) {
-	var post models.BlogPostModel
-	err := r.db.Get(&post, fmt.Sprintf(`SELECT * FROM %s WHERE slug = ?`, models.TableBlogPosts), slug)
+func (r *CmsRepository) GetPostBySlug(slug string) (*models.PostModel, error) {
+	var post models.PostModel
+	err := r.db.Get(&post, fmt.Sprintf(`SELECT * FROM %s WHERE slug = ?`, models.TablePosts), slug)
 	if err != nil {
 		return nil, err
 	}
 	return &post, nil
 }
 
-func (r *CmsRepository) GetAllBlogPosts(publishedOnly bool) ([]models.BlogPostModel, error) {
-	var posts []models.BlogPostModel
-	query := fmt.Sprintf(`SELECT * FROM %s`, models.TableBlogPosts)
+func (r *CmsRepository) GetAllPosts(req *models.ListRequest, publishedOnly bool) ([]models.PostModel, error) {
+	query := fmt.Sprintf(`SELECT * FROM %s`, models.TablePosts)
+	var posts []models.PostModel
 	if publishedOnly {
 		query += ` WHERE is_published = TRUE`
 	}
-	query += ` ORDER BY created_at DESC`
-	err := r.db.Select(&posts, query)
+	query += `
+	ORDER BY created_at DESC
+	LIMIT ? OFFSET ?
+	`
+
+	offset := (req.Page - 1) * req.Limit
+	err := r.db.Select(&posts, query, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
 	return posts, nil
 }
 
-func (r *CmsRepository) GetPostsListByType(req models.ListRequest, postType models.PostType) ([]models.BlogPostModel, int, error) {
+func (r *CmsRepository) GetTotalPosts() (int, error) {
+	var total int
+	err := r.db.Get(&total, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TablePosts))
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (r *CmsRepository) GetPostsListByType(req *models.ListRequest, postType models.PostType) ([]models.PostModel, error) {
 	query := fmt.Sprintf(`
 	SELECT * FROM %s 
 	WHERE post_type = ?
+	AND is_published = TRUE
 	ORDER BY created_at DESC
 	LIMIT ? OFFSET ?
-	`, models.TableBlogPosts)
+	`, models.TablePosts)
 
-	var posts []models.BlogPostModel
 	offset := (req.Page - 1) * req.Limit
+	var posts []models.PostModel
 	err := r.db.Select(&posts, query, postType, req.Limit, offset)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	var total int
-	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE post_type = ?`, models.TableBlogPosts)
-	err = r.db.Get(&total, countQuery, postType)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return posts, total, nil
-
+	return posts, nil
 }
 
-func (r *CmsRepository) UpdateBlogPost(post *models.BlogPostModel) error {
+func (r *CmsRepository) GetPublishedTotalByType(postType models.PostType) (int, error) {
+	var total int
+	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE post_type = ? AND is_published = TRUE`, models.TablePosts)
+	err := r.db.Get(&total, countQuery, postType)
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (r *CmsRepository) UpdatePost(post *models.PostModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
 	SET cover_image_id = :cover_image_id, title = :title, slug = :slug, content = :content, 
 	    author_id = :author_id, is_published = :is_published, updated_at = :updated_at
 	WHERE id = :id
-	`, models.TableBlogPosts)
+	`, models.TablePosts)
 	_, err := r.db.NamedExec(query, post)
 	return err
 }
 
-func (r *CmsRepository) DeleteBlogPost(id int64) error {
-	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableBlogPosts), id)
+func (r *CmsRepository) DeletePost(id int64) error {
+	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TablePosts), id)
 	return err
 }
 

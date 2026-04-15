@@ -74,8 +74,8 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 
 	{ // ==== CMS
 		cms := apiV1.Group("/cms")
-		cms.GET("/blogs/:slug", CmsHandler.GetViewBlogPostBySlug)
-		cms.POST("/blogs", CmsHandler.GetBlogPostsList)
+		cms.GET("/blogs/:slug", CmsHandler.GetViewPostBySlug)
+		cms.GET("/blogs", CmsHandler.GetViewPostsList)
 		cms.GET("/team", CmsHandler.GetViewTeamMembers)
 	}
 
@@ -115,7 +115,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			user := admin.Group("/user")
 			user.Use(middleware.RequireAnyRole(models.RoleSystemUserMgr, models.RoleSystemSuperAdmin))
 			user.GET("/:id", UserHandler.GetByID)
-			user.POST("/all", UserHandler.GetAll)
+			user.GET("/all", UserHandler.GetAll)
 			user.POST("/temp-users", UserHandler.GetAllTempUsers)
 			user.GET("/username/:username", UserHandler.GetByUsername)
 			user.GET("/passcode/:id", UserHandler.GetTempUserPasscode)
@@ -138,11 +138,11 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 		{ // ==== BLOG POSTS
 			blog := admin.Group("/blog")
 			blog.Use(middleware.RequireAnyRole(models.RoleContentBlogMgr, models.RoleSystemSuperAdmin))
-			blog.GET("", CmsHandler.GetAllBlogPosts)
-			blog.GET("/:id", CmsHandler.GetBlogPostById)
-			blog.POST("", CmsHandler.CreateBlogPost)
-			blog.PUT("", CmsHandler.UpdateBlogPost)
-			blog.DELETE("/:id", CmsHandler.DeleteBlogPost)
+			blog.GET("", CmsHandler.GetAllPosts)
+			blog.GET("/:id", CmsHandler.GetPostById)
+			blog.POST("", CmsHandler.CreatePost)
+			blog.PUT("", CmsHandler.UpdatePost)
+			blog.DELETE("/:id", CmsHandler.DeletePost)
 		}
 
 		{ // ==== GALLERY

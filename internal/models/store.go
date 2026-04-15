@@ -3,7 +3,7 @@ package models
 type ObjectType int
 
 const (
-	ObjBlogPost ObjectType = iota
+	ObjPost ObjectType = iota
 	ObjNews
 	ObjForm
 	ObjEvent

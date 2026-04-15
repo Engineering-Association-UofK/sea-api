@@ -18,7 +18,7 @@ const (
 
 	// CMS
 
-	TableBlogPosts   TableName = "blog_posts"
+	TablePosts       TableName = "blog_posts"
 	TableTeamMembers TableName = "team_members"
 
 	// Gallery

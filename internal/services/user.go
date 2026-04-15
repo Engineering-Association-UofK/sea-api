@@ -12,6 +12,7 @@ import (
 	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
 	"sea-api/internal/utils/sheets"
+	"sea-api/internal/utils/valid"
 	"slices"
 	"strconv"
 	"time"
@@ -54,20 +55,12 @@ func NewUserService(repo *repositories.UserRepository, suspensionsRepo *reposito
 // ======== GET ALL ========
 
 func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUserListResponse, error) {
-	if err := isValidGetListRequest(req); err != nil {
-		return nil, err
-	}
-
-	pages, err := s.repo.GetPagesCount(int(req.Limit), true)
+	total, err := s.repo.GetTotal(int(req.Limit), true)
 	if err != nil {
 		return nil, err
 	}
-	if req.Page > pages {
-		return &models.TempUserListResponse{
-			Users: []models.TempUserResponse{},
-			Pages: pages,
-		}, nil
-	}
+	valid.ValidateListRequest(req, total)
+
 	users, err := s.repo.GetAllTempUsers(int(req.Limit), req.Page)
 	if err != nil {
 		return nil, err
@@ -75,7 +68,7 @@ func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUser
 	if len(users) == 0 {
 		return &models.TempUserListResponse{
 			Users: []models.TempUserResponse{},
-			Pages: pages,
+			Pages: total / req.Limit,
 		}, nil
 	}
 
@@ -90,25 +83,17 @@ func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUser
 
 	return &models.TempUserListResponse{
 		Users: userResponses,
-		Pages: pages,
+		Pages: total / req.Limit,
 	}, nil
 }
 
 func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse, error) {
-	if err := isValidGetListRequest(req); err != nil {
+	total, err := s.repo.GetTotal(req.Limit, false)
+	if err != nil {
 		return nil, err
 	}
+	valid.ValidateListRequest(req, total)
 
-	pages, err := s.repo.GetPagesCount(int(req.Limit), false)
-	if err != nil {
-		return nil, errs.New(errs.InternalServerError, "Error getting pages count: "+err.Error(), nil)
-	}
-	if req.Page > pages {
-		return &models.UserListResponse{
-			Users: []models.UserListItemResponse{},
-			Pages: pages,
-		}, nil
-	}
 	users, err := s.repo.GetAll(int(req.Limit), req.Page)
 	if err != nil {
 		return nil, errs.New(errs.InternalServerError, "Error getting users: "+err.Error(), nil)
@@ -116,7 +101,7 @@ func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse,
 	if len(users) == 0 {
 		return &models.UserListResponse{
 			Users: []models.UserListItemResponse{},
-			Pages: pages,
+			Pages: total / req.Limit,
 		}, nil
 	}
 	ids := utils.ExtractField(users, func(u models.UserModel) int64 { return u.ID })
@@ -135,7 +120,7 @@ func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse,
 
 	return &models.UserListResponse{
 		Users: userResponses,
-		Pages: pages,
+		Pages: total / req.Limit,
 	}, nil
 }
 
@@ -635,16 +620,4 @@ func generatePasscode(length int) (string, error) {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(bytes), nil
-}
-
-// ======== VALIDATION ========
-
-func isValidGetListRequest(req *models.ListRequest) error {
-	if req.Page < 1 || req.Limit < 1 {
-		return errs.New(errs.BadRequest, "Given page and limit must be greater than 0", nil)
-	}
-	if !models.AllowedListLimit[req.Limit] {
-		return errs.New(errs.BadRequest, "Given limit is not valid", nil)
-	}
-	return nil
 }

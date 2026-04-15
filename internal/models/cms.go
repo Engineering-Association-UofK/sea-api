@@ -15,7 +15,7 @@ const (
 
 // Models
 
-type BlogPostModel struct {
+type PostModel struct {
 	ID           int64     `db:"id" json:"id"`
 	CoverImageID int64     `db:"cover_image_id" json:"cover_image_id"`
 	Title        string    `db:"title" json:"title"`
@@ -40,7 +40,7 @@ type TeamMemberModel struct {
 
 // DTOs
 
-type BlogPostRequest struct {
+type PostRequest struct {
 	CoverImageID int64  `json:"cover_image_id"`
 	Title        string `json:"title" binding:"required,min=3,max=255"`
 	Slug         string `json:"slug"`
@@ -48,12 +48,12 @@ type BlogPostRequest struct {
 	IsPublished  bool   `json:"is_published"`
 }
 
-type BlogPostUpdateRequest struct {
+type PostUpdateRequest struct {
 	ID int64 `db:"id" json:"id"`
-	BlogPostRequest
+	PostRequest
 }
 
-type BlogPostResponse struct {
+type PostResponse struct {
 	ID           int64     `json:"id"`
 	CoverImageID int64     `json:"cover_image_id"`
 	ImageUrl     string    `json:"image_url"`
@@ -67,7 +67,13 @@ type BlogPostResponse struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-type BlogPostViewResponse struct {
+type PostListResponse struct {
+	Posts   []PostResponse `json:"posts"`
+	Current int            `json:"current"`
+	Pages   int            `json:"pages"`
+}
+
+type PostViewResponse struct {
 	ImageUrl   string    `json:"image_url"`
 	Title      string    `json:"title"`
 	Content    string    `json:"content"`
@@ -75,7 +81,7 @@ type BlogPostViewResponse struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-type BlogPostListViewResponse struct {
+type PostViewListResponse struct {
 	ImageUrl   string    `json:"image_url"`
 	Title      string    `json:"title"`
 	AuthorName string    `json:"author_name"`
@@ -83,8 +89,9 @@ type BlogPostListViewResponse struct {
 }
 
 type PostListViewResponse struct {
-	Posts []BlogPostListViewResponse `json:"posts"`
-	Pages int                        `json:"pages"`
+	Posts   []PostViewListResponse `json:"posts"`
+	Current int                    `json:"current"`
+	Pages   int                    `json:"pages"`
 }
 
 type TeamMemberRequest struct {

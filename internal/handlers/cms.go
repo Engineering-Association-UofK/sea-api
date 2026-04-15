@@ -20,8 +20,8 @@ func NewCmsHandler(cmsService *services.CmsService) *CmsHandler {
 	}
 }
 
-func (h *CmsHandler) CreateBlogPost(ctx *gin.Context) {
-	var req models.BlogPostRequest
+func (h *CmsHandler) CreatePost(ctx *gin.Context) {
+	var req models.PostRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -34,7 +34,7 @@ func (h *CmsHandler) CreateBlogPost(ctx *gin.Context) {
 		return
 	}
 
-	id, err := h.CmsService.CreateBlogPost(claims.UserID, &req)
+	id, err := h.CmsService.CreatePost(claims.UserID, &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -43,14 +43,14 @@ func (h *CmsHandler) CreateBlogPost(ctx *gin.Context) {
 	response.NewTransactionResponse(201, "Blog post created successfully", id, ctx)
 }
 
-func (h *CmsHandler) GetBlogPostById(ctx *gin.Context) {
+func (h *CmsHandler) GetPostById(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	var id int64
 	if idStr != "" {
 		id, _ = strconv.ParseInt(idStr, 10, 64)
 	}
 
-	post, err := h.CmsService.GetBlogPostById(id)
+	post, err := h.CmsService.GetPostById(id)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -59,9 +59,9 @@ func (h *CmsHandler) GetBlogPostById(ctx *gin.Context) {
 	ctx.PureJSON(200, post)
 }
 
-func (h *CmsHandler) GetViewBlogPostBySlug(ctx *gin.Context) {
+func (h *CmsHandler) GetViewPostBySlug(ctx *gin.Context) {
 	slug := ctx.Param("slug")
-	post, err := h.CmsService.GetViewBlogPostBySlug(slug)
+	post, err := h.CmsService.GetViewPostBySlug(slug)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -70,14 +70,14 @@ func (h *CmsHandler) GetViewBlogPostBySlug(ctx *gin.Context) {
 	ctx.PureJSON(200, post)
 }
 
-func (h *CmsHandler) GetBlogPostsList(ctx *gin.Context) {
+func (h *CmsHandler) GetViewPostsList(ctx *gin.Context) {
 	var req models.ListRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
 		return
 	}
 
-	posts, err := h.CmsService.GetViewBlogPostList(req)
+	posts, err := h.CmsService.GetViewPostList(&req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -86,8 +86,14 @@ func (h *CmsHandler) GetBlogPostsList(ctx *gin.Context) {
 	ctx.PureJSON(200, posts)
 }
 
-func (h *CmsHandler) GetAllBlogPosts(ctx *gin.Context) {
-	posts, err := h.CmsService.GetAllBlogPosts(false)
+func (h *CmsHandler) GetAllPosts(ctx *gin.Context) {
+	var req models.ListRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
+		return
+	}
+
+	posts, err := h.CmsService.GetAllPosts(&req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -96,14 +102,14 @@ func (h *CmsHandler) GetAllBlogPosts(ctx *gin.Context) {
 	ctx.PureJSON(200, posts)
 }
 
-func (h *CmsHandler) UpdateBlogPost(ctx *gin.Context) {
-	var req models.BlogPostUpdateRequest
+func (h *CmsHandler) UpdatePost(ctx *gin.Context) {
+	var req models.PostUpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
-	err := h.CmsService.UpdateBlogPost(&req)
+	err := h.CmsService.UpdatePost(&req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -112,7 +118,7 @@ func (h *CmsHandler) UpdateBlogPost(ctx *gin.Context) {
 	response.NewTransactionResponse(200, "Blog post updated successfully", req.ID, ctx)
 }
 
-func (h *CmsHandler) DeleteBlogPost(ctx *gin.Context) {
+func (h *CmsHandler) DeletePost(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -120,7 +126,7 @@ func (h *CmsHandler) DeleteBlogPost(ctx *gin.Context) {
 		return
 	}
 
-	err = h.CmsService.DeleteBlogPost(id)
+	err = h.CmsService.DeletePost(id)
 	if err != nil {
 		ctx.Error(err)
 		return

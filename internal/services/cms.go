@@ -6,6 +6,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
+	"sea-api/internal/utils/valid"
 	"strings"
 	"time"
 )
@@ -26,18 +27,18 @@ func NewCmsService(CmsRepo *repositories.CmsRepository, userService *UserService
 
 // ======== BLOG POSTS ========
 
-func (s *CmsService) CreateBlogPost(userId int64, post *models.BlogPostRequest) (int64, error) {
+func (s *CmsService) CreatePost(userId int64, post *models.PostRequest) (int64, error) {
 	if post.Slug == "" {
 		post.Slug = strings.ToLower(strings.ReplaceAll(post.Title, " ", "-"))
 	}
-	if _, err := s.CmsRepo.GetBlogPostBySlug(post.Slug); err == nil {
+	if _, err := s.CmsRepo.GetPostBySlug(post.Slug); err == nil {
 		return 0, errs.New(errs.Conflict, "Slug already exists", nil)
 	}
 	if _, err := s.GalleryService.GetAssetByID(post.CoverImageID); err != nil {
 		return 0, errs.New(errs.BadRequest, "invalid image ID provided", nil)
 	}
 
-	model := &models.BlogPostModel{
+	model := &models.PostModel{
 		CoverImageID: post.CoverImageID,
 		Title:        post.Title,
 		Slug:         post.Slug,
@@ -47,40 +48,40 @@ func (s *CmsService) CreateBlogPost(userId int64, post *models.BlogPostRequest) 
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
-	id, err := s.CmsRepo.CreateBlogPost(model)
+	id, err := s.CmsRepo.CreatePost(model)
 	if err != nil {
 		return 0, err
 	}
-	err = s.GalleryService.AttachAssetToObject(post.CoverImageID, models.ObjBlogPost, id)
+	err = s.GalleryService.AttachAssetToObject(post.CoverImageID, models.ObjPost, id)
 	if err != nil {
 		return 0, err
 	}
 	return id, nil
 }
 
-func (s *CmsService) GetBlogPostById(id int64) (*models.BlogPostResponse, error) {
-	post, err := s.CmsRepo.GetBlogPostByID(id)
+func (s *CmsService) GetPostById(id int64) (*models.PostResponse, error) {
+	post, err := s.CmsRepo.GetPostByID(id)
 	if err != nil {
 		slog.Info("Post not found using ID")
 		return nil, err
 	}
-	return s.getBlogPost(post)
+	return s.getPost(post)
 }
 
-func (s *CmsService) GetViewBlogPostBySlug(slug string) (*models.BlogPostViewResponse, error) {
-	post, err := s.CmsRepo.GetBlogPostBySlug(slug)
+func (s *CmsService) GetViewPostBySlug(slug string) (*models.PostViewResponse, error) {
+	post, err := s.CmsRepo.GetPostBySlug(slug)
 	if err != nil {
 		return nil, err
 	}
 	if !post.IsPublished {
 		return nil, errs.New(errs.NotFound, "post not found", nil)
 	}
-	model, err := s.getBlogPost(post)
+	model, err := s.getPost(post)
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.BlogPostViewResponse{
+	return &models.PostViewResponse{
 		ImageUrl:   model.ImageUrl,
 		Title:      model.Title,
 		Content:    model.Content,
@@ -89,8 +90,14 @@ func (s *CmsService) GetViewBlogPostBySlug(slug string) (*models.BlogPostViewRes
 	}, nil
 }
 
-func (s *CmsService) GetViewBlogPostList(req models.ListRequest) (*models.PostListViewResponse, error) {
-	posts, total, err := s.CmsRepo.GetPostsListByType(req, models.PostBlog)
+func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.PostListViewResponse, error) {
+	total, err := s.CmsRepo.GetPublishedTotalByType(models.PostBlog)
+	if err != nil {
+		return nil, err
+	}
+	valid.ValidateListRequest(req, total)
+
+	posts, err := s.CmsRepo.GetPostsListByType(req, models.PostBlog)
 	if err != nil {
 		return nil, err
 	}
@@ -110,14 +117,14 @@ func (s *CmsService) GetViewBlogPostList(req models.ListRequest) (*models.PostLi
 	}
 	authorsMap := utils.FromSlice(authors, func(u models.UserDetails) int64 { return u.ID })
 
-	responses := []models.BlogPostListViewResponse{}
+	responses := []models.PostViewListResponse{}
 	for _, post := range posts {
 		url, err := s.GalleryService.GetLinkByAssetID(post.CoverImageID)
 		if err != nil {
 			slog.Info("Failed to generate url", "store id", post.CoverImageID)
 			return nil, err
 		}
-		responses = append(responses, models.BlogPostListViewResponse{
+		responses = append(responses, models.PostViewListResponse{
 			ImageUrl:   url,
 			Title:      post.Title,
 			AuthorName: authorsMap[post.AuthorID].NameAr,
@@ -126,14 +133,15 @@ func (s *CmsService) GetViewBlogPostList(req models.ListRequest) (*models.PostLi
 	}
 
 	response = models.PostListViewResponse{
-		Posts: responses,
-		Pages: total / req.Limit,
+		Posts:   responses,
+		Current: req.Page,
+		Pages:   total / req.Limit,
 	}
 
 	return &response, nil
 }
 
-func (s *CmsService) getBlogPost(post *models.BlogPostModel) (*models.BlogPostResponse, error) {
+func (s *CmsService) getPost(post *models.PostModel) (*models.PostResponse, error) {
 	url, err := s.GalleryService.GetLinkByAssetID(post.CoverImageID)
 	if err != nil {
 		slog.Info("Failed to generate url", "store id", post.CoverImageID)
@@ -146,7 +154,7 @@ func (s *CmsService) getBlogPost(post *models.BlogPostModel) (*models.BlogPostRe
 		return nil, err
 	}
 
-	return &models.BlogPostResponse{
+	return &models.PostResponse{
 		ID:           post.ID,
 		CoverImageID: post.CoverImageID,
 		ImageUrl:     url,
@@ -161,27 +169,34 @@ func (s *CmsService) getBlogPost(post *models.BlogPostModel) (*models.BlogPostRe
 	}, nil
 }
 
-func (s *CmsService) GetAllBlogPosts(publishedOnly bool) ([]models.BlogPostResponse, error) {
-	posts, err := s.CmsRepo.GetAllBlogPosts(publishedOnly)
+func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.PostListResponse, error) {
+	total, err := s.CmsRepo.GetTotalPosts()
 	if err != nil {
-		return []models.BlogPostResponse{}, err
+		return &models.PostListResponse{}, err
+	}
+	valid.ValidateListRequest(req, total)
+
+	posts, err := s.CmsRepo.GetAllPosts(req, false)
+	if err != nil {
+		return &models.PostListResponse{}, err
 	}
 	if len(posts) == 0 {
-		return []models.BlogPostResponse{}, nil
+		return &models.PostListResponse{}, nil
 	}
-	usersIds := utils.FromSlice(posts, func(p models.BlogPostModel) int64 { return p.AuthorID }).Keys()
+
+	usersIds := utils.FromSlice(posts, func(p models.PostModel) int64 { return p.AuthorID }).Keys()
 
 	users, err := s.UserService.GetAllUserDetailsByIndices(usersIds)
 	if err != nil {
-		return []models.BlogPostResponse{}, err
+		return &models.PostListResponse{}, err
 	}
 	usersMap := utils.FromSlice(users, func(u models.UserDetails) int64 { return u.ID })
 
-	var responses []models.BlogPostResponse
+	var responses = []models.PostResponse{}
 	for _, post := range posts {
 		url, _ := s.GalleryService.GetLinkByAssetID(post.CoverImageID)
 
-		responses = append(responses, models.BlogPostResponse{
+		responses = append(responses, models.PostResponse{
 			ID:           post.ID,
 			CoverImageID: post.CoverImageID,
 			ImageUrl:     url,
@@ -196,27 +211,30 @@ func (s *CmsService) GetAllBlogPosts(publishedOnly bool) ([]models.BlogPostRespo
 		})
 	}
 
-	return responses, nil
-
+	return &models.PostListResponse{
+		Posts:   responses,
+		Current: req.Page,
+		Pages:   total / req.Limit,
+	}, nil
 }
 
-func (s *CmsService) UpdateBlogPost(req *models.BlogPostUpdateRequest) error {
-	post, err := s.CmsRepo.GetBlogPostByID(req.ID)
+func (s *CmsService) UpdatePost(req *models.PostUpdateRequest) error {
+	post, err := s.CmsRepo.GetPostByID(req.ID)
 	if err != nil {
 		return err
 	}
 	if req.CoverImageID != post.CoverImageID {
-		s.GalleryService.RemoveReference(models.ObjBlogPost, post.ID)
+		s.GalleryService.RemoveReference(models.ObjPost, post.ID)
 		if _, err := s.GalleryService.GetAssetByID(req.CoverImageID); err != nil {
 			return errs.New(errs.BadRequest, "invalid image ID provided", nil)
 		}
-		s.GalleryService.AttachAssetToObject(req.CoverImageID, models.ObjBlogPost, req.ID)
+		s.GalleryService.AttachAssetToObject(req.CoverImageID, models.ObjPost, req.ID)
 	}
 
 	post.CoverImageID = req.CoverImageID
 	post.Title = req.Title
 	if req.Slug != "" {
-		_, err := s.CmsRepo.GetBlogPostBySlug(req.Slug)
+		_, err := s.CmsRepo.GetPostBySlug(req.Slug)
 		if err == nil {
 			return errs.New(errs.Conflict, "Slug already exists", nil)
 		}
@@ -226,15 +244,15 @@ func (s *CmsService) UpdateBlogPost(req *models.BlogPostUpdateRequest) error {
 	post.IsPublished = req.IsPublished
 	post.UpdatedAt = time.Now()
 
-	return s.CmsRepo.UpdateBlogPost(post)
+	return s.CmsRepo.UpdatePost(post)
 }
 
-func (s *CmsService) DeleteBlogPost(id int64) error {
-	if _, err := s.CmsRepo.GetBlogPostByID(id); err != nil {
+func (s *CmsService) DeletePost(id int64) error {
+	if _, err := s.CmsRepo.GetPostByID(id); err != nil {
 		return err
 	}
-	s.GalleryService.RemoveReference(models.ObjBlogPost, id)
-	return s.CmsRepo.DeleteBlogPost(id)
+	s.GalleryService.RemoveReference(models.ObjPost, id)
+	return s.CmsRepo.DeletePost(id)
 }
 
 // ======== TEAM MEMBERS ========

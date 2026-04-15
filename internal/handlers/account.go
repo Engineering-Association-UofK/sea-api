@@ -38,6 +38,13 @@ func (a *AccountHandler) GetProfile(c *gin.Context) {
 }
 
 func (a *AccountHandler) GetCertificates(c *gin.Context) {
+	var req models.ListRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
+
+		return
+	}
+
 	value, exists := c.Get("user")
 	claims, ok := value.(*models.ManagedClaims)
 	if !exists || !ok {
