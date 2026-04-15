@@ -16,9 +16,17 @@ import (
 
 // @title						SEA Backend API
 // @version					1.0
-// @description				This is the backend for the Steering Engineering Association.
+// @description				This is the backend API for the Steering Engineering Association.
+// @contact.name				Technical Office - SEA - UofK
+// @contact.email				tech.sea.uofk@gmail.com
+// @license.name				MIT
+// @license.url				http://opensource.org/licenses/MIT
+//
 // @host						localhost:8000
 // @BasePath					/api/v1
+// @schemes					http https
+// @servers					http://localhost:8080 Local
+// @servers					https://api-sea-uofk.duckdns.org Staging
 //
 // @securityDefinitions.apikey	ApiKeyAuth
 // @in							header

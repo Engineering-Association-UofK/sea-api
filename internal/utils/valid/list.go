@@ -2,7 +2,7 @@ package valid
 
 import "sea-api/internal/models"
 
-func ValidateListRequest(req *models.ListRequest, total int) {
+func ValidateListRequest(req *models.ListRequest, total int64) {
 	if !models.AllowedListLimit[req.Limit] {
 		req.Limit = 10
 	}
@@ -12,5 +12,8 @@ func ValidateListRequest(req *models.ListRequest, total int) {
 	}
 	if req.Page > totalPages {
 		req.Page = totalPages
+	}
+	if req.Page < 1 {
+		req.Page = 1
 	}
 }

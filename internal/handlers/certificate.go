@@ -5,6 +5,7 @@ import (
 	"io"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	_ "sea-api/internal/response"
 	"sea-api/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -18,8 +19,17 @@ func NewCertificateHandler(service *services.CertificateService) *CertificateHan
 	return &CertificateHandler{service: service}
 }
 
+// VerifyCertificate godocs
+//
+//	@Summary		Verify Certificate
+//	@Description	Validate certificate
+//	@Tags			Certificate
+//	@Produce		json
+//	@Param			hash	path	string	true	"Certificate hash"
+//	@Success		200	{object}	models.CertificateVerify
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/cert/verify/{hash} [get]
 func (h *CertificateHandler) VerifyCertificate(ctx *gin.Context) {
-
 	hash := ctx.Param("hash")
 	cert, err := h.service.VerifyCertificate(hash)
 	if err != nil {
@@ -30,6 +40,16 @@ func (h *CertificateHandler) VerifyCertificate(ctx *gin.Context) {
 	ctx.JSON(200, cert)
 }
 
+// VerifyDocument godocs
+//
+//	@Summary		Verify Document
+//	@Description	Validate document
+//	@Tags			Certificate
+//	@Produce		json
+//	@Param			hash	path	string	true	"Document hash"
+//	@Success		200	{object}	models.DocumentVerifyResponse
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/cert/verify-document/{hash} [get]
 func (h *CertificateHandler) VerifyDocument(ctx *gin.Context) {
 
 	hash := ctx.Param("hash")
@@ -42,6 +62,19 @@ func (h *CertificateHandler) VerifyDocument(ctx *gin.Context) {
 	ctx.JSON(200, doc)
 }
 
+// MakeCertificatesForEvent godocs
+//
+//	@Summary		Make Certificates For Event
+//	@Description	Generate certificates for all eligible participants of an event
+//	@Tags			Certificate
+//	@Produce		text/event-stream
+//	@Param			body	body	models.MakeCertificatesForEventRequest	true	"Request body"
+//	@Success		200		{string}	string	"SSE stream"
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/certificate/generate-all-for-event [get]
+//
+//	@Security		ApiKeyAuth
 func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 	var req models.MakeCertificatesForEventRequest
 
@@ -69,6 +102,20 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 	})
 }
 
+// SignPDF godocs
+//
+//	@Summary		Sign PDF
+//	@Description	Sign a PDF certificate
+//	@Tags			Certificate
+//	@Accept			multipart/form-data
+//	@Produce		application/pdf
+//	@Param			file formData	models.SignPdfRequest	true	"PDF file to sign"
+//	@Success		200				{file}		binary
+//	@Failure		400				{object}	response.BaseError
+//	@Failure		500				{object}	response.BaseError
+//	@Router			/admin/certificate/sign [post]
+//
+//	@Security		ApiKeyAuth
 func (h *CertificateHandler) SignPDF(ctx *gin.Context) {
 	var req models.SignPdfRequest
 	if err := ctx.ShouldBind(&req); err != nil {
@@ -86,6 +133,19 @@ func (h *CertificateHandler) SignPDF(ctx *gin.Context) {
 	ctx.Data(200, "application/pdf", signedPdf)
 }
 
+// SendCertificatesEmailsForEvent godocs
+//
+//	@Summary		Send Certificates Emails For Event
+//	@Description	Send certificate emails to all eligible participants of an event
+//	@Tags			Certificate
+//	@Produce		text/event-stream
+//	@Param			body	body	models.CertificateSendEmailData	true	"Request body"
+//	@Success		200		{string}	string	"SSE stream"
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/event/send-all-emails [post]
+//
+//	@Security		ApiKeyAuth
 func (h *CertificateHandler) SendCertificatesEmailsForEvent(ctx *gin.Context) {
 	var req models.CertificateSendEmailData
 
@@ -113,6 +173,16 @@ func (h *CertificateHandler) SendCertificatesEmailsForEvent(ctx *gin.Context) {
 	})
 }
 
+// GetCertificates godocs
+//
+//	@Summary		Get Certificate
+//	@Description	Get certificate details by its hash
+//	@Tags			Certificate
+//	@Produce		application/zip
+//	@Param			hash	path	string	true	"Certificate hash"
+//	@Success		200		{file}		binary
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
 func (h *CertificateHandler) GetCertificates(ctx *gin.Context) {
 	hash := ctx.Param("hash")
 

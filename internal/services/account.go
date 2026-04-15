@@ -12,6 +12,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
+	"sea-api/internal/utils/valid"
 	"strings"
 	"time"
 
@@ -62,8 +63,14 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 	}, nil
 }
 
-func (s *AccountService) GetCertificates(ctx context.Context, claims *models.ManagedClaims) ([]models.CertificateListResponse, error) {
-	certs, err := s.certificateRepository.GetByUserID(claims.UserID)
+func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *models.ListRequest) ([]models.CertificateListResponse, error) {
+	total, err := s.certificateRepository.GetTotalByUserID(claims.UserID)
+	if err != nil {
+		return nil, err
+	}
+	valid.ValidateListRequest(req, total)
+
+	certs, err := s.certificateRepository.GetByUserID(claims.UserID, req)
 	if err != nil {
 		return nil, err
 	}

@@ -69,8 +69,8 @@ type PostResponse struct {
 
 type PostListResponse struct {
 	Posts   []PostResponse `json:"posts"`
-	Current int            `json:"current"`
-	Pages   int            `json:"pages"`
+	Current int64          `json:"current"`
+	Pages   int64          `json:"pages"`
 }
 
 type PostViewResponse struct {
@@ -90,8 +90,8 @@ type PostViewListResponse struct {
 
 type PostListViewResponse struct {
 	Posts   []PostViewListResponse `json:"posts"`
-	Current int                    `json:"current"`
-	Pages   int                    `json:"pages"`
+	Current int64                  `json:"current"`
+	Pages   int64                  `json:"pages"`
 }
 
 type TeamMemberRequest struct {

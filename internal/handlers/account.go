@@ -14,12 +14,26 @@ type AccountHandler struct {
 	AccountService *services.AccountService
 }
 
+//	@Param			id	path	int	true	"Notification ID"
+
 func NewAccountHandler(accountService *services.AccountService) *AccountHandler {
 	return &AccountHandler{
 		AccountService: accountService,
 	}
 }
 
+// GetProfile godocs
+//
+//	@Summary		Get Profile
+//	@Description	Get all profile details of requesting user
+//	@Tags			Account:profile
+//	@Produce		json
+//	@Success		200	{object}	models.UserProfileResponse
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account [get]
+//
+//	@Security		ApiKeyAuth
 func (a *AccountHandler) GetProfile(c *gin.Context) {
 	value, exists := c.Get("user")
 	claims, ok := value.(*models.ManagedClaims)
@@ -37,6 +51,21 @@ func (a *AccountHandler) GetProfile(c *gin.Context) {
 	c.PureJSON(http.StatusOK, profile)
 }
 
+// GetCertificates godocs
+//
+//	@Summary		Get user certificates
+//	@Description	Get all certificates associated with the requesting user
+//	@Tags			Account:profile
+//	@Produce		json
+//	@Param			limit	query	int	true	"Content count limit"
+//	@Param			page	query	int	true	"Page number"
+//	@Success		200	{array}	models.CertificateListResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/certificates [get]
+//
+//	@Security		ApiKeyAuth
 func (a *AccountHandler) GetCertificates(c *gin.Context) {
 	var req models.ListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -52,7 +81,7 @@ func (a *AccountHandler) GetCertificates(c *gin.Context) {
 		return
 	}
 
-	certs, err := a.AccountService.GetCertificates(c.Request.Context(), claims)
+	certs, err := a.AccountService.GetCertificates(claims, &req)
 	if err != nil {
 		c.Error(err)
 		return
@@ -61,6 +90,20 @@ func (a *AccountHandler) GetCertificates(c *gin.Context) {
 	c.PureJSON(http.StatusOK, certs)
 }
 
+// UpdateProfile godocs
+//
+//	@Summary		Update profile
+//	@Description	Update profile text details
+//	@Tags			Account:profile
+//	@Produce		json
+//	@Param			body	body	models.UpdateProfileRequest 	true	"Request body"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/certificates [put]
+//
+//	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdateProfile(c *gin.Context) {
 	var req models.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -84,6 +127,20 @@ func (a *AccountHandler) UpdateProfile(c *gin.Context) {
 	response.NewTransactionResponse(200, "Profile updated successfully", req.ID, c)
 }
 
+// UpdatePicture godocs
+//
+//	@Summary		Update profile picture
+//	@Description	Update user profile picture
+//	@Tags			Account:profile
+//	@Produce		json
+//	@Param			picture	formData	file 	true	"Upload File"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/certificates/picture [put]
+//
+//	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdatePicture(c *gin.Context) {
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 5*1024*1024)
 
@@ -110,6 +167,20 @@ func (a *AccountHandler) UpdatePicture(c *gin.Context) {
 	response.NewTransactionResponse(200, "Profile picture updated successfully", claims.UserID, c)
 }
 
+// UpdatePassword godocs
+//
+//	@Summary		Update profile picture
+//	@Description	Update user profile picture
+//	@Tags			Account:profile
+//	@Produce		json
+//	@Param			body	body	models.UpdatePasswordRequest 	true	"Request body"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/certificates/password [put]
+//
+//	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdatePassword(c *gin.Context) {
 	var req models.UpdatePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -130,6 +201,20 @@ func (a *AccountHandler) UpdatePassword(c *gin.Context) {
 	response.NewTransactionResponse(200, "Password updated successfully", claims.UserID, c)
 }
 
+// UpdateEmail godocs
+//
+//	@Summary		Update Email
+//	@Description	Update user email address
+//	@Tags			Account:profile
+//	@Produce		json
+//	@Param			body	body	models.UpdateEmailRequest 	true	"Request body"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/certificates/email [put]
+//
+//	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdateEmail(c *gin.Context) {
 	var req models.UpdateEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -151,6 +236,20 @@ func (a *AccountHandler) UpdateEmail(c *gin.Context) {
 	response.NewTransactionResponse(200, "Email updated successfully", claims.UserID, c)
 }
 
+// UpdateUsername godocs
+//
+//	@Summary		Update Username
+//	@Description	Update username
+//	@Tags			Account:profile
+//	@Produce		json
+//	@Param			body	body	models.UpdateUsernameRequest 	true	"Request body"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/certificates/username [put]
+//
+//	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdateUsername(c *gin.Context) {
 	var req models.UpdateUsernameRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -171,6 +270,18 @@ func (a *AccountHandler) UpdateUsername(c *gin.Context) {
 	response.NewTransactionResponse(200, "Username updated successfully", claims.UserID, c)
 }
 
+// CheckUsernameAvailability godocs
+//
+//	@Summary		Update Username
+//	@Description	Update username
+//	@Tags			Account:profile
+//	@Produce		json
+//	@Param			body	body	models.UpdateUsernameRequest 	true	"Request body"
+//	@Success		200	{object}	models.CheckUsername
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/auth/check-username [post]
 func (a *AccountHandler) CheckUsernameAvailability(c *gin.Context) {
 	var req models.UpdateUsernameRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

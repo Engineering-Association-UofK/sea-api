@@ -66,8 +66,8 @@ func (r *CmsRepository) GetAllPosts(req *models.ListRequest, publishedOnly bool)
 	return posts, nil
 }
 
-func (r *CmsRepository) GetTotalPosts() (int, error) {
-	var total int
+func (r *CmsRepository) GetTotalPosts() (int64, error) {
+	var total int64
 	err := r.db.Get(&total, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TablePosts))
 	if err != nil {
 		return 0, err
@@ -94,8 +94,8 @@ func (r *CmsRepository) GetPostsListByType(req *models.ListRequest, postType mod
 	return posts, nil
 }
 
-func (r *CmsRepository) GetPublishedTotalByType(postType models.PostType) (int, error) {
-	var total int
+func (r *CmsRepository) GetPublishedTotalByType(postType models.PostType) (int64, error) {
+	var total int64
 	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE post_type = ? AND is_published = TRUE`, models.TablePosts)
 	err := r.db.Get(&total, countQuery, postType)
 	if err != nil {

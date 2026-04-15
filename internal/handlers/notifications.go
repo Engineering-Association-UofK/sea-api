@@ -23,7 +23,7 @@ func NewNotificationHandler(service *services.NotificationService) *Notification
 //
 //	@Summary		Create demo notification
 //	@Description	Create a demo notification for the account that sends the request
-//	@Tags			notifications
+//	@Tags			Notifications
 //	@Param			body	body	models.DemoNotificationRequest	true	"Request body"
 //	@Produce		json
 //	@Success		200	{object}	response.TransactionResponse
@@ -60,7 +60,7 @@ func (h *NotificationHandler) CreateDemoNotifications(c *gin.Context) {
 //
 //	@Summary		Get notifications
 //	@Description	Get latest notifications for requester
-//	@Tags			notifications
+//	@Tags			Notifications
 //	@Param			limit	query	int	true	"Content count limit"
 //	@Param			page	query	int	true	"Page number"
 //	@Produce		json
@@ -98,7 +98,7 @@ func (h *NotificationHandler) GetNotifications(c *gin.Context) {
 //
 //	@Summary		Mark one notification as read
 //	@Description	Marks the provided notification ID as read, the notification must belong to the requesting user
-//	@Tags			notifications
+//	@Tags			Notifications
 //	@Param			id	path	int	true	"Notification ID"
 //	@Produce		json
 //	@Success		200	{object}	response.TransactionResponse
@@ -136,7 +136,7 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 //
 //	@Summary		Mark all notification as read
 //	@Description	Marks all notifications that belong to the requesting user as read
-//	@Tags			notifications
+//	@Tags			Notifications
 //	@Produce		json
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		401	{object}	response.BaseError
@@ -165,7 +165,7 @@ func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 //
 //	@Summary		Delete notification
 //	@Description	Delete one notification with ID, must belong to the requesting user
-//	@Tags			notifications
+//	@Tags			Notifications
 //	@Param			id	path	int	true	"Notification ID"
 //	@Produce		json
 //	@Success		200	{object}	response.TransactionResponse
