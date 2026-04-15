@@ -205,12 +205,12 @@ type TempUserResponse struct {
 
 type UserListResponse struct {
 	Users []UserListItemResponse `json:"users"`
-	Pages int                    `json:"pages"`
+	Pages int64                  `json:"pages"`
 }
 
 type TempUserListResponse struct {
 	Users []TempUserResponse `json:"users"`
-	Pages int                `json:"pages"`
+	Pages int64              `json:"pages"`
 }
 
 type UserProfileResponse struct {

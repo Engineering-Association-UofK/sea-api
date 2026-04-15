@@ -84,12 +84,12 @@ const (
 )
 
 type ListRequest struct {
-	Limit int    `form:"limit" binding:"required"`
-	Page  int    `form:"page" binding:"required"`
+	Limit int64  `form:"limit" binding:"required"`
+	Page  int64  `form:"page" binding:"required"`
 	Type  string `form:"type"`
 }
 
-var AllowedListLimit = map[int]bool{
+var AllowedListLimit = map[int64]bool{
 	10:  true,
 	25:  true,
 	50:  true,

@@ -16,6 +16,12 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version-file: go.mod
+    
+    - name: Install Swag
+      run: go install github.com/swaggo/swag/cmd/swag@latest
+
+    - name: Generate Docs
+      run: swag init -g cmd/api/main.go --parseDependency --parseInternal
 
     - name: Build
       run: go build -o api cmd/api/main.go

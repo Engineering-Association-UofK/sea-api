@@ -65,6 +65,6 @@ type NotificationResponse struct {
 
 type NotificationsListResponse struct {
 	Notifications []NotificationResponse `json:"notifications"`
-	Pages         int                    `json:"pages"`
-	Total         int                    `json:"total"`
+	Pages         int64                  `json:"pages"`
+	Total         int64                  `json:"total"`
 }

@@ -23,9 +23,9 @@ type GalleryReferenceModel struct {
 }
 
 type NewGalleryAssetRequest struct {
-	FileName string                `form:"file_name"`
-	AltText  string                `form:"alt_text"`
-	File     *multipart.FileHeader `form:"file"`
+	FileName string                `form:"file_name" binding:"required"`
+	AltText  string                `form:"alt_text" binding:"required"`
+	File     *multipart.FileHeader `form:"file" binding:"required"`
 }
 
 type GallerySqlModel struct {

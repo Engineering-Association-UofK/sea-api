@@ -43,9 +43,9 @@ func (r *NotificationRepository) GetByUserIDWithLimit(userID int64, limit models
 	return notifications, nil
 }
 
-func (r *NotificationRepository) GetTotalWithUserID(userID int64) (int, error) {
+func (r *NotificationRepository) GetTotalWithUserID(userID int64) (int64, error) {
 	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE user_id = ?`, models.TableNotifications)
-	var count int
+	var count int64
 	err := r.db.Get(&count, query, userID)
 	return count, err
 }

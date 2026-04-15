@@ -5,7 +5,6 @@ import (
 	"sea-api/cmd/routes"
 	"sea-api/internal/config"
 	"sea-api/internal/handlers"
-	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
 	"sea-api/internal/services/forms"
@@ -15,8 +14,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var mods []models.ImportUserUpdate
-
+// @title						SEA Backend API
+// @version					1.0
+// @description				This is the backend API for the Steering Engineering Association.
+// @contact.name				Technical Office - SEA - UofK
+// @contact.email				tech.sea.uofk@gmail.com
+// @license.name				MIT
+// @license.url				http://opensource.org/licenses/MIT
+//
+// @host						localhost:8000
+// @BasePath					/api/v1
+// @schemes					http https
+// @servers					http://localhost:8080 Local
+// @servers					https://api-sea-uofk.duckdns.org Staging
+//
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description				Type 'Bearer <token>' to authenticate
 func main() {
 	err := config.Load()
 	if err != nil {

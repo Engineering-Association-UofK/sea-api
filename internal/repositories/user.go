@@ -17,7 +17,7 @@ func NewUserRepository(DB *sqlx.DB) *UserRepository {
 
 // ======== GET ALL ========
 
-func (r *UserRepository) GetAll(limit int, page int) ([]models.UserModel, error) {
+func (r *UserRepository) GetAll(limit int64, page int64) ([]models.UserModel, error) {
 	var users []models.UserModel
 	offset := (page - 1) * limit
 	err := r.DB.Select(&users, fmt.Sprintf(`
@@ -31,7 +31,7 @@ func (r *UserRepository) GetAll(limit int, page int) ([]models.UserModel, error)
 	return users, nil
 }
 
-func (r *UserRepository) GetAllTempUsers(limit int, page int) ([]models.TempUserModel, error) {
+func (r *UserRepository) GetAllTempUsers(limit int64, page int64) ([]models.TempUserModel, error) {
 	var users []models.TempUserModel
 	offset := (page - 1) * limit
 	err := r.DB.Select(&users, fmt.Sprintf(`SELECT * FROM %s LIMIT ? OFFSET ?`, models.TableTempUsers), limit, offset)
@@ -50,12 +50,12 @@ func (r *UserRepository) GetTempUsersWithNullPasswords() ([]models.TempUserModel
 	return users, nil
 }
 
-func (r *UserRepository) GetTotal(limit int, isTempUser bool) (int, error) {
+func (r *UserRepository) GetTotal(limit int64, isTempUser bool) (int64, error) {
 	table := models.TableUsers
 	if isTempUser {
 		table = models.TableTempUsers
 	}
-	var count int
+	var count int64
 	err := r.DB.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, table))
 	if err != nil {
 		return 0, err

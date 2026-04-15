@@ -55,13 +55,13 @@ func NewUserService(repo *repositories.UserRepository, suspensionsRepo *reposito
 // ======== GET ALL ========
 
 func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUserListResponse, error) {
-	total, err := s.repo.GetTotal(int(req.Limit), true)
+	total, err := s.repo.GetTotal(req.Limit, true)
 	if err != nil {
 		return nil, err
 	}
 	valid.ValidateListRequest(req, total)
 
-	users, err := s.repo.GetAllTempUsers(int(req.Limit), req.Page)
+	users, err := s.repo.GetAllTempUsers(req.Limit, req.Page)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse,
 	}
 	valid.ValidateListRequest(req, total)
 
-	users, err := s.repo.GetAll(int(req.Limit), req.Page)
+	users, err := s.repo.GetAll(req.Limit, req.Page)
 	if err != nil {
 		return nil, errs.New(errs.InternalServerError, "Error getting users: "+err.Error(), nil)
 	}

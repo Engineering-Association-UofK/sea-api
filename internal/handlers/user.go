@@ -21,6 +21,21 @@ func NewUserHandler(service *services.UserService) *UserHandler {
 
 // ======== GET ALL ========
 
+// GetAll godocs
+//
+//	@Summary		Get all users
+//	@Description	Get a list of all users with pagination
+//	@Tags			User
+//	@Produce		json
+//	@Param			limit	query		int	true	"Content count limit"
+//	@Param			page	query		int	true	"Page number"
+//	@Success		200		{object}	models.UserListResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/user/all [get]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) GetAll(c *gin.Context) {
 	var req models.ListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -36,6 +51,22 @@ func (u *UserHandler) GetAll(c *gin.Context) {
 
 	c.JSON(200, resp)
 }
+
+// GetAllTempUsers godocs
+//
+//	@Summary		Get all temporary users
+//	@Description	Get a list of all temporary users with pagination
+//	@Tags			User
+//	@Produce		json
+//	@Param			limit	query		int	true	"Content count limit"
+//	@Param			page	query		int	true	"Page number"
+//	@Success		200		{object}	models.TempUserListResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/user/temp-users [post]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) GetAllTempUsers(c *gin.Context) {
 	var req models.ListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -51,6 +82,18 @@ func (u *UserHandler) GetAllTempUsers(c *gin.Context) {
 	c.JSON(200, resp)
 }
 
+// GetAdmins godocs
+//
+//	@Summary		Get all admins
+//	@Description	Get a list of all administrative users
+//	@Tags			User
+//	@Produce		json
+//	@Success		200	{array}		models.AdminResponse
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin [get]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) GetAdmins(c *gin.Context) {
 	admins, err := u.service.GetAdmins()
 	if err != nil {
@@ -63,6 +106,21 @@ func (u *UserHandler) GetAdmins(c *gin.Context) {
 
 // ======== GET ========
 
+// GetByID godocs
+//
+//	@Summary		Get user by ID
+//	@Description	Get user details by their ID
+//	@Tags			User
+//	@Produce		json
+//	@Param			id	path		int	true	"User ID"
+//	@Success		200	{object}	models.UserResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/user/{id} [get]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
@@ -80,6 +138,21 @@ func (u *UserHandler) GetByID(c *gin.Context) {
 	c.PureJSON(200, user)
 }
 
+// GetByUsername godocs
+//
+//	@Summary		Get user by username
+//	@Description	Get user details by their username
+//	@Tags			User
+//	@Produce		json
+//	@Param			username	path		string	true	"Username"
+//	@Success		200			{object}	models.UserResponse
+//	@Failure		400			{object}	response.BaseError
+//	@Failure		401			{object}	response.BaseError
+//	@Failure		404			{object}	response.BaseError
+//	@Failure		500			{object}	response.BaseError
+//	@Router			/admin/user/username/{username} [get]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) GetByUsername(c *gin.Context) {
 	username := c.Param("username")
 	user, err := u.service.GetByUsername(c.Request.Context(), username)
@@ -91,6 +164,21 @@ func (u *UserHandler) GetByUsername(c *gin.Context) {
 	c.PureJSON(200, user)
 }
 
+// GetTempUserPasscode godocs
+//
+//	@Summary		Get temporary user passcode
+//	@Description	Get the registration passcode for a temporary user by their ID
+//	@Tags			User
+//	@Produce		json
+//	@Param			id	path		int	true	"User ID"
+//	@Success		200	{object}	models.GetPasscodeResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/user/passcode/{id} [get]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) GetTempUserPasscode(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
@@ -110,6 +198,22 @@ func (u *UserHandler) GetTempUserPasscode(c *gin.Context) {
 
 // ======== MAKE CHANGES ========
 
+// Update godocs
+//
+//	@Summary		Update user
+//	@Description	Update user profile details by administration
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.UpdateProfileRequest	true	"Update data"
+//	@Success		200		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		404		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/user [put]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) Update(c *gin.Context) {
 	var req models.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -125,6 +229,21 @@ func (u *UserHandler) Update(c *gin.Context) {
 	response.NewTransactionResponse(200, "Profile updated successfully", req.ID, c)
 }
 
+// MakeAdmin godocs
+//
+//	@Summary		Make user admin
+//	@Description	Assign administrative roles to a user
+//	@Tags			User
+//	@Produce		json
+//	@Param			id	path		int	true	"User ID"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/{id} [post]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) MakeAdmin(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
@@ -141,6 +260,21 @@ func (u *UserHandler) MakeAdmin(c *gin.Context) {
 	response.NewTransactionResponse(200, "User added as admin successfully", intId, c)
 }
 
+// MakeAdminManager godocs
+//
+//	@Summary		Make user admin manager
+//	@Description	Assign admin manager role to a user
+//	@Tags			User
+//	@Produce		json
+//	@Param			id	path		int	true	"User ID"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/add-manager/{id} [post]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) MakeAdminManager(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
@@ -157,6 +291,21 @@ func (u *UserHandler) MakeAdminManager(c *gin.Context) {
 	response.NewTransactionResponse(200, "User added as admin manager successfully", intId, c)
 }
 
+// RemoveAdminManager godocs
+//
+//	@Summary		Remove admin manager
+//	@Description	Remove admin manager role from a user
+//	@Tags			User
+//	@Produce		json
+//	@Param			id	path		int	true	"User ID"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/remove-manager/{id} [delete]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) RemoveAdminManager(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
@@ -173,6 +322,22 @@ func (u *UserHandler) RemoveAdminManager(c *gin.Context) {
 	response.NewTransactionResponse(200, "User removed as admin manager successfully", intId, c)
 }
 
+// UpdateAdmin godocs
+//
+//	@Summary		Update admin roles
+//	@Description	Update administrative roles for an existing admin
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.AdminRequest	true	"Admin update data"
+//	@Success		200		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		404		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin [put]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) UpdateAdmin(c *gin.Context) {
 	var req models.AdminRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -188,6 +353,21 @@ func (u *UserHandler) UpdateAdmin(c *gin.Context) {
 	response.NewTransactionResponse(200, "Admin updated successfully", req.ID, c)
 }
 
+// DeleteAdmin godocs
+//
+//	@Summary		Delete admin
+//	@Description	Remove administrative roles from a user
+//	@Tags			User
+//	@Produce		json
+//	@Param			id	path		int	true	"User ID"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/{id} [delete]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) DeleteAdmin(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
@@ -206,6 +386,21 @@ func (u *UserHandler) DeleteAdmin(c *gin.Context) {
 
 // ======== SPECIAL ========
 
+// Suspend godocs
+//
+//	@Summary		Suspend user
+//	@Description	Suspend a user account for a specified duration
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.SuspensionRequest	true	"Suspension data"
+//	@Success		200		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/user/suspend [post]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) Suspend(c *gin.Context) {
 	var req models.SuspensionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -229,6 +424,18 @@ func (u *UserHandler) Suspend(c *gin.Context) {
 	response.NewTransactionResponse(200, "User suspended successfully", req.UserID, c)
 }
 
+// AssignPasscodes godocs
+//
+//	@Summary		Assign passcodes
+//	@Description	Generate and assign registration passcodes to all temporary users
+//	@Tags			User
+//	@Produce		text/event-stream
+//	@Success		200	{string}	string	"SSE stream"
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/user/assign-passcodes [post]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) AssignPasscodes(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
@@ -251,6 +458,21 @@ func (u *UserHandler) AssignPasscodes(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Passcodes assigned successfully"})
 }
 
+// UpdateUsersImport godocs
+//
+//	@Summary		Import users with emails
+//	@Description	Update or import users from an Excel file containing email addresses
+//	@Tags			User
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			file	formData	file	true	"Excel file"
+//	@Success		200		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/user/import-users-with-emails [post]
+//
+//	@Security		ApiKeyAuth
 func (u *UserHandler) UpdateUsersImport(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")
 	if err != nil {

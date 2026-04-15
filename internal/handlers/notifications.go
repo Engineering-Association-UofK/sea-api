@@ -19,6 +19,20 @@ func NewNotificationHandler(service *services.NotificationService) *Notification
 	return &NotificationHandler{service: service}
 }
 
+// CreateDemoNotifications godocs
+//
+//	@Summary		Create demo notification
+//	@Description	Create a demo notification for the account that sends the request
+//	@Tags			Notifications
+//	@Param			body	body	models.DemoNotificationRequest	true	"Request body"
+//	@Produce		json
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/notifications/demo [post]
+//
+//	@Security		ApiKeyAuth
 func (h *NotificationHandler) CreateDemoNotifications(c *gin.Context) {
 	var req models.DemoNotificationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -42,6 +56,21 @@ func (h *NotificationHandler) CreateDemoNotifications(c *gin.Context) {
 	response.NewTransactionResponse(201, "Notification created successfully", id, c)
 }
 
+// GetNotifications godocs
+//
+//	@Summary		Get notifications
+//	@Description	Get latest notifications for requester
+//	@Tags			Notifications
+//	@Param			limit	query	int	true	"Content count limit"
+//	@Param			page	query	int	true	"Page number"
+//	@Produce		json
+//	@Success		200	{object}	models.NotificationsListResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/notifications [get]
+//
+//	@Security		ApiKeyAuth
 func (h *NotificationHandler) GetNotifications(c *gin.Context) {
 	var req models.ListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -65,6 +94,20 @@ func (h *NotificationHandler) GetNotifications(c *gin.Context) {
 	c.JSON(200, resp)
 }
 
+// MarkAsRead godocs
+//
+//	@Summary		Mark one notification as read
+//	@Description	Marks the provided notification ID as read, the notification must belong to the requesting user
+//	@Tags			Notifications
+//	@Param			id	path	int	true	"Notification ID"
+//	@Produce		json
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/notifications/{id} [get]
+//
+//	@Security		ApiKeyAuth
 func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -89,6 +132,18 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 	response.NewTransactionResponse(200, fmt.Sprintf("%d Notification marked as read", affected), id, c)
 }
 
+// MarkAllAsRead godocs
+//
+//	@Summary		Mark all notification as read
+//	@Description	Marks all notifications that belong to the requesting user as read
+//	@Tags			Notifications
+//	@Produce		json
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/notifications [post]
+//
+//	@Security		ApiKeyAuth
 func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 	value, exists := c.Get("user")
 	claims, ok := value.(*models.ManagedClaims)
@@ -106,7 +161,21 @@ func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 	response.NewTransactionResponse(200, "All notifications marked as read", claims.UserID, c)
 }
 
-func (h *NotificationHandler) Delete(c *gin.Context) {
+// DeleteNotification godocs
+//
+//	@Summary		Delete notification
+//	@Description	Delete one notification with ID, must belong to the requesting user
+//	@Tags			Notifications
+//	@Param			id	path	int	true	"Notification ID"
+//	@Produce		json
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/notifications/{id} [delete]
+//
+//	@Security		ApiKeyAuth
+func (h *NotificationHandler) DeleteNotification(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
