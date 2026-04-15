@@ -48,6 +48,11 @@ type NotificationRequest struct {
 	Data    interface{}      `json:"data"`
 }
 
+type DemoNotificationRequest struct {
+	Title   string `json:"title" binding:"required"`
+	Message string `json:"message" binding:"required"`
+}
+
 type NotificationResponse struct {
 	ID        int64            `json:"id"`
 	Title     string           `json:"title"`

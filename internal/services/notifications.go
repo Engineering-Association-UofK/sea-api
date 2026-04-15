@@ -32,6 +32,16 @@ func (s *NotificationService) CreateNotification(notification *models.Notificati
 	})
 }
 
+func (s *NotificationService) CreateDemoNotifications(userId int64, req *models.DemoNotificationRequest) (int64, error) {
+	return s.CreateNotification(&models.NotificationRequest{
+		UserID:  userId,
+		Title:   req.Title,
+		Message: req.Message,
+		Type:    models.NotifyBasic,
+		Data:    nil,
+	})
+}
+
 func (s *NotificationService) GetNotificationsByUserID(userID int64, limit models.ListRequest) (*models.NotificationsListResponse, error) {
 	if !models.AllowedListLimit[limit.Limit] {
 		limit.Limit = 10

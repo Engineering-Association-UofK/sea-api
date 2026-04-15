@@ -19,6 +19,29 @@ func NewNotificationHandler(service *services.NotificationService) *Notification
 	return &NotificationHandler{service: service}
 }
 
+func (h *NotificationHandler) CreateDemoNotifications(c *gin.Context) {
+	var req models.DemoNotificationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(errs.New(errs.BadRequest, "Invalid request body", nil))
+		return
+	}
+
+	value, exists := c.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	id, err := h.service.CreateDemoNotifications(claims.UserID, &req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(201, "Notification created successfully", id, c)
+}
+
 func (h *NotificationHandler) GetNotifications(c *gin.Context) {
 	var req models.ListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {

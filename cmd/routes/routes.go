@@ -100,6 +100,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 
 		{ // ==== Notifications
 			notification := account.Group("/notifications")
+			notification.POST("/demo", NotificationHandler.CreateDemoNotifications)
 			notification.GET("", NotificationHandler.GetNotifications)
 			notification.POST("/:id", NotificationHandler.MarkAsRead)
 			notification.POST("", NotificationHandler.MarkAllAsRead)
