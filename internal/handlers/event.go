@@ -20,6 +20,18 @@ func NewEventHandler(eventService *services.EventService) *EventHandler {
 	}
 }
 
+// GetAllEvents godocs
+//
+//	@Summary		Get all events
+//	@Description	Get a list of all events for administration
+//	@Tags			Events
+//	@Produce		json
+//	@Success		200	{array}		models.EventListResponse
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/event [get]
+//
+//	@Security		ApiKeyAuth
 func (h *EventHandler) GetAllEvents(ctx *gin.Context) {
 	events, err := h.EventService.GetAllEvents()
 	if err != nil {
@@ -29,6 +41,21 @@ func (h *EventHandler) GetAllEvents(ctx *gin.Context) {
 	ctx.JSON(200, events)
 }
 
+// GetEventByID godocs
+//
+//	@Summary		Get event by ID
+//	@Description	Get event details by ID for administration
+//	@Tags			Events
+//	@Produce		json
+//	@Param			id	path	int	true	"Event ID"
+//	@Success		200	{object}	models.EventDTO
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/event/{id} [get]
+//
+//	@Security		ApiKeyAuth
 func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.Atoi(id)
@@ -45,6 +72,21 @@ func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 	ctx.JSON(200, event)
 }
 
+// CreateEvent godocs
+//
+//	@Summary		Create event
+//	@Description	Create a new event
+//	@Tags			Events
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.EventDTO	true	"Event data"
+//	@Success		201		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/event [post]
+//
+//	@Security		ApiKeyAuth
 func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 	var event models.EventDTO
 	if err := ctx.ShouldBindJSON(&event); err != nil {
@@ -61,6 +103,22 @@ func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 	response.NewTransactionResponse(201, "Event created successfully", id, ctx)
 }
 
+// UpdateEvent godocs
+//
+//	@Summary		Update event
+//	@Description	Update an existing event
+//	@Tags			Events
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.EventDTO	true	"Event update data"
+//	@Success		200		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		404		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/event [put]
+//
+//	@Security		ApiKeyAuth
 func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
 	var event models.EventDTO
 	if err := ctx.ShouldBindJSON(&event); err != nil {
@@ -76,6 +134,21 @@ func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
 	response.NewTransactionResponse(200, "Event updated successfully", event.ID, ctx)
 }
 
+// DeleteEvent godocs
+//
+//	@Summary		Delete event
+//	@Description	Delete an event by its ID
+//	@Tags			Events
+//	@Produce		json
+//	@Param			id	path		int	true	"Event ID"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/event/{id} [delete]
+//
+//	@Security		ApiKeyAuth
 func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.Atoi(id)
@@ -90,6 +163,22 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 	response.NewTransactionResponse(200, "Event deleted successfully", int64(intId), ctx)
 }
 
+// ImportUsers godocs
+//
+//	@Summary		Import users to event
+//	@Description	Import users from an Excel file to an event
+//	@Tags			Events
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			id		path		int		true	"Event ID"
+//	@Param			file	formData	file	true	"Excel file"
+//	@Success		200		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/event/import-users/{id} [post]
+//
+//	@Security		ApiKeyAuth
 func (h *EventHandler) ImportUsers(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)

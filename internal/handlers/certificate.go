@@ -109,7 +109,7 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 //	@Tags			Certificate
 //	@Accept			multipart/form-data
 //	@Produce		application/pdf
-//	@Param			file formData	models.SignPdfRequest	true	"PDF file to sign"
+//	@Param			details formData	models.SignPdfRequest	true	"details"
 //	@Success		200				{file}		binary
 //	@Failure		400				{object}	response.BaseError
 //	@Failure		500				{object}	response.BaseError

@@ -21,6 +21,21 @@ func NewGalleryHandler(galleryService *services.GalleryService) *GalleryHandler 
 	}
 }
 
+// Upload godocs
+//
+//	@Summary		Upload gallery asset
+//	@Description	Upload a new asset to the gallery
+//	@Tags			Gallery
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			details formData	models.NewGalleryAssetRequest	true	"details"
+//	@Success		201			{object}	response.TransactionResponse
+//	@Failure		400			{object}	response.BaseError
+//	@Failure		401			{object}	response.BaseError
+//	@Failure		500			{object}	response.BaseError
+//	@Router			/admin/gallery [post]
+//
+//	@Security		ApiKeyAuth
 func (h *GalleryHandler) Upload(ctx *gin.Context) {
 	var req models.NewGalleryAssetRequest
 	if err := ctx.ShouldBind(&req); err != nil {
@@ -51,6 +66,18 @@ func (h *GalleryHandler) Upload(ctx *gin.Context) {
 	response.NewTransactionResponse(201, "Asset uploaded successfully", id, ctx)
 }
 
+// GetAll godocs
+//
+//	@Summary		Get all gallery assets
+//	@Description	Get a list of all assets in the gallery
+//	@Tags			Gallery
+//	@Produce		json
+//	@Success		200	{array}		models.GalleryAssetResponse
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/gallery [get]
+//
+//	@Security		ApiKeyAuth
 func (h *GalleryHandler) GetAll(ctx *gin.Context) {
 	assets, err := h.GalleryService.GetAllAssets()
 	if err != nil {
@@ -60,6 +87,20 @@ func (h *GalleryHandler) GetAll(ctx *gin.Context) {
 	ctx.PureJSON(200, assets)
 }
 
+// GetByID godocs
+//
+//	@Summary		Get gallery asset by ID
+//	@Description	Get a gallery asset by its ID
+//	@Tags			Gallery
+//	@Produce		json
+//	@Param			id	path		int	true	"Asset ID"
+//	@Success		200	{object}	models.GalleryAssetResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/gallery/{id} [get]
+//
+//	@Security		ApiKeyAuth
 func (h *GalleryHandler) GetByID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -76,6 +117,18 @@ func (h *GalleryHandler) GetByID(ctx *gin.Context) {
 	ctx.PureJSON(200, asset)
 }
 
+// CleanGallery godocs
+//
+//	@Summary		Clean Gallery
+//	@Description	Delete all assets from the gallery
+//	@Tags			Gallery
+//	@Produce		json
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/gallery [delete]
+//
+//	@Security		ApiKeyAuth
 func (h *GalleryHandler) CleanGallery(ctx *gin.Context) {
 	num, err := h.GalleryService.CleanGallery()
 	if err != nil {

@@ -99,6 +99,7 @@ func (a *AccountHandler) GetCertificates(c *gin.Context) {
 //	@Param			body	body	models.UpdateProfileRequest 	true	"Request body"
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
+//	@Failure		400	{object}	response.ErrorResponse
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/account/certificates [put]

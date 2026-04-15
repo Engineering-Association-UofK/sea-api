@@ -105,7 +105,7 @@ func (h *NotificationHandler) GetNotifications(c *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/account/notifications/:id [get]
+//	@Router			/account/notifications/{id} [get]
 //
 //	@Security		ApiKeyAuth
 func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
@@ -172,7 +172,7 @@ func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/account/notifications/:id [delete]
+//	@Router			/account/notifications/{id} [delete]
 //
 //	@Security		ApiKeyAuth
 func (h *NotificationHandler) DeleteNotification(c *gin.Context) {
