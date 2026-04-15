@@ -9,8 +9,12 @@ import (
 	"sea-api/internal/response"
 	"sea-api/internal/services"
 
+	_ "sea-api/docs"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/time/rate"
 )
 
@@ -52,6 +56,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 		}))
 		r.Use(middleware.ErrorHandlerMiddleware())
 		r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"status": 200}) })
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 	apiV1 := r.Group("/api/v1")
 	apiV1.Use(basicLimit)
@@ -104,7 +109,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			notification.GET("", NotificationHandler.GetNotifications)
 			notification.POST("/:id", NotificationHandler.MarkAsRead)
 			notification.POST("", NotificationHandler.MarkAllAsRead)
-			notification.DELETE("/:id", NotificationHandler.Delete)
+			notification.DELETE("/:id", NotificationHandler.DeleteNotification)
 		}
 	}
 

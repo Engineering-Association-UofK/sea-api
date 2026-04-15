@@ -5,7 +5,6 @@ import (
 	"sea-api/cmd/routes"
 	"sea-api/internal/config"
 	"sea-api/internal/handlers"
-	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
 	"sea-api/internal/services/forms"
@@ -15,8 +14,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var mods []models.ImportUserUpdate
-
+// @title						SEA Backend API
+// @version					1.0
+// @description				This is the backend for the Steering Engineering Association.
+// @host						localhost:8000
+// @BasePath					/api/v1
+//
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description				Type 'Bearer <token>' to authenticate
 func main() {
 	err := config.Load()
 	if err != nil {

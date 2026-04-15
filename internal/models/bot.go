@@ -20,6 +20,6 @@ type BotCommandTrigger struct {
 }
 
 type BotCommandOption struct {
-	CommandID    int    `json:"command_id" db:"command_id"`
-	NextKeyword  string `json:"next_keyword" db:"next_keyword"`
+	CommandID   int    `json:"command_id" db:"command_id"`
+	NextKeyword string `json:"next_keyword" db:"next_keyword"`
 }
