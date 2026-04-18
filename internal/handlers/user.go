@@ -5,17 +5,17 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
-	"sea-api/internal/services"
+	"sea-api/internal/services/user"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type UserHandler struct {
-	service *services.UserService
+	service *user.UserService
 }
 
-func NewUserHandler(service *services.UserService) *UserHandler {
+func NewUserHandler(service *user.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
 
@@ -487,4 +487,44 @@ func (u *UserHandler) UpdateUsersImport(c *gin.Context) {
 	}
 
 	response.NewTransactionResponse(200, "User updated successfully", 0, c)
+}
+
+// ImportUsers godocs
+//
+//	@Summary		Import users to event
+//	@Description	Import users from an Excel file to an event
+//	@Tags			Events
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			id		path		int		true	"Event ID"
+//	@Param			file	formData	file	true	"Excel file"
+//	@Success		200		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/event/import-users/{id} [post]
+//
+//	@Security		ApiKeyAuth
+func (u *UserHandler) ImportUsers(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	file, _, err := ctx.Request.FormFile("file")
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+	defer file.Close()
+
+	err = u.service.ImportUsers(id, file)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Users imported successfully", id, ctx)
 }

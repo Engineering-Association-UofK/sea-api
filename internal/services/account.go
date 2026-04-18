@@ -11,6 +11,7 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
+	"sea-api/internal/services/storage"
 	"sea-api/internal/utils"
 	"sea-api/internal/utils/valid"
 	"strings"
@@ -21,13 +22,13 @@ import (
 
 type AccountService struct {
 	UserRepo              *repositories.UserRepository
-	store                 *S3StorageService
+	store                 *storage.S3
 	certificateRepository *repositories.CertificateRepository
 
 	profilePath string
 }
 
-func NewAccountService(UserRepo *repositories.UserRepository, store *S3StorageService, certificateRepository *repositories.CertificateRepository) *AccountService {
+func NewAccountService(UserRepo *repositories.UserRepository, store *storage.S3, certificateRepository *repositories.CertificateRepository) *AccountService {
 	return &AccountService{
 		UserRepo:              UserRepo,
 		store:                 store,

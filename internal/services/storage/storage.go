@@ -1,4 +1,4 @@
-package services
+package storage
 
 import (
 	"bytes"
@@ -13,14 +13,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-type S3StorageService struct {
+type S3 struct {
 	FilesRepo     *repositories.FileRepository
 	Client        *s3.Client
 	PresignClient *s3.PresignClient
 	Bucket        string
 }
 
-func NewS3Service(repo *repositories.FileRepository) *S3StorageService {
+func NewS3Service(repo *repositories.FileRepository) *S3 {
 	bucket := "sea-api"
 	internalClient := s3.New(s3.Options{
 		Region:       "us-east-1",
@@ -34,7 +34,7 @@ func NewS3Service(repo *repositories.FileRepository) *S3StorageService {
 		UsePathStyle: true,
 		Credentials:  credentials.NewStaticCredentialsProvider(config.App.S3AccessKey, config.App.S3SecretKey, ""),
 	})
-	return &S3StorageService{
+	return &S3{
 		FilesRepo:     repo,
 		Client:        internalClient,
 		PresignClient: s3.NewPresignClient(externalClient),
@@ -42,7 +42,7 @@ func NewS3Service(repo *repositories.FileRepository) *S3StorageService {
 	}
 }
 
-func (s *S3StorageService) Upload(ctx context.Context, key string, data []byte, contentType string) (int64, error) {
+func (s *S3) Upload(ctx context.Context, key string, data []byte, contentType string) (int64, error) {
 	_, err := s.Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      &s.Bucket,
 		Key:         &key,
@@ -66,7 +66,7 @@ func (s *S3StorageService) Upload(ctx context.Context, key string, data []byte, 
 	return id, nil
 }
 
-func (s *S3StorageService) DownloadWithKey(ctx context.Context, key string) ([]byte, error) {
+func (s *S3) DownloadWithKey(ctx context.Context, key string) ([]byte, error) {
 	result, err := s.Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &s.Bucket,
 		Key:    &key,
@@ -79,7 +79,7 @@ func (s *S3StorageService) DownloadWithKey(ctx context.Context, key string) ([]b
 	return io.ReadAll(result.Body)
 }
 
-func (s *S3StorageService) Download(ctx context.Context, id int64) ([]byte, error) {
+func (s *S3) Download(ctx context.Context, id int64) ([]byte, error) {
 	file, err := s.FilesRepo.GetFileById(id)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (s *S3StorageService) Download(ctx context.Context, id int64) ([]byte, erro
 	return s.DownloadWithKey(ctx, file.Key)
 }
 
-func (s *S3StorageService) Delete(ctx context.Context, id int64) error {
+func (s *S3) Delete(ctx context.Context, id int64) error {
 	file, err := s.FilesRepo.GetFileById(id)
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func (s *S3StorageService) Delete(ctx context.Context, id int64) error {
 	return s.FilesRepo.DeleteFile(id)
 }
 
-func (s *S3StorageService) DeleteWithKey(ctx context.Context, key string) error {
+func (s *S3) DeleteWithKey(ctx context.Context, key string) error {
 	_, err := s.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: &s.Bucket,
 		Key:    &key,
@@ -109,7 +109,7 @@ func (s *S3StorageService) DeleteWithKey(ctx context.Context, key string) error 
 	return err
 }
 
-func (s *S3StorageService) GenerateDownloadUrlByID(ctx context.Context, id int64) (string, error) {
+func (s *S3) GenerateDownloadUrlByID(ctx context.Context, id int64) (string, error) {
 	file, err := s.FilesRepo.GetFileById(id)
 	if err != nil {
 		return "", err
@@ -118,7 +118,7 @@ func (s *S3StorageService) GenerateDownloadUrlByID(ctx context.Context, id int64
 	return s.GenerateDownloadUrlByKey(ctx, file.Key)
 }
 
-func (s *S3StorageService) GenerateDownloadUrlByKey(ctx context.Context, key string) (string, error) {
+func (s *S3) GenerateDownloadUrlByKey(ctx context.Context, key string) (string, error) {
 	request, err := s.PresignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: &s.Bucket,
 		Key:    &key,

@@ -8,6 +8,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
+	"sea-api/internal/services/user"
 
 	_ "sea-api/docs"
 
@@ -39,7 +40,7 @@ var (
 	strictLimit = middleware.RateLimiter(rate.Every(time.Minute), 1)
 )
 
-func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitService) *gin.Engine {
+func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitService) *gin.Engine {
 	r := gin.New()
 	{ // ==== Config ====
 		r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
@@ -129,6 +130,7 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			user.POST("/suspend", UserHandler.Suspend)
 			user.POST("/assign-passcodes", UserHandler.AssignPasscodes)
 			user.POST("/import-users-with-emails", UserHandler.UpdateUsersImport)
+			user.POST("/import-users/:id", UserHandler.ImportUsers)
 		}
 
 		{ // ==== ADMIN
@@ -215,7 +217,6 @@ func SetupRouter(u *services.UserService, rateLimitService *services.RateLimitSe
 			event.PUT("", EventHandler.UpdateEvent)
 			event.DELETE("/:id", EventHandler.DeleteEvent)
 			event.GET("/send-all-emails", strictLimit, CertificateHandler.SendCertificatesEmailsForEvent)
-			event.POST("/import-users/:id", EventHandler.ImportUsers)
 		}
 
 		{ // ==== Collaborators

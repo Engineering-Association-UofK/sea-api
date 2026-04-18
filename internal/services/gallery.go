@@ -8,17 +8,18 @@ import (
 	"path/filepath"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
+	"sea-api/internal/services/storage"
 	"time"
 )
 
 type GalleryService struct {
 	Repo      *repositories.GalleryRepository
-	S3Service *S3StorageService
+	S3Service *storage.S3
 
 	path string
 }
 
-func NewGalleryService(galleryRepo *repositories.GalleryRepository, s3Service *S3StorageService) *GalleryService {
+func NewGalleryService(galleryRepo *repositories.GalleryRepository, s3Service *storage.S3) *GalleryService {
 	return &GalleryService{
 		Repo:      galleryRepo,
 		S3Service: s3Service,

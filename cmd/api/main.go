@@ -9,6 +9,8 @@ import (
 	"sea-api/internal/services"
 	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
+	st "sea-api/internal/services/storage"
+	"sea-api/internal/services/user"
 	"sea-api/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -66,23 +68,23 @@ func Go() {
 
 	// Initialize services
 	pdfService := services.NewPDFService(10)
-	s3StorageService := services.NewS3Service(fileRepo)
-	galleryService := services.NewGalleryService(galleryRepository, s3StorageService)
+	S3 := st.NewS3Service(fileRepo)
+	galleryService := services.NewGalleryService(galleryRepository, S3)
 	rateLimitService := services.NewRateLimitService(rateLimitRepository)
-	collaboratorService := services.NewCollaboratorService(collaboratorRepository, s3StorageService)
+	collaboratorService := services.NewCollaboratorService(collaboratorRepository, S3)
 	notificationService := services.NewNotificationService(notificationRepository)
 
 	eventService := services.NewEventService(notificationService, eventRepository, userRepository)
-	accountService := services.NewAccountService(userRepository, s3StorageService, certificateRepository)
+	accountService := services.NewAccountService(userRepository, S3, certificateRepository)
 
-	userService := services.NewUserService(userRepository, suspensionsRepo, s3StorageService)
+	userService := user.NewUserService(userRepository, suspensionsRepo, S3)
 	mailService := services.NewMailService(userService)
 	authService := services.NewAuthService(userRepository, mailService, verificationRepo)
 
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
 	FormService := forms.NewFormService(formRepository, galleryService)
 
-	certificateService := services.NewCertificateService(userRepository, eventService, s3StorageService, pdfService, mailService, collaboratorService, certificateRepository, documentRepository)
+	certificateService := services.NewCertificateService(userRepository, eventService, S3, pdfService, mailService, collaboratorService, certificateRepository, documentRepository)
 	schedularService := schedular.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService, rateLimitService)
 	schedularService.Run()
 

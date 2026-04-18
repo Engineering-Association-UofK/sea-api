@@ -11,21 +11,22 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
+	"sea-api/internal/services/storage"
 	"strings"
 )
 
 type CollaboratorService struct {
-	repo             *repositories.CollaboratorRepo
-	s3StorageService *S3StorageService
+	repo *repositories.CollaboratorRepo
+	S3   *storage.S3
 
 	signaturePath string
 }
 
-func NewCollaboratorService(repo *repositories.CollaboratorRepo, s3StorageService *S3StorageService) *CollaboratorService {
+func NewCollaboratorService(repo *repositories.CollaboratorRepo, S3 *storage.S3) *CollaboratorService {
 	return &CollaboratorService{
-		repo:             repo,
-		s3StorageService: s3StorageService,
-		signaturePath:    "internal/collaborators",
+		repo:          repo,
+		S3:            S3,
+		signaturePath: "internal/collaborators",
 	}
 }
 
@@ -43,7 +44,7 @@ func (s *CollaboratorService) GetAll(ctx context.Context) ([]models.Collaborator
 	for _, collaborator := range collaborators {
 		url := ""
 		if collaborator.SignatureID.Valid {
-			link, err := s.s3StorageService.GenerateDownloadUrlByID(ctx, collaborator.SignatureID.Int64)
+			link, err := s.S3.GenerateDownloadUrlByID(ctx, collaborator.SignatureID.Int64)
 			if err != nil {
 				return nil, err
 			}
@@ -68,7 +69,7 @@ func (s *CollaboratorService) GetByID(ctx context.Context, id int64) (*models.Co
 
 	url := ""
 	if collaborator.SignatureID.Valid {
-		link, err := s.s3StorageService.GenerateDownloadUrlByID(ctx, collaborator.SignatureID.Int64)
+		link, err := s.S3.GenerateDownloadUrlByID(ctx, collaborator.SignatureID.Int64)
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +100,7 @@ func (s *CollaboratorService) Create(ctx context.Context, req *models.Collaborat
 	hash.Write([]byte(string(req.NameAr) + string(req.NameEn) + string(req.Email) + config.App.SecretSalt))
 	fileKey := fmt.Sprintf("%s/%d-%s.%s", s.signaturePath, hash.Sum64(), strings.Split(req.NameEn, " ")[0], contentType[6:])
 
-	id, err := s.s3StorageService.Upload(ctx, fileKey, fileBytes, contentType)
+	id, err := s.S3.Upload(ctx, fileKey, fileBytes, contentType)
 	if err != nil {
 		return 0, err
 	}
@@ -136,13 +137,13 @@ func (s *CollaboratorService) Update(ctx context.Context, req *models.Collaborat
 		hash.Write([]byte(string(req.NameAr) + string(req.NameEn) + string(req.Email) + config.App.SecretSalt))
 		fileKey := fmt.Sprintf("%s/%d-%s.%s", s.signaturePath, hash.Sum64(), strings.Split(req.NameEn, " ")[0], contentType[6:])
 
-		newFileID, err := s.s3StorageService.Upload(ctx, fileKey, fileBytes, contentType)
+		newFileID, err := s.S3.Upload(ctx, fileKey, fileBytes, contentType)
 		if err != nil {
 			return err
 		}
 
 		if collaborator.SignatureID.Valid {
-			s.s3StorageService.Delete(ctx, collaborator.SignatureID.Int64)
+			s.S3.Delete(ctx, collaborator.SignatureID.Int64)
 		}
 		collaborator.SignatureID = sql.NullInt64{Int64: newFileID, Valid: true}
 	}
@@ -161,7 +162,7 @@ func (s *CollaboratorService) Delete(ctx context.Context, id int64) error {
 	}
 
 	if collaborator.SignatureID.Valid {
-		err = s.s3StorageService.Delete(ctx, collaborator.SignatureID.Int64)
+		err = s.S3.Delete(ctx, collaborator.SignatureID.Int64)
 		if err != nil {
 			return err
 		}

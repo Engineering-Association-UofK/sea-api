@@ -1,91 +1,31 @@
-package services
+package user
 
 import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"io"
-	"log/slog"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
+	"sea-api/internal/services/storage"
 	"sea-api/internal/utils"
-	"sea-api/internal/utils/sheets"
 	"sea-api/internal/utils/valid"
 	"slices"
-	"strconv"
 	"time"
 )
 
 type UserService struct {
-	repo             *repositories.UserRepository
-	suspensionsRepo  *repositories.SuspensionsRepo
-	S3StorageService *S3StorageService
+	repo            *repositories.UserRepository
+	suspensionsRepo *repositories.SuspensionsRepo
+	S3              *storage.S3
 }
 
-func NewUserService(repo *repositories.UserRepository, suspensionsRepo *repositories.SuspensionsRepo, s3StorageService *S3StorageService) *UserService {
-	// if _, err := repo.GetByUserID(0); err != nil {
-	// 	err = repo.DetailedCreate(&models.UserModel{
-	// 		ID:             0,
-	// 		UniID:          1000000000,
-	// 		ProfileImageID: sql.NullInt64{Int64: 0, Valid: false},
-	// 		Username:       "system",
-	// 		NameAr:         "النظام",
-	// 		NameEn:         "System",
-	// 		Email:          "system@sea.uofk.edu",
-	// 		Phone:          "0000000000",
-	// 		Department:     "IT",
-	// 		Gender:         models.MALE,
-	// 		Verified:       true,
-	// 		Password:       "",
-	// 		Status:         models.STATUS_ACTIVE,
-	// 		IsEditable:     false,
-	// 		IsLoggable:     false,
-	// 		IsAnonymous:    true,
-	// 	}, nil)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// }
-
-	return &UserService{repo: repo, suspensionsRepo: suspensionsRepo, S3StorageService: s3StorageService}
+func NewUserService(repo *repositories.UserRepository, suspensionsRepo *repositories.SuspensionsRepo, S3 *storage.S3) *UserService {
+	return &UserService{repo: repo, suspensionsRepo: suspensionsRepo, S3: S3}
 }
 
 // ======== GET ALL ========
-
-func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUserListResponse, error) {
-	total, err := s.repo.GetTotal(req.Limit, true)
-	if err != nil {
-		return nil, err
-	}
-	valid.ValidateListRequest(req, total)
-
-	users, err := s.repo.GetAllTempUsers(req.Limit, req.Page)
-	if err != nil {
-		return nil, err
-	}
-	if len(users) == 0 {
-		return &models.TempUserListResponse{
-			Users: []models.TempUserResponse{},
-			Pages: total / req.Limit,
-		}, nil
-	}
-
-	var userResponses []models.TempUserResponse
-	for _, u := range users {
-		userResponses = append(userResponses, models.TempUserResponse{
-			ID:       u.ID.Int64,
-			NameAr:   u.NameAr.String,
-			Passcode: u.Password.String,
-		})
-	}
-
-	return &models.TempUserListResponse{
-		Users: userResponses,
-		Pages: total / req.Limit,
-	}, nil
-}
 
 func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse, error) {
 	total, err := s.repo.GetTotal(req.Limit, false)
@@ -138,7 +78,7 @@ func (s *UserService) GetAllUserDetailsByIndices(indices []int64) ([]models.User
 	for _, user := range users {
 		url := ""
 		if user.ProfileImageID.Valid {
-			link, err := s.S3StorageService.GenerateDownloadUrlByID(context.Background(), user.ProfileImageID.Int64)
+			link, err := s.S3.GenerateDownloadUrlByID(context.Background(), user.ProfileImageID.Int64)
 			if err == nil {
 				url = link
 			}
@@ -189,7 +129,6 @@ func (s *UserService) GetAllByIndices(indices []int64) ([]models.UserListItemRes
 
 // ======== GET ========
 
-// Get UserDetails
 func (s *UserService) GetUserDetails(id int64) (*models.UserDetails, error) {
 	user, err := s.repo.GetByUserID(id)
 	if err != nil {
@@ -198,7 +137,7 @@ func (s *UserService) GetUserDetails(id int64) (*models.UserDetails, error) {
 
 	url := ""
 	if user.ProfileImageID.Valid {
-		link, err := s.S3StorageService.GenerateDownloadUrlByID(context.Background(), user.ProfileImageID.Int64)
+		link, err := s.S3.GenerateDownloadUrlByID(context.Background(), user.ProfileImageID.Int64)
 		if err != nil {
 			return nil, err
 		}
@@ -234,7 +173,7 @@ func (s *UserService) GetByUserID(ctx context.Context, userID int64) (*models.Us
 
 	url := ""
 	if user.ProfileImageID.Valid {
-		link, err := s.S3StorageService.GenerateDownloadUrlByID(ctx, user.ProfileImageID.Int64)
+		link, err := s.S3.GenerateDownloadUrlByID(ctx, user.ProfileImageID.Int64)
 		if err != nil {
 			return nil, err
 		}
@@ -257,7 +196,7 @@ func (s *UserService) GetByUsername(ctx context.Context, username string) (*mode
 
 	url := ""
 	if user.ProfileImageID.Valid {
-		link, err := s.S3StorageService.GenerateDownloadUrlByID(ctx, user.ProfileImageID.Int64)
+		link, err := s.S3.GenerateDownloadUrlByID(ctx, user.ProfileImageID.Int64)
 		if err != nil {
 			return nil, err
 		}
@@ -265,16 +204,6 @@ func (s *UserService) GetByUsername(ctx context.Context, username string) (*mode
 	}
 
 	return parseUserResponse(user, roles, url), nil
-}
-
-func (s *UserService) GetTempUserPasscode(userID int64) (*models.GetPasscodeResponse, error) {
-	user, err := s.repo.GetTempUser(userID)
-	if err != nil {
-		return nil, err
-	}
-	return &models.GetPasscodeResponse{
-		Passcode: user.Password.String,
-	}, nil
 }
 
 func (s *UserService) GetRolesByUserID(userID int64) ([]models.Role, error) {
@@ -359,210 +288,6 @@ func (s *UserService) Suspend(req *models.SuspensionRequest, adminId int64) erro
 		return err
 	}
 	if err := tx.Commit(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *UserService) AssignPasscodes(progressChan chan string) error {
-	defer close(progressChan)
-	tempUsers, err := s.repo.GetTempUsersWithNullPasswords()
-	if err != nil {
-		return err
-	}
-	if len(tempUsers) == 0 {
-		return nil
-	}
-	total := len(tempUsers)
-	for i, u := range tempUsers {
-		passcode, err := generatePasscode(6)
-		if err != nil {
-			utils.ParseProgressStruct(total, i+1, u.ID.Int64, false, u.NameAr.String, progressChan)
-			continue
-		}
-		err = s.repo.UpdateTempPasscode(u.ID.Int64, passcode)
-		if err != nil {
-			utils.ParseProgressStruct(total, i+1, u.ID.Int64, false, u.NameAr.String, progressChan)
-			continue
-		}
-		utils.ParseProgressStruct(total, i+1, u.ID.Int64, true, u.NameAr.String, progressChan)
-	}
-	progressChan <- "done"
-	return nil
-}
-
-func (s *UserService) UpdateUsersImport(file io.Reader) error {
-	mods, err := sheets.ParseExcelToStructs[models.ImportUserUpdate](file)
-	if err != nil {
-		return err
-	}
-
-	users, err := s.repo.GetAll(100, 1)
-	if err != nil {
-		return err
-	}
-
-	modsMap := utils.FromSlice(mods, func(u models.ImportUserUpdate) string { return u.Email })
-
-	for _, u := range users {
-		if user, ok := modsMap[u.Email]; ok {
-			index, err := strconv.ParseInt(user.Index, 10, 64)
-			if err != nil {
-				slog.Error("user "+user.Index+" failed to update", "error", err)
-			}
-			u.ID = index
-			u.Phone = user.Phone
-			u.Status = models.STATUS_INACTIVE
-			s.repo.UpdateWithID(&u, nil)
-		}
-	}
-
-	return nil
-}
-
-// ############################################################
-// ##################    ADMIN MANAGEMENT    ##################
-// ############################################################
-
-func (s *UserService) GetAdmins() ([]models.AdminResponse, error) {
-	admins, err := s.repo.GetAdmins()
-	if err != nil {
-		return nil, err
-	}
-	if len(admins) == 0 {
-		return []models.AdminResponse{}, nil
-	}
-	rolesModels, err := s.repo.GetAllRolesByUserIDs(utils.ExtractField(admins, func(u models.UserModel) int64 { return u.ID }))
-	if err != nil {
-		return nil, err
-	}
-	rolesMap := extractRoles(rolesModels)
-
-	var adminResponses []models.AdminResponse
-	for _, a := range admins {
-		url := ""
-		if a.ProfileImageID.Valid {
-			link, err := s.S3StorageService.GenerateDownloadUrlByID(context.Background(), a.ProfileImageID.Int64)
-			if err != nil {
-				return nil, err
-			}
-			url = link
-		}
-		adminResponses = append(adminResponses, models.AdminResponse{
-			ID:         a.ID,
-			Email:      a.Email,
-			ProfilePic: url,
-			NameAr:     a.NameAr,
-			Username:   a.Username,
-			Gender:     a.Gender,
-			Roles:      rolesMap[a.ID],
-		})
-	}
-
-	return adminResponses, nil
-}
-
-func (s *UserService) AddAdmin(ID int64) error {
-	roles, err := s.GetRolesByUserID(ID)
-	if err != nil {
-		return err
-	}
-	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
-		return errs.New(errs.Forbidden, "Cannot add a Super Admin as an admin", nil)
-	}
-	if slices.Contains(roles, models.RoleSystemAdmin) {
-		return errs.New(errs.Conflict, "User is already an admin", nil)
-	}
-	err = s.repo.AddAdmin(ID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *UserService) MakeAdminManager(ID int64) error {
-	roles, err := s.GetRolesByUserID(ID)
-	if err != nil {
-		return err
-	}
-	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
-		return errs.New(errs.Forbidden, "Cannot add a Super Admin as an admin", nil)
-	}
-	if slices.Contains(roles, models.RoleSystemAdminManager) {
-		return errs.New(errs.Conflict, "User is already an admin manager", nil)
-	}
-	err = s.repo.CreateRole(&models.UserRole{UserID: ID, Role: models.RoleSystemAdminManager})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *UserService) RemoveAdminManager(ID int64) error {
-	roles, err := s.GetRolesByUserID(ID)
-	if err != nil {
-		return err
-	}
-	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
-		return errs.New(errs.Forbidden, "Cannot remove a Super Admin as an admin manager", nil)
-	}
-	if !slices.Contains(roles, models.RoleSystemAdminManager) {
-		return errs.New(errs.NotFound, "User is not an admin manager", nil)
-	}
-	err = s.repo.RemoveRole(ID, models.RoleSystemAdminManager, nil)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *UserService) UpdateAdminRoles(req *models.AdminRequest) error {
-	roles, err := s.GetRolesByUserID(req.ID)
-	if err != nil {
-		return err
-	}
-	specialRoles := []models.Role{}
-	for _, role := range roles {
-		if role == models.RoleSystemSuperAdmin {
-			return errs.New(errs.Forbidden, "Cannot update a Super Admin's roles", nil)
-		}
-		if models.SpecialAdminRoles[role] {
-			specialRoles = append(specialRoles, role)
-		}
-	}
-	if !slices.Contains(roles, models.RoleSystemAdmin) {
-		return errs.New(errs.NotFound, "User is not an admin", nil)
-	}
-
-	var rolesToAdd = []models.Role{}
-	for _, role := range req.Roles {
-		if models.AllowedAdminRoles[role] {
-			rolesToAdd = append(rolesToAdd, role)
-		}
-	}
-
-	if len(rolesToAdd) == 0 {
-		return nil
-	}
-
-	for _, role := range specialRoles {
-		rolesToAdd = append(rolesToAdd, role)
-	}
-
-	err = s.repo.ReplaceRoles(req.ID, rolesToAdd, nil)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *UserService) RemoveAdmin(ID int64) error {
-	err := s.UpdateAdminRoles(&models.AdminRequest{
-		ID:    ID,
-		Roles: []models.Role{},
-	})
-	err = s.repo.RemoveAdmin(ID)
-	if err != nil {
 		return err
 	}
 	return nil
