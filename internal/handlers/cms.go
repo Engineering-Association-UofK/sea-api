@@ -92,7 +92,7 @@ func (h *CmsHandler) GetPostById(ctx *gin.Context) {
 //
 //	@Summary		Get blog post by slug
 //	@Description	Get a blog post by its slug for public view
-//	@Tags			CMS:blog
+//	@Tags			Public
 //	@Produce		json
 //	@Param			slug	path		string	true	"Post slug"
 //	@Success		200		{object}	models.PostResponse
