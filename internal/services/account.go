@@ -144,12 +144,12 @@ func (s *AccountService) UpdateProfilePicture(ctx context.Context, claims *model
 	hash.Write([]byte(fmt.Sprint(claims.UserID) + config.App.SecretSalt))
 	fileKey := fmt.Sprintf("%s/%d/%d-%d.%s", s.profilePath, time.Now().Year(), hash.Sum64(), claims.UserID, contentType[6:])
 
+	if user.ProfileImageID.Valid {
+		s.store.Delete(ctx, user.ProfileImageID.Int64)
+	}
 	id, err := s.store.Upload(ctx, fileKey, fileBytes, contentType)
 	if err != nil {
 		return err
-	}
-	if user.ProfileImageID.Valid {
-		s.store.Delete(ctx, user.ProfileImageID.Int64)
 	}
 	user.ProfileImageID.Valid = true
 	user.ProfileImageID.Int64 = id
