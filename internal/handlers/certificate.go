@@ -109,10 +109,16 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 //	@Tags			Certificate
 //	@Accept			multipart/form-data
 //	@Produce		application/pdf
-//	@Param			details formData	models.SignPdfRequest	true	"details"
-//	@Success		200				{file}		binary
-//	@Failure		400				{object}	response.BaseError
-//	@Failure		500				{object}	response.BaseError
+//	@Param			event_id	formData	integer	true	"Event ID"
+//	@Param			type		formData	string	true	"Document Type"
+//	@Param			metadata	formData	string	true	"Metadata JSON or string"
+//	@Param			qr_x		formData	number	false	"QR X coordinate"
+//	@Param			qr_y		formData	number	false	"QR Y coordinate"
+//	@Param			qr_s		formData	number	true	"QR Scale/Size"
+//	@Param			file		formData	file	true	"PDF file to sign"
+//	@Success		200			{file}		binary
+//	@Failure		400			{object}	response.BaseError
+//	@Failure		500			{object}	response.BaseError
 //	@Router			/admin/certificate/sign [post]
 //
 //	@Security		ApiKeyAuth

@@ -426,13 +426,23 @@ func (r *EventRepository) GetParticipantByUserAndEventIDs(user_id int, eventID i
 
 // ======== GET ALL ========
 
-func (r *EventRepository) GetAllEvents() ([]models.EventModel, error) {
+func (r *EventRepository) GetAllEvents(req models.ListRequest) ([]models.EventModel, error) {
 	var events []models.EventModel
-	err := r.db.Select(&events, fmt.Sprintf(`SELECT * FROM %s`, models.TableEvents))
+	query := fmt.Sprintf(`SELECT * FROM %s ORDER BY start_date DESC LIMIT ? OFFSET ?`, models.TableEvents)
+	err := r.db.Select(&events, query, req.Limit, (req.Page-1)*req.Limit)
 	if err != nil {
 		return nil, err
 	}
 	return events, nil
+}
+
+func (r *EventRepository) GetTotalEvents() (int64, error) {
+	var total int64
+	err := r.db.Get(&total, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TableEvents))
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
 }
 
 // ======== DELETE ========

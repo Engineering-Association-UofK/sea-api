@@ -9,6 +9,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/utils"
+	"sea-api/internal/utils/valid"
 	"strings"
 	"time"
 
@@ -18,14 +19,16 @@ import (
 type EventService struct {
 	NotificationService *NotificationService
 
-	EventRepo *repositories.EventRepository
-	UserRepo  *repositories.UserRepository
+	EventRepo  *repositories.EventRepository
+	CollabRepo *repositories.CollaboratorRepo
+	UserRepo   *repositories.UserRepository
 }
 
-func NewEventService(NotificationService *NotificationService, EventRepo *repositories.EventRepository, UserRepo *repositories.UserRepository) *EventService {
+func NewEventService(NotificationService *NotificationService, EventRepo *repositories.EventRepository, CollabRepo *repositories.CollaboratorRepo, UserRepo *repositories.UserRepository) *EventService {
 	return &EventService{
 		NotificationService: NotificationService,
 		EventRepo:           EventRepo,
+		CollabRepo:          CollabRepo,
 		UserRepo:            UserRepo,
 	}
 }
@@ -63,8 +66,38 @@ func (s *EventService) GetEventByID(id int64) (*models.EventDTO, error) {
 	}, nil
 }
 
-func (s *EventService) GetAllEvents() ([]models.EventListResponse, error) {
-	events, err := s.EventRepo.GetAllEvents()
+func (s *EventService) GetViewEventByID(id int64) (*models.EventViewResponse, error) {
+	event, err := s.EventRepo.GetEventByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	presenter, err := s.CollabRepo.GetByID(event.PresenterID)
+	if err != nil {
+		slog.Info("Presenter not found for event", "presenter_id", event.PresenterID)
+		return nil, err
+	}
+
+	return &models.EventViewResponse{
+		ID:            event.ID,
+		Name:          event.Name,
+		Description:   event.Description,
+		Outcomes:      strings.Split(event.Outcomes, ","),
+		PresenterName: presenter.NameEn,
+		EventType:     event.EventType,
+		StartDate:     event.StartDate,
+		EndDate:       event.EndDate,
+	}, nil
+}
+
+func (s *EventService) GetAllEvents(req models.ListRequest) (*models.EventListLimitResponse, error) {
+	total, err := s.EventRepo.GetTotalEvents()
+	if err != nil {
+		return nil, err
+	}
+	valid.ValidateListRequest(&req, total)
+
+	events, err := s.EventRepo.GetAllEvents(req)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +113,44 @@ func (s *EventService) GetAllEvents() ([]models.EventListResponse, error) {
 			EndDate:         event.EndDate,
 		})
 	}
-	return eventList, nil
+	return &models.EventListLimitResponse{
+		Events:  eventList,
+		Pages:   total / req.Limit,
+		Current: req.Page,
+	}, nil
+}
+
+func (s *EventService) GetAllViewEvents(req models.ListRequest) (*models.EventViewListLimitResponse, error) {
+	total, err := s.EventRepo.GetTotalEvents()
+	if err != nil {
+		return nil, err
+	}
+	valid.ValidateListRequest(&req, total)
+
+	events, err := s.EventRepo.GetAllEvents(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(events) == 0 {
+		return &models.EventViewListLimitResponse{}, nil
+	}
+
+	eventList := make([]models.EventViewListResponse, 0)
+	for _, event := range events {
+		eventList = append(eventList, models.EventViewListResponse{
+			ID:        event.ID,
+			Name:      event.Name,
+			EventType: event.EventType,
+			StartDate: event.StartDate,
+			EndDate:   event.EndDate,
+		})
+	}
+	return &models.EventViewListLimitResponse{
+		Events:  eventList,
+		Pages:   total / req.Limit,
+		Current: req.Page,
+	}, nil
 }
 
 // ======== CREATE ========

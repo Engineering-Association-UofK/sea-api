@@ -84,8 +84,8 @@ const (
 )
 
 type ListRequest struct {
-	Limit int64  `form:"limit" binding:"required"`
-	Page  int64  `form:"page" binding:"required"`
+	Limit int64  `form:"limit"`
+	Page  int64  `form:"page"`
 	Type  string `form:"type"`
 }
 

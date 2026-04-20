@@ -24,11 +24,9 @@ import (
 // @license.name				MIT
 // @license.url				http://opensource.org/licenses/MIT
 //
-// @host						localhost:8000
+// @host						api-sea-uofk.duckdns.org
 // @BasePath					/api/v1
-// @schemes					http https
-// @servers					http://localhost:8080 Local
-// @servers					https://api-sea-uofk.duckdns.org Staging
+// @schemes					https
 //
 // @securityDefinitions.apikey	ApiKeyAuth
 // @in							header
@@ -74,7 +72,7 @@ func Go() {
 	collaboratorService := services.NewCollaboratorService(collaboratorRepository, S3)
 	notificationService := services.NewNotificationService(notificationRepository)
 
-	eventService := services.NewEventService(notificationService, eventRepository, userRepository)
+	eventService := services.NewEventService(notificationService, eventRepository, collaboratorRepository, userRepository)
 	accountService := services.NewAccountService(userRepository, S3, certificateRepository)
 
 	userService := user.NewUserService(userRepository, suspensionsRepo, S3)

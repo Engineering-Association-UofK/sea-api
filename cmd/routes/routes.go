@@ -83,6 +83,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		cms.GET("/blogs/:slug", CmsHandler.GetViewPostBySlug)
 		cms.GET("/blogs", CmsHandler.GetViewPostsList)
 		cms.GET("/team", CmsHandler.GetViewTeamMembers)
+		cms.GET("/events", EventHandler.GetViewEvents)
+		cms.GET("/events/:id", EventHandler.GetViewEventByID)
 	}
 
 	{ // ==== ACCOUNT

@@ -26,6 +26,8 @@ func NewEventHandler(eventService *services.EventService) *EventHandler {
 //	@Description	Get a list of all events for administration
 //	@Tags			Events
 //	@Produce		json
+//	@Param			limit	query		int	true	"Content count limit"
+//	@Param			page	query		int	true	"Page number"
 //	@Success		200	{array}		models.EventListResponse
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
@@ -33,7 +35,40 @@ func NewEventHandler(eventService *services.EventService) *EventHandler {
 //
 //	@Security		ApiKeyAuth
 func (h *EventHandler) GetAllEvents(ctx *gin.Context) {
-	events, err := h.EventService.GetAllEvents()
+	var req models.ListRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
+		return
+	}
+
+	events, err := h.EventService.GetAllEvents(req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+	ctx.JSON(200, events)
+}
+
+// GetViewEvents godocs
+//
+//	@Summary		Get events for view
+//	@Description	Get a list of events for public view
+//	@Tags			Public
+//	@Produce		json
+//	@Param			limit	query		int	true	"Content count limit"
+//	@Param			page	query		int	true	"Page number"
+//	@Success		200		{object}	models.EventViewListLimitResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/cms/events [get]
+func (h *EventHandler) GetViewEvents(ctx *gin.Context) {
+	var req models.ListRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
+		return
+	}
+
+	events, err := h.EventService.GetAllViewEvents(req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -65,6 +100,34 @@ func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 	}
 
 	event, err := h.EventService.GetEventByID(int64(intId))
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+	ctx.JSON(200, event)
+}
+
+// GetViewEventByID godocs
+//
+//	@Summary		Get event by ID for view
+//	@Description	Get event details by ID for public view
+//	@Tags			Public
+//	@Produce		json
+//	@Param			id	path		int	true	"Event ID"
+//	@Success		200	{object}	models.EventViewResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/cms/events/{id} [get]
+func (h *EventHandler) GetViewEventByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+	intId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	event, err := h.EventService.GetViewEventByID(intId)
 	if err != nil {
 		ctx.Error(err)
 		return

@@ -5,12 +5,10 @@ import "time"
 type PostType string
 
 const (
-	PostNews         PostType = "NEWS"
-	PostIssues       PostType = "ISSUES"
-	PostAnnouncement PostType = "ANNOUNCEMENT"
-	PostEvent        PostType = "EVENT"
-	PostBlog         PostType = "BLOG"
-	PostPhilosophy   PostType = "PHILANTHROPY"
+	PostNews       PostType = "NEWS"
+	PostIssues     PostType = "ISSUES"
+	PostBlog       PostType = "BLOG"
+	PostPhilosophy PostType = "DONATIONS"
 )
 
 // Models
@@ -84,6 +82,7 @@ type PostViewResponse struct {
 type PostViewListResponse struct {
 	ImageUrl   string    `json:"image_url"`
 	Title      string    `json:"title"`
+	Slug       string    `json:"slug"`
 	AuthorName string    `json:"author_name"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }

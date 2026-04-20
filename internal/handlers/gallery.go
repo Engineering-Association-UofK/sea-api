@@ -28,7 +28,9 @@ func NewGalleryHandler(galleryService *services.GalleryService) *GalleryHandler 
 //	@Tags			Gallery
 //	@Accept			multipart/form-data
 //	@Produce		json
-//	@Param			details formData	models.NewGalleryAssetRequest	true	"details"
+//	@Param			file_name	formData	string	true	"Name of the file"
+//	@Param			alt_text	formData	string	true	"Alternative text for the image"
+//	@Param			file		formData	file	true	"The actual asset file"
 //	@Success		201			{object}	response.TransactionResponse
 //	@Failure		400			{object}	response.BaseError
 //	@Failure		401			{object}	response.BaseError

@@ -113,6 +113,12 @@ type ComScoreDTO struct {
 	Score       float64 `json:"score"`
 }
 
+type EventListLimitResponse struct {
+	Current int64               `json:"current"`
+	Pages   int64               `json:"pages"`
+	Events  []EventListResponse `json:"events"`
+}
+
 type EventListResponse struct {
 	ID              int64     `json:"id"`
 	Name            string    `json:"name"`
@@ -139,20 +145,27 @@ type MakeCertificatesForEventRequest struct {
 // Open Endpoints
 
 type EventViewResponse struct {
-	Name           string    `json:"name"`
-	Description    string    `json:"description"`
-	HeaderImageUrl string    `json:"header_image_url"`
-	PresenterName  string    `json:"presenter_name"`
-	EventType      EventType `json:"event_type"`
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
+	ID            int64     `json:"id"`
+	Name          string    `json:"name"`
+	Description   string    `json:"description"`
+	Outcomes      []string  `json:"outcomes"`
+	PresenterName string    `json:"presenter_name"`
+	EventType     EventType `json:"event_type"`
+	StartDate     time.Time `json:"start_date"`
+	EndDate       time.Time `json:"end_date"`
+}
+
+type EventViewListLimitResponse struct {
+	Current int64                   `json:"current"`
+	Pages   int64                   `json:"pages"`
+	Events  []EventViewListResponse `json:"events"`
 }
 
 type EventViewListResponse struct {
-	Name           string `json:"name"`
-	HeaderImageUrl string `json:"header_image_url"`
-	PresenterName  string `json:"presenter_name"`
-	EventType      string `json:"event_type"`
-	StartDate      string `json:"start_date"`
-	EndDate        string `json:"end_date"`
+	ID            int64     `json:"id"`
+	Name          string    `json:"name"`
+	PresenterName string    `json:"presenter_name"`
+	EventType     EventType `json:"event_type"`
+	StartDate     time.Time `json:"start_date"`
+	EndDate       time.Time `json:"end_date"`
 }

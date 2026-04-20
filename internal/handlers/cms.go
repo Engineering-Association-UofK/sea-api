@@ -115,10 +115,11 @@ func (h *CmsHandler) GetViewPostBySlug(ctx *gin.Context) {
 //
 //	@Summary		Get blog posts list
 //	@Description	Get a list of blog posts for public view
-//	@Tags			CMS:blog
+//	@Tags			Public
 //	@Produce		json
-//	@Param			limit	query		int	true	"Content count limit"
-//	@Param			page	query		int	true	"Page number"
+//	@Param			limit	query		int				true	"Content count limit"
+//	@Param			page	query		int				true	"Page number"
+//	@Param			type	query		models.PostType	true	"Post type"
 //	@Success		200		{object}	models.PostListViewResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -326,7 +327,7 @@ func (h *CmsHandler) GetAllTeamMembers(ctx *gin.Context) {
 //
 //	@Summary		Get team members for view
 //	@Description	Get a list of active team members for public view
-//	@Tags			CMS:team
+//	@Tags			Public
 //	@Produce		json
 //	@Success		200	{array}		models.TeamMemberViewResponse
 //	@Failure		500	{object}	response.BaseError

@@ -130,6 +130,7 @@ func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.PostListV
 			Title:      post.Title,
 			AuthorName: authorsMap[post.AuthorID].NameAr,
 			UpdatedAt:  post.UpdatedAt,
+			Slug:       post.Slug,
 		})
 	}
 
