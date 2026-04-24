@@ -30,7 +30,7 @@ type NewGalleryAssetRequest struct {
 
 type GallerySqlModel struct {
 	ID             int64     `db:"id"`
-	FileID         int64     `db:"file_id"`
+	FileKey        string    `db:"file_key"`
 	ReferenceTimes int64     `db:"reference_times"`
 	FileName       string    `db:"file_name"`
 	AltText        string    `db:"alt_text"`
@@ -46,4 +46,15 @@ type GalleryAssetResponse struct {
 	AltText        string    `json:"alt_text"`
 	UploadedBy     int64     `json:"uploaded_by"`
 	CreatedAt      time.Time `json:"created_at"`
+}
+
+type GalleryListRequest struct {
+	// The images
+	Images []GalleryAssetResponse `json:"images"`
+	// The total number there is in gallery
+	Total int64 `json:"total"`
+	// The current page
+	Current int64 `form:"current"`
+	// Total number of pages (determined by total and limit of the page)
+	Page int64 `form:"page"`
 }

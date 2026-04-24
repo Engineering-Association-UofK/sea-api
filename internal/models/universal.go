@@ -84,9 +84,9 @@ const (
 )
 
 type ListRequest struct {
-	Limit int64  `form:"limit"`
-	Page  int64  `form:"page"`
-	Type  string `form:"type"`
+	Limit int64    `form:"limit"`
+	Page  int64    `form:"page"`
+	Type  PostType `form:"type"`
 }
 
 var AllowedListLimit = map[int64]bool{
@@ -103,4 +103,16 @@ type Progress struct {
 	Success   bool      `json:"success"`
 	Timestamp time.Time `json:"timestamp"`
 	Name      string    `json:"name"`
+}
+
+type Language string
+
+const (
+	Arabic  Language = "ar"
+	English Language = "en"
+)
+
+var AllowedLanguages = map[Language]bool{
+	Arabic:  true,
+	English: true,
 }

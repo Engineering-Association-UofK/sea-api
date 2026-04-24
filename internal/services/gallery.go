@@ -9,6 +9,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services/storage"
+	"sea-api/internal/utils/valid"
 	"time"
 )
 
@@ -96,15 +97,21 @@ func (s *GalleryService) GetAssetByID(id int64) (*models.GalleryAssetResponse, e
 	}, nil
 }
 
-func (s *GalleryService) GetAllAssets() ([]models.GalleryAssetResponse, error) {
-	assets, err := s.Repo.GetAllGallery()
+func (s *GalleryService) GetAllAssets(req *models.ListRequest) (*models.GalleryListRequest, error) {
+	total, err := s.Repo.GetTotal(req.Limit, req.Page)
+	if err != nil {
+		return nil, err
+	}
+	valid.Limit(req, total)
+
+	assets, err := s.Repo.GetAllGallery(req)
 	if err != nil {
 		return nil, err
 	}
 
 	var responses []models.GalleryAssetResponse
 	for _, asset := range assets {
-		url, _ := s.S3Service.GenerateDownloadUrlByID(context.Background(), asset.FileID)
+		url, _ := s.S3Service.GenerateDownloadUrlByKey(context.Background(), asset.FileKey)
 		responses = append(responses, models.GalleryAssetResponse{
 			ID:             asset.ID,
 			URL:            url,
@@ -116,7 +123,12 @@ func (s *GalleryService) GetAllAssets() ([]models.GalleryAssetResponse, error) {
 		})
 	}
 
-	return responses, nil
+	return &models.GalleryListRequest{
+		Images:  responses,
+		Total:   total,
+		Current: req.Page,
+		Page:    total / req.Limit,
+	}, nil
 }
 
 func (s *GalleryService) CleanGallery() (int, error) {

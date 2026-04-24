@@ -148,6 +148,7 @@ func (h *CmsHandler) GetViewPostsList(ctx *gin.Context) {
 //	@Produce		json
 //	@Param			limit	query		int	false	"Content count limit"
 //	@Param			page	query		int	false	"Page number"
+//	@Param			type	query		models.PostType	false	"Post type"
 //	@Success		200		{object}	models.BatchPostAdminListViewResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError

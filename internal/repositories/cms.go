@@ -21,8 +21,8 @@ func NewCmsRepository(db *sqlx.DB) *CmsRepository {
 
 func (r *CmsRepository) CreatePost(post *models.PostModel) (int64, error) {
 	query := fmt.Sprintf(`
-	INSERT INTO %s (cover_image_id, title, slug, summary, content, author_id, is_published, created_at, updated_at)
-	VALUES (:cover_image_id, :title, :slug, :summary, :content, :author_id, :is_published, :created_at, :updated_at)
+	INSERT INTO %s (cover_image_id, title, slug, summary, content, post_type, author_id, is_published, created_at, updated_at)
+	VALUES (:cover_image_id, :title, :slug, :summary, :content, :post_type, :author_id, :is_published, :created_at, :updated_at)
 	`, models.TablePosts)
 	res, err := r.db.NamedExec(query, post)
 	if err != nil {
@@ -123,7 +123,7 @@ func (r *CmsRepository) GetAllPostModels(req *models.ListRequest, publishedOnly 
 	return posts, nil
 }
 
-func (r *CmsRepository) GetPostsAdminListByType(req *models.ListRequest, postType models.PostType) ([]models.PostAdminViewRow, error) {
+func (r *CmsRepository) GetPostsAdminListByType(req *models.ListRequest) ([]models.PostAdminViewRow, error) {
 	offset := (req.Page - 1) * req.Limit
 	query := fmt.Sprintf(`
 	SELECT 
@@ -147,9 +147,9 @@ func (r *CmsRepository) GetPostsAdminListByType(req *models.ListRequest, postTyp
 	`, models.TablePosts, models.TableGalleryAssets, models.TableFiles, models.TableUsers)
 
 	var args []interface{}
-	if postType != "" {
+	if req.Type != "" {
 		query += ` WHERE p.post_type = ?`
-		args = append(args, postType)
+		args = append(args, req.Type)
 	}
 
 	query += ` ORDER BY p.created_at DESC LIMIT ? OFFSET ?`
@@ -233,7 +233,7 @@ func (r *CmsRepository) UpdatePost(post *models.PostModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
 	SET cover_image_id = :cover_image_id, title = :title, slug = :slug, summary = :summary, content = :content, 
-	    author_id = :author_id, is_published = :is_published, updated_at = :updated_at
+	    post_type = :post_type, author_id = :author_id, is_published = :is_published, updated_at = :updated_at
 	WHERE id = :id
 	`, models.TablePosts)
 	_, err := r.db.NamedExec(query, post)

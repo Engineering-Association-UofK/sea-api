@@ -74,14 +74,22 @@ func (h *GalleryHandler) Upload(ctx *gin.Context) {
 //	@Description	Get a list of all assets in the gallery
 //	@Tags			Gallery
 //	@Produce		json
-//	@Success		200	{array}		models.GalleryAssetResponse
+//	@Param			limit	query		int	false	"Number of items per page"
+//	@Param			page	query		int	false	"Page number"
+//	@Success		200	{object}		models.GalleryListRequest
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/admin/gallery [get]
 //
 //	@Security		ApiKeyAuth
 func (h *GalleryHandler) GetAll(ctx *gin.Context) {
-	assets, err := h.GalleryService.GetAllAssets()
+	var req models.ListRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	assets, err := h.GalleryService.GetAllAssets(&req)
 	if err != nil {
 		ctx.Error(err)
 		return

@@ -45,6 +45,7 @@ func (s *CmsService) CreatePost(userId int64, post *models.PostRequest) (int64, 
 		Slug:         post.Slug,
 		Summary:      sql.NullString{String: post.Summary, Valid: post.Summary != ""},
 		Content:      post.Content,
+		PostType:     post.Type,
 		AuthorID:     userId,
 		IsPublished:  post.IsPublished,
 		CreatedAt:    time.Now(),
@@ -168,13 +169,13 @@ func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.BatchPostAdmi
 	if !models.AllowedPostTypes[models.PostType(req.Type)] {
 		return nil, errs.New(errs.BadRequest, "invalid post type", nil)
 	}
-	total, err := s.CmsRepo.GetTotalPosts("", false)
+	total, err := s.CmsRepo.GetTotalPosts(models.PostType(req.Type), false)
 	if err != nil {
 		return nil, err
 	}
 	valid.Limit(req, total)
 
-	posts, err := s.CmsRepo.GetPostsAdminListByType(req, "")
+	posts, err := s.CmsRepo.GetPostsAdminListByType(req)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +234,9 @@ func (s *CmsService) UpdatePost(req *models.PostUpdateRequest) error {
 		}
 		post.Slug = req.Slug
 	}
+	post.Summary = sql.NullString{String: req.Summary, Valid: req.Summary != ""}
 	post.Content = req.Content
+	post.PostType = models.PostType(req.Type)
 	post.IsPublished = req.IsPublished
 	post.UpdatedAt = time.Now()
 

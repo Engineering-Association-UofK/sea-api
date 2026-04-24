@@ -45,16 +45,36 @@ func (r *GalleryRepository) GetAllAssets() ([]models.GalleryAssetModel, error) {
 	return assets, nil
 }
 
-func (r *GalleryRepository) GetAllGallery() ([]models.GallerySqlModel, error) {
+func (r *GalleryRepository) GetTotal(limit int64, page int64) (int64, error) {
+	var count int64
+	err := r.db.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TableGalleryAssets))
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *GalleryRepository) GetAllGallery(req *models.ListRequest) ([]models.GallerySqlModel, error) {
 	var assets []models.GallerySqlModel
-	err := r.db.Select(&assets, fmt.Sprintf(`
-	SELECT a.id, a.file_id, a.file_name, a.alt_text, a.uploaded_by, a.created_at,
+	offset := (req.Page - 1) * req.Limit
+	query := fmt.Sprintf(`
+	SELECT 
+		a.id, 
+		f.file_key,
+		a.file_name, 
+		a.alt_text, 
+		a.uploaded_by, 
+		a.created_at,
 	COUNT(r.asset_id) AS reference_times
 	FROM %s a
 	LEFT JOIN %s r ON a.id = r.asset_id
+	LEFT JOIN %s f ON a.file_id = f.id
 	GROUP BY a.id, a.file_id, a.file_name, a.alt_text, a.uploaded_by, a.created_at
 	ORDER BY a.created_at DESC
-	`, models.TableGalleryAssets, models.TableGalleryReferences))
+	LIMIT ? OFFSET ?
+	`, models.TableGalleryAssets, models.TableGalleryReferences, models.TableFiles)
+
+	err := r.db.Select(&assets, query, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}

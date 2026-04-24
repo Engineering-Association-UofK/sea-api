@@ -124,12 +124,13 @@ type TeamMemberRow struct {
 // For Admin
 
 type PostRequest struct {
-	CoverImageID int64  `json:"cover_image_id"`
-	Title        string `json:"title" binding:"required,min=3,max=255"`
-	Slug         string `json:"slug"`
-	Summary      string `json:"summary"`
-	Content      string `json:"content" binding:"required"`
-	IsPublished  bool   `json:"is_published"`
+	CoverImageID int64    `json:"cover_image_id"`
+	Title        string   `json:"title" binding:"required,min=3,max=255"`
+	Slug         string   `json:"slug"`
+	Summary      string   `json:"summary"`
+	Type         PostType `json:"type"`
+	Content      string   `json:"content" binding:"required"`
+	IsPublished  bool     `json:"is_published"`
 }
 
 type PostUpdateRequest struct {

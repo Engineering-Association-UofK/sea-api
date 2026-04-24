@@ -28,7 +28,7 @@ func NewEventHandler(eventService *services.EventService) *EventHandler {
 //	@Produce		json
 //	@Param			limit	query		int	true	"Content count limit"
 //	@Param			page	query		int	true	"Page number"
-//	@Success		200	{array}		models.EventListResponse
+//	@Success		200	{object}		models.EventListLimitResponse
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/admin/event [get]
