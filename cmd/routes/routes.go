@@ -146,13 +146,13 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		}
 
 		{ // ==== BLOG POSTS
-			blog := admin.Group("/blog")
-			blog.Use(middleware.RequireAnyRole(models.RoleContentBlogMgr, models.RoleSystemSuperAdmin))
-			blog.GET("", CmsHandler.GetAllPosts)
-			blog.GET("/:id", CmsHandler.GetPostById)
-			blog.POST("", CmsHandler.CreatePost)
-			blog.PUT("", CmsHandler.UpdatePost)
-			blog.DELETE("/:id", CmsHandler.DeletePost)
+			posts := admin.Group("/blog")
+			posts.Use(middleware.RequireAnyRole(models.RoleContentBlogMgr, models.RoleSystemSuperAdmin))
+			posts.GET("", CmsHandler.GetAllPosts)
+			posts.GET("/:id", CmsHandler.GetPostById)
+			posts.POST("", CmsHandler.CreatePost)
+			posts.PUT("", CmsHandler.UpdatePost)
+			posts.DELETE("/:id", CmsHandler.DeletePost)
 		}
 
 		{ // ==== GALLERY

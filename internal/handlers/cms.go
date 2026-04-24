@@ -65,7 +65,7 @@ func (h *CmsHandler) CreatePost(ctx *gin.Context) {
 //	@Tags			CMS:blog
 //	@Produce		json
 //	@Param			id	path		int	true	"Post ID"
-//	@Success		200	{object}	models.PostResponse
+//	@Success		200	{object}	models.PostAdminViewResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
@@ -95,7 +95,7 @@ func (h *CmsHandler) GetPostById(ctx *gin.Context) {
 //	@Tags			Public
 //	@Produce		json
 //	@Param			slug	path		string	true	"Post slug"
-//	@Success		200		{object}	models.PostResponse
+//	@Success		200		{object}	models.PostViewResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		404		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -117,10 +117,10 @@ func (h *CmsHandler) GetViewPostBySlug(ctx *gin.Context) {
 //	@Description	Get a list of blog posts for public view
 //	@Tags			Public
 //	@Produce		json
-//	@Param			limit	query		int				true	"Content count limit"
-//	@Param			page	query		int				true	"Page number"
+//	@Param			limit	query		int				false	"Content count limit"
+//	@Param			page	query		int				false	"Page number"
 //	@Param			type	query		models.PostType	true	"Post type"
-//	@Success		200		{object}	models.PostListViewResponse
+//	@Success		200		{object}	models.BatchPostListViewResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
 //	@Router			/cms/blogs [get]
@@ -146,9 +146,9 @@ func (h *CmsHandler) GetViewPostsList(ctx *gin.Context) {
 //	@Description	Get a list of all blog posts for administration
 //	@Tags			CMS:blog
 //	@Produce		json
-//	@Param			limit	query		int	true	"Content count limit"
-//	@Param			page	query		int	true	"Page number"
-//	@Success		200		{object}	models.PostListResponse
+//	@Param			limit	query		int	false	"Content count limit"
+//	@Param			page	query		int	false	"Page number"
+//	@Success		200		{object}	models.BatchPostAdminListViewResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError

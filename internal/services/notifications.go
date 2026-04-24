@@ -5,6 +5,7 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
+	"sea-api/internal/utils/valid"
 	"time"
 )
 
@@ -43,14 +44,12 @@ func (s *NotificationService) CreateDemoNotifications(userId int64, req *models.
 }
 
 func (s *NotificationService) GetNotificationsByUserID(userID int64, limit models.ListRequest) (*models.NotificationsListResponse, error) {
-	if !models.AllowedListLimit[limit.Limit] {
-		limit.Limit = 10
-	}
-
 	total, err := s.repo.GetTotalWithUserID(userID)
 	if err != nil {
 		return nil, err
 	}
+
+	valid.Limit(&limit, total)
 
 	numPages := total / limit.Limit
 	if total%limit.Limit != 0 {

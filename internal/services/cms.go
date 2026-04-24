@@ -1,12 +1,12 @@
 package services
 
 import (
+	"database/sql"
 	"log/slog"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services/user"
-	"sea-api/internal/utils"
 	"sea-api/internal/utils/valid"
 	"strings"
 	"time"
@@ -32,7 +32,7 @@ func (s *CmsService) CreatePost(userId int64, post *models.PostRequest) (int64, 
 	if post.Slug == "" {
 		post.Slug = strings.ToLower(strings.ReplaceAll(post.Title, " ", "-"))
 	}
-	if _, err := s.CmsRepo.GetPostBySlug(post.Slug); err == nil {
+	if _, err := s.CmsRepo.GetPostDetailsBySlug(post.Slug); err == nil {
 		return 0, errs.New(errs.Conflict, "Slug already exists", nil)
 	}
 	if _, err := s.GalleryService.GetAssetByID(post.CoverImageID); err != nil {
@@ -43,6 +43,7 @@ func (s *CmsService) CreatePost(userId int64, post *models.PostRequest) (int64, 
 		CoverImageID: post.CoverImageID,
 		Title:        post.Title,
 		Slug:         post.Slug,
+		Summary:      sql.NullString{String: post.Summary, Valid: post.Summary != ""},
 		Content:      post.Content,
 		AuthorID:     userId,
 		IsPublished:  post.IsPublished,
@@ -60,81 +61,92 @@ func (s *CmsService) CreatePost(userId int64, post *models.PostRequest) (int64, 
 	return id, nil
 }
 
-func (s *CmsService) GetPostById(id int64) (*models.PostResponse, error) {
+func (s *CmsService) GetPostById(id int64) (*models.PostAdminViewResponse, error) {
 	post, err := s.CmsRepo.GetPostByID(id)
 	if err != nil {
 		slog.Info("Post not found using ID")
 		return nil, err
 	}
-	return s.getPost(post)
-}
 
-func (s *CmsService) GetViewPostBySlug(slug string) (*models.PostViewResponse, error) {
-	post, err := s.CmsRepo.GetPostBySlug(slug)
+	url, err := s.GalleryService.GetLinkByAssetKey(post.ImageFileKey)
 	if err != nil {
 		return nil, err
 	}
-	if !post.IsPublished {
-		return nil, errs.New(errs.NotFound, "post not found", nil)
+
+	return &models.PostAdminViewResponse{
+		ID:           post.ID,
+		CoverImageID: post.CoverImageID,
+		ImageUrl:     url,
+		Title:        post.Title,
+		Slug:         post.Slug,
+		Summary:      post.Summary.String,
+		Content:      post.Content,
+		PostType:     post.PostType,
+		AuthorID:     post.AuthorID,
+		AuthorName:   post.AuthorName,
+		IsPublished:  post.IsPublished,
+		CreatedAt:    post.CreatedAt,
+		UpdatedAt:    post.UpdatedAt,
+	}, nil
+}
+
+func (s *CmsService) GetViewPostBySlug(slug string) (*models.PostViewResponse, error) {
+	post, err := s.CmsRepo.GetPostDetailsBySlug(slug)
+	if err != nil {
+		return nil, err
 	}
-	model, err := s.getPost(post)
+
+	url, err := s.GalleryService.GetLinkByAssetKey(post.ImageFileKey)
 	if err != nil {
 		return nil, err
 	}
 
 	return &models.PostViewResponse{
-		ImageUrl:   model.ImageUrl,
-		Title:      model.Title,
-		Content:    model.Content,
-		UpdatedAt:  model.UpdatedAt,
-		AuthorName: model.AuthorName,
+		ImageUrl:   url,
+		Title:      post.Title,
+		Slug:       post.Slug,
+		Summary:    post.Summary.String,
+		Content:    post.Content,
+		AuthorName: post.AuthorName,
+		UpdatedAt:  post.UpdatedAt,
 	}, nil
 }
 
-func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.PostListViewResponse, error) {
-	total, err := s.CmsRepo.GetPublishedTotalByType(models.PostBlog)
+func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.BatchPostListViewResponse, error) {
+	total, err := s.CmsRepo.GetTotalPosts(models.PostBlog, true)
 	if err != nil {
 		return nil, err
 	}
-	valid.ValidateListRequest(req, total)
 
-	posts, err := s.CmsRepo.GetPostsListByType(req, models.PostBlog)
+	valid.Limit(req, total)
+
+	postsRows, err := s.CmsRepo.GetPostsViewListByType(req, models.PostBlog)
 	if err != nil {
 		return nil, err
 	}
-	response := models.PostListViewResponse{}
-	if len(posts) == 0 {
-		return &response, nil
-	}
-
-	var usersIds []int64
-	for _, post := range posts {
-		usersIds = append(usersIds, post.AuthorID)
-	}
-
-	authors, err := s.UserService.GetAllUserDetailsByIndices(usersIds)
-	if err != nil {
-		return nil, err
-	}
-	authorsMap := utils.FromSlice(authors, func(u models.UserDetails) int64 { return u.ID })
 
 	responses := []models.PostViewListResponse{}
-	for _, post := range posts {
-		url, err := s.GalleryService.GetLinkByAssetID(post.CoverImageID)
+	for _, post := range postsRows {
+		url, err := s.GalleryService.GetLinkByAssetKey(post.ImageFileKey)
 		if err != nil {
-			slog.Info("Failed to generate url", "store id", post.CoverImageID)
+			slog.Info("Failed to generate url", "store key", post.ImageFileKey)
 			return nil, err
+		}
+		summary := ""
+		if post.Summary.Valid {
+			summary = post.Summary.String
 		}
 		responses = append(responses, models.PostViewListResponse{
 			ImageUrl:   url,
 			Title:      post.Title,
-			AuthorName: authorsMap[post.AuthorID].NameAr,
-			UpdatedAt:  post.UpdatedAt,
 			Slug:       post.Slug,
+			Summary:    summary,
+			AuthorName: post.AuthorName,
+			UpdatedAt:  post.UpdatedAt,
 		})
 	}
 
-	response = models.PostListViewResponse{
+	response := models.BatchPostListViewResponse{
 		Posts:   responses,
 		Current: req.Page,
 		Pages:   total / req.Limit,
@@ -143,77 +155,44 @@ func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.PostListV
 	return &response, nil
 }
 
-func (s *CmsService) getPost(post *models.PostModel) (*models.PostResponse, error) {
-	url, err := s.GalleryService.GetLinkByAssetID(post.CoverImageID)
+func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.BatchPostAdminListViewResponse, error) {
+	total, err := s.CmsRepo.GetTotalPosts("", false)
 	if err != nil {
-		slog.Info("Failed to generate url", "store id", post.CoverImageID)
 		return nil, err
 	}
+	valid.Limit(req, total)
 
-	user, err := s.UserService.GetUserDetails(post.AuthorID)
+	posts, err := s.CmsRepo.GetPostsAdminListByType(req, "")
 	if err != nil {
-		slog.Info("User not found for getting post author", "user id", post.AuthorID)
 		return nil, err
-	}
-
-	return &models.PostResponse{
-		ID:           post.ID,
-		CoverImageID: post.CoverImageID,
-		ImageUrl:     url,
-		Title:        post.Title,
-		Slug:         post.Slug,
-		Content:      post.Content,
-		AuthorID:     post.AuthorID,
-		AuthorName:   user.NameAr,
-		IsPublished:  post.IsPublished,
-		CreatedAt:    post.CreatedAt,
-		UpdatedAt:    post.UpdatedAt,
-	}, nil
-}
-
-func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.PostListResponse, error) {
-	total, err := s.CmsRepo.GetTotalPosts()
-	if err != nil {
-		return &models.PostListResponse{}, err
-	}
-	valid.ValidateListRequest(req, total)
-
-	posts, err := s.CmsRepo.GetAllPosts(req, false)
-	if err != nil {
-		return &models.PostListResponse{}, err
 	}
 	if len(posts) == 0 {
-		return &models.PostListResponse{}, nil
+		return &models.BatchPostAdminListViewResponse{
+			Posts:   []models.PostAdminListViewResponse{},
+			Current: req.Page,
+			Pages:   total / req.Limit,
+		}, nil
 	}
 
-	usersIds := utils.FromSlice(posts, func(p models.PostModel) int64 { return p.AuthorID }).Keys()
+	var responses = []models.PostAdminListViewResponse{}
 
-	users, err := s.UserService.GetAllUserDetailsByIndices(usersIds)
-	if err != nil {
-		return &models.PostListResponse{}, err
-	}
-	usersMap := utils.FromSlice(users, func(u models.UserDetails) int64 { return u.ID })
-
-	var responses = []models.PostResponse{}
 	for _, post := range posts {
 		url, _ := s.GalleryService.GetLinkByAssetID(post.CoverImageID)
 
-		responses = append(responses, models.PostResponse{
-			ID:           post.ID,
-			CoverImageID: post.CoverImageID,
-			ImageUrl:     url,
-			Title:        post.Title,
-			Slug:         post.Slug,
-			Content:      post.Content,
-			AuthorID:     post.AuthorID,
-			AuthorName:   usersMap[post.AuthorID].NameAr,
-			IsPublished:  post.IsPublished,
-			CreatedAt:    post.CreatedAt,
-			UpdatedAt:    post.UpdatedAt,
+		responses = append(responses, models.PostAdminListViewResponse{
+			ID:          post.ID,
+			ImageUrl:    url,
+			Title:       post.Title,
+			Summary:     post.Summary.String,
+			PostType:    post.PostType,
+			AuthorName:  post.AuthorName,
+			IsPublished: post.IsPublished,
+			CreatedAt:   post.CreatedAt,
+			UpdatedAt:   post.UpdatedAt,
 		})
 	}
 
-	return &models.PostListResponse{
+	return &models.BatchPostAdminListViewResponse{
 		Posts:   responses,
 		Current: req.Page,
 		Pages:   total / req.Limit,
@@ -221,7 +200,7 @@ func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.PostListRespo
 }
 
 func (s *CmsService) UpdatePost(req *models.PostUpdateRequest) error {
-	post, err := s.CmsRepo.GetPostByID(req.ID)
+	post, err := s.CmsRepo.GetPostModelByID(req.ID)
 	if err != nil {
 		return err
 	}
@@ -236,7 +215,7 @@ func (s *CmsService) UpdatePost(req *models.PostUpdateRequest) error {
 	post.CoverImageID = req.CoverImageID
 	post.Title = req.Title
 	if req.Slug != "" {
-		_, err := s.CmsRepo.GetPostBySlug(req.Slug)
+		_, err := s.CmsRepo.GetPostDetailsBySlug(req.Slug)
 		if err == nil {
 			return errs.New(errs.Conflict, "Slug already exists", nil)
 		}
@@ -270,6 +249,7 @@ func (s *CmsService) CreateTeamMember(member *models.TeamMemberRequest) (int64, 
 		UserID:       member.UserID,
 		Role:         member.Role,
 		Bio:          member.Bio,
+		Link:         sql.NullString{String: member.Link, Valid: member.Link != ""},
 		DisplayOrder: member.DisplayOrder,
 		IsActive:     member.IsActive,
 		CreatedAt:    time.Now(),
@@ -287,6 +267,11 @@ func (s *CmsService) GetTeamMemberByID(id int64) (*models.TeamMemberResponse, er
 		return nil, err
 	}
 
+	link := ""
+	if member.Link.Valid {
+		link = member.Link.String
+	}
+
 	return &models.TeamMemberResponse{
 		ID:           member.ID,
 		UserID:       member.UserID,
@@ -294,6 +279,8 @@ func (s *CmsService) GetTeamMemberByID(id int64) (*models.TeamMemberResponse, er
 		NameEn:       user.NameEn,
 		Role:         member.Role,
 		Bio:          member.Bio,
+		Link:         link,
+		ProfilePic:   user.ProfilePic,
 		DisplayOrder: member.DisplayOrder,
 		CreatedAt:    member.CreatedAt,
 	}, nil
@@ -304,32 +291,31 @@ func (s *CmsService) GetAllTeamMembers(activeOnly bool) ([]models.TeamMemberResp
 	if err != nil {
 		return nil, err
 	}
-
 	if len(members) == 0 {
 		return []models.TeamMemberResponse{}, nil
 	}
 
-	userIds := make([]int64, len(members))
-	for i, m := range members {
-		userIds[i] = m.UserID
-	}
-
-	users, err := s.UserService.GetAllUserDetailsByIndices(userIds)
-	if err != nil {
-		return nil, err
-	}
-	usersMap := utils.FromSlice(users, func(u models.UserDetails) int64 { return u.ID })
-
 	var dtos []models.TeamMemberResponse
 	for _, m := range members {
-		user := usersMap[m.UserID]
+		url := ""
+		if m.ProfilePicKey.Valid {
+			url, _ = s.GalleryService.GetLinkByAssetKey(m.ProfilePicKey.String)
+		}
+
+		link := ""
+		if m.Link.Valid {
+			link = m.Link.String
+		}
+
 		dtos = append(dtos, models.TeamMemberResponse{
 			ID:           m.ID,
 			UserID:       m.UserID,
-			NameAr:       user.NameAr,
-			NameEn:       user.NameEn,
+			NameAr:       m.NameAr,
+			NameEn:       m.NameEn,
 			Role:         m.Role,
 			Bio:          m.Bio,
+			Link:         link,
+			ProfilePic:   url,
 			DisplayOrder: m.DisplayOrder,
 			CreatedAt:    m.CreatedAt,
 		})
@@ -348,27 +334,27 @@ func (s *CmsService) GetViewTeamMembers() ([]models.TeamMemberViewResponse, erro
 		return []models.TeamMemberViewResponse{}, nil
 	}
 
-	var usersIds []int64
-	for _, member := range members {
-		usersIds = append(usersIds, member.UserID)
-	}
-
-	users, err := s.UserService.GetAllUserDetailsByIndices(usersIds)
-	if err != nil {
-		return nil, err
-	}
-	usersMap := utils.FromSlice(users, func(u models.UserDetails) int64 { return u.ID })
-
 	var dtos []models.TeamMemberViewResponse
 	for _, m := range members {
+		url := ""
+		if m.ProfilePicKey.Valid {
+			url, _ = s.GalleryService.GetLinkByAssetKey(m.ProfilePicKey.String)
+		}
+
+		link := ""
+		if m.Link.Valid {
+			link = m.Link.String
+		}
+
 		dtos = append(dtos, models.TeamMemberViewResponse{
 			UserID:       m.UserID,
-			NameAr:       usersMap[m.UserID].NameAr,
-			NameEn:       usersMap[m.UserID].NameEn,
+			NameAr:       m.NameAr,
+			NameEn:       m.NameEn,
 			Role:         m.Role,
 			Bio:          m.Bio,
+			Link:         link,
+			ProfilePic:   url,
 			DisplayOrder: m.DisplayOrder,
-			ProfilePic:   usersMap[m.UserID].ProfilePic,
 		})
 	}
 
@@ -383,6 +369,7 @@ func (s *CmsService) UpdateTeamMember(req *models.TeamMemberUpdateRequest) error
 
 	member.Role = req.Role
 	member.Bio = req.Bio
+	member.Link = sql.NullString{String: req.Link, Valid: req.Link != ""}
 	member.DisplayOrder = req.DisplayOrder
 	member.IsActive = req.IsActive
 

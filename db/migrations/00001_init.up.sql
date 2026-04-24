@@ -71,6 +71,16 @@ CREATE TABLE verification_code (
 
 -- -------- EVENT SCHEMA
 
+CREATE TABLE collaborators (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name_ar VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    signature_id INT NOT NULL,
+
+    FOREIGN KEY (signature_id) REFERENCES files(id) ON DELETE CASCADE
+);
+
 CREATE TABLE event (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
@@ -121,16 +131,6 @@ CREATE TABLE component_score (
     FOREIGN KEY (participant_id) REFERENCES event_participant(id) ON DELETE CASCADE,
     FOREIGN KEY (component_id) REFERENCES event_component(id) ON DELETE CASCADE
 );
-
-CREATE TABLE collaborators (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name_ar VARCHAR(255) NOT NULL,
-    name_en VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    signature_id INT NOT NULL,
-
-    FOREIGN KEY (signature_id) REFERENCES files(id) ON DELETE CASCADE
-)
 
 -- -------- CERTIFICATE SCHEMA
 
@@ -225,6 +225,7 @@ CREATE TABLE posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255) NOT NULL UNIQUE,
+    summary TEXT,
     content LONGTEXT NOT NULL,
     cover_image_id INT NOT NULL,
     author_id INT NOT NULL,
@@ -245,6 +246,7 @@ CREATE TABLE team_members (
     user_id INT NOT NULL UNIQUE,
     role VARCHAR(100) NOT NULL,
     bio TEXT NOT NULL,
+    link TEXT,
     display_order INT NOT NULL DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

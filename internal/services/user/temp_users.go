@@ -19,8 +19,9 @@ func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUser
 	}
 	if len(users) == 0 {
 		return &models.TempUserListResponse{
-			Users: []models.TempUserResponse{},
-			Pages: total / req.Limit,
+			Users:   []models.TempUserResponse{},
+			Current: req.Page,
+			Pages:   total / req.Limit,
 		}, nil
 	}
 
@@ -34,8 +35,9 @@ func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUser
 	}
 
 	return &models.TempUserListResponse{
-		Users: userResponses,
-		Pages: total / req.Limit,
+		Users:   userResponses,
+		Current: req.Page,
+		Pages:   total / req.Limit,
 	}, nil
 }
 

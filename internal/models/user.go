@@ -204,13 +204,15 @@ type TempUserResponse struct {
 }
 
 type UserListResponse struct {
-	Users []UserListItemResponse `json:"users"`
-	Pages int64                  `json:"pages"`
+	Users   []UserListItemResponse `json:"users"`
+	Current int64                  `json:"current"`
+	Pages   int64                  `json:"pages"`
 }
 
 type TempUserListResponse struct {
-	Users []TempUserResponse `json:"users"`
-	Pages int64              `json:"pages"`
+	Users   []TempUserResponse `json:"users"`
+	Current int64              `json:"current"`
+	Pages   int64              `json:"pages"`
 }
 
 type UserProfileResponse struct {

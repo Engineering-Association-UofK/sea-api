@@ -162,6 +162,10 @@ func (s *GalleryService) GetLinkByAssetID(assetID int64) (string, error) {
 	return s.S3Service.GenerateDownloadUrlByID(context.Background(), asset.FileID)
 }
 
+func (s *GalleryService) GetLinkByAssetKey(assetKey string) (string, error) {
+	return s.S3Service.GenerateDownloadUrlByKey(context.Background(), assetKey)
+}
+
 func (s *GalleryService) RemoveReference(objType models.ObjectType, objID int64) error {
 	return s.Repo.DeleteReferencesByObject(objType, objID)
 }

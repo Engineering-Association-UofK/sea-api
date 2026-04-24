@@ -32,17 +32,11 @@ func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse,
 	if err != nil {
 		return nil, err
 	}
-	valid.ValidateListRequest(req, total)
+	valid.Limit(req, total)
 
 	users, err := s.repo.GetAll(req.Limit, req.Page)
 	if err != nil {
 		return nil, errs.New(errs.InternalServerError, "Error getting users: "+err.Error(), nil)
-	}
-	if len(users) == 0 {
-		return &models.UserListResponse{
-			Users: []models.UserListItemResponse{},
-			Pages: total / req.Limit,
-		}, nil
 	}
 	ids := utils.ExtractField(users, func(u models.UserModel) int64 { return u.ID })
 
@@ -59,8 +53,9 @@ func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse,
 	}
 
 	return &models.UserListResponse{
-		Users: userResponses,
-		Pages: total / req.Limit,
+		Users:   userResponses,
+		Current: req.Page,
+		Pages:   total / req.Limit,
 	}, nil
 }
 
