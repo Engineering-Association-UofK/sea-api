@@ -92,6 +92,7 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		account.Use(middleware.AuthMiddleware(u))
 
 		{ // ==== PROFILE
+			account.GET("/summary", AccountHandler.GetProfileSummary)
 			account.GET("", AccountHandler.GetProfile)
 			account.PUT("", AccountHandler.UpdateProfile)
 			account.GET("/certificates", AccountHandler.GetCertificates)

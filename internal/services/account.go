@@ -37,6 +37,28 @@ func NewAccountService(UserRepo *repositories.UserRepository, store *storage.S3,
 	}
 }
 
+func (s *AccountService) GetProfileSummary(ctx context.Context, claims *models.ManagedClaims) (*models.UserProfileSummaryResponse, error) {
+	user, err := s.UserRepo.GetUserRow(claims.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	url := ""
+	if user.ProfilePicKey.Valid {
+		url, err = s.store.GenerateDownloadUrlByKey(ctx, user.ProfilePicKey.String)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &models.UserProfileSummaryResponse{
+		ID:         user.ID,
+		Username:   user.Username,
+		Email:      user.Email,
+		ProfilePic: url,
+	}, nil
+}
+
 func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedClaims) (*models.UserProfileResponse, error) {
 	user, err := s.UserRepo.GetByUserID(claims.UserID)
 	if err != nil {

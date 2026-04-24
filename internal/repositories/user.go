@@ -17,6 +17,28 @@ func NewUserRepository(DB *sqlx.DB) *UserRepository {
 
 // ======== GET ALL ========
 
+func (r *UserRepository) GetUserRows(req *models.ListRequest) ([]models.UserRow, error) {
+	var users []models.UserRow
+	offset := (req.Page - 1) * req.Limit
+	query := fmt.Sprintf(`
+		SELECT 
+			u.id, u.uni_id, u.username, u.profile_image_id, u.name_ar, u.name_en, 
+			u.email, u.phone, u.department, u.gender, u.verified, u.status,
+			f.file_key AS profile_pic_key
+		FROM %s u
+		LEFT JOIN %s f ON u.profile_image_id = f.id
+		WHERE u.is_anonymous = false
+		ORDER BY u.id DESC
+		LIMIT ? OFFSET ?
+	`, models.TableUsers, models.TableFiles)
+
+	err := r.DB.Select(&users, query, req.Limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func (r *UserRepository) GetAll(limit int64, page int64) ([]models.UserModel, error) {
 	var users []models.UserModel
 	offset := (page - 1) * limit
@@ -128,6 +150,24 @@ func (r *UserRepository) GetAdmins() ([]models.UserModel, error) {
 }
 
 // ======== GET ========
+
+func (r *UserRepository) GetUserRow(id int64) (*models.UserRow, error) {
+	var user models.UserRow
+	query := fmt.Sprintf(`
+		SELECT 
+			u.id, u.uni_id, u.username, u.profile_image_id, u.name_ar, u.name_en, 
+			u.email, u.phone, u.department, u.gender, u.verified, u.status,
+			f.file_key AS profile_pic_key
+		FROM %s u
+		LEFT JOIN %s f ON u.profile_image_id = f.id
+		WHERE u.id = ? AND u.is_anonymous = false
+	`, models.TableUsers, models.TableFiles)
+	err := r.DB.Get(&user, query, id)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
 
 func (r *UserRepository) GetByUserID(id int64) (*models.UserModel, error) {
 	var user models.UserModel

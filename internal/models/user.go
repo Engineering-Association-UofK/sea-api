@@ -17,6 +17,10 @@ func (ts *TrimmedString) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+//////////////////
+////  CONFIG  ////
+//////////////////
+
 var AllowedAdminRoles = map[Role]bool{
 	RoleSystemUserMgr:   true,
 	RoleSystemSupport:   true,
@@ -101,6 +105,10 @@ const (
 	RoleOrgModerator Role = "org:moderator"
 )
 
+//////////////////
+////  MODELS  ////
+//////////////////
+
 type UserModel struct {
 	ID       int64  `db:"id"`
 	UniID    int64  `db:"uni_id"`
@@ -147,6 +155,30 @@ type UserRole struct {
 	UserID int64 `db:"user_id"`
 	Role   Role  `db:"role"`
 }
+
+//////////////////
+////   ROWS   ////
+//////////////////
+
+type UserRow struct {
+	ID             int64          `db:"id"`
+	UniID          int64          `db:"uni_id"`
+	Username       string         `db:"username"`
+	ProfileImageID sql.NullInt64  `db:"profile_image_id"`
+	ProfilePicKey  sql.NullString `db:"profile_pic_key"`
+	NameAr         string         `db:"name_ar"`
+	NameEn         string         `db:"name_en"`
+	Email          string         `db:"email"`
+	Phone          string         `db:"phone"`
+	Department     Department     `db:"department"`
+	Gender         Gender         `db:"gender"`
+	Verified       bool           `db:"verified"`
+	Status         Status         `db:"status"`
+}
+
+//////////////////
+////   DTOS   ////
+//////////////////
 
 type UserResponse struct {
 	ID       int64  `json:"id"`
@@ -213,6 +245,13 @@ type TempUserListResponse struct {
 	Users   []TempUserResponse `json:"users"`
 	Current int64              `json:"current"`
 	Pages   int64              `json:"pages"`
+}
+
+type UserProfileSummaryResponse struct {
+	ID         int64  `json:"id"`
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	ProfilePic string `json:"profile_pic"`
 }
 
 type UserProfileResponse struct {

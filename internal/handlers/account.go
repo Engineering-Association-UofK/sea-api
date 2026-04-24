@@ -22,6 +22,35 @@ func NewAccountHandler(accountService *services.AccountService) *AccountHandler 
 	}
 }
 
+// GetProfileSummary godocs
+//
+//	@Summary		Get Profile Summary
+//	@Description	Get profile summary of requesting user
+//	@Tags			Account:profile
+//	@Produce		json
+//	@Success		200	{object}	models.UserProfileSummaryResponse
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/summary [get]
+//
+//	@Security		ApiKeyAuth
+func (a *AccountHandler) GetProfileSummary(c *gin.Context) {
+	value, exists := c.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	profile, err := a.AccountService.GetProfileSummary(c.Request.Context(), claims)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.PureJSON(http.StatusOK, profile)
+}
+
 // GetProfile godocs
 //
 //	@Summary		Get Profile
