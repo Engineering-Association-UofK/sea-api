@@ -102,7 +102,7 @@ func (s *GalleryService) GetAllAssets(req *models.ListRequest) (*models.GalleryL
 	if err != nil {
 		return nil, err
 	}
-	valid.Limit(req, total)
+	pages := valid.Limit(req, total)
 
 	assets, err := s.Repo.GetAllGallery(req)
 	if err != nil {
@@ -127,7 +127,7 @@ func (s *GalleryService) GetAllAssets(req *models.ListRequest) (*models.GalleryL
 		Images:  responses,
 		Total:   total,
 		Current: req.Page,
-		Page:    total / req.Limit,
+		Page:    pages,
 	}, nil
 }
 

@@ -128,7 +128,7 @@ func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.BatchPost
 		"Type", req.Type,
 	)
 
-	valid.Limit(req, total)
+	pages := valid.Limit(req, total)
 
 	postsRows, err := s.CmsRepo.GetPostsViewListByType(req, models.PostType(req.Type))
 	if err != nil {
@@ -159,7 +159,7 @@ func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.BatchPost
 	response := models.BatchPostListViewResponse{
 		Posts:   responses,
 		Current: req.Page,
-		Pages:   total / req.Limit,
+		Pages:   pages,
 	}
 
 	return &response, nil
@@ -173,7 +173,7 @@ func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.BatchPostAdmi
 	if err != nil {
 		return nil, err
 	}
-	valid.Limit(req, total)
+	pages := valid.Limit(req, total)
 
 	posts, err := s.CmsRepo.GetPostsAdminListByType(req)
 	if err != nil {
@@ -183,7 +183,7 @@ func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.BatchPostAdmi
 		return &models.BatchPostAdminListViewResponse{
 			Posts:   []models.PostAdminListViewResponse{},
 			Current: req.Page,
-			Pages:   total / req.Limit,
+			Pages:   pages,
 		}, nil
 	}
 
@@ -208,7 +208,7 @@ func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.BatchPostAdmi
 	return &models.BatchPostAdminListViewResponse{
 		Posts:   responses,
 		Current: req.Page,
-		Pages:   total / req.Limit,
+		Pages:   pages,
 	}, nil
 }
 

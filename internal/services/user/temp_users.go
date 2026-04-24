@@ -11,7 +11,7 @@ func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUser
 	if err != nil {
 		return nil, err
 	}
-	valid.ValidateListRequest(req, total)
+	pages := valid.Limit(req, total)
 
 	users, err := s.repo.GetAllTempUsers(req.Limit, req.Page)
 	if err != nil {
@@ -21,7 +21,7 @@ func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUser
 		return &models.TempUserListResponse{
 			Users:   []models.TempUserResponse{},
 			Current: req.Page,
-			Pages:   total / req.Limit,
+			Pages:   pages,
 		}, nil
 	}
 
@@ -37,7 +37,7 @@ func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUser
 	return &models.TempUserListResponse{
 		Users:   userResponses,
 		Current: req.Page,
-		Pages:   total / req.Limit,
+		Pages:   pages,
 	}, nil
 }
 

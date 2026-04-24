@@ -95,7 +95,7 @@ func (s *EventService) GetAllEvents(req models.ListRequest) (*models.EventListLi
 	if err != nil {
 		return nil, err
 	}
-	valid.ValidateListRequest(&req, total)
+	pages := valid.Limit(&req, total)
 
 	events, err := s.EventRepo.GetAllEvents(req)
 	if err != nil {
@@ -115,7 +115,7 @@ func (s *EventService) GetAllEvents(req models.ListRequest) (*models.EventListLi
 	}
 	return &models.EventListLimitResponse{
 		Events:  eventList,
-		Pages:   total / req.Limit,
+		Pages:   pages,
 		Current: req.Page,
 	}, nil
 }
@@ -125,7 +125,7 @@ func (s *EventService) GetAllViewEvents(req models.ListRequest) (*models.EventVi
 	if err != nil {
 		return nil, err
 	}
-	valid.ValidateListRequest(&req, total)
+	pages := valid.Limit(&req, total)
 
 	events, err := s.EventRepo.GetAllEvents(req)
 	if err != nil {
@@ -148,7 +148,7 @@ func (s *EventService) GetAllViewEvents(req models.ListRequest) (*models.EventVi
 	}
 	return &models.EventViewListLimitResponse{
 		Events:  eventList,
-		Pages:   total / req.Limit,
+		Pages:   pages,
 		Current: req.Page,
 	}, nil
 }

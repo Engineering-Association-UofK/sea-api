@@ -13,7 +13,7 @@ func (s *UserService) GetAdmins(ctx context.Context, req *models.ListRequest) (*
 	if err != nil {
 		return nil, err
 	}
-	valid.Limit(req, total)
+	pages := valid.Limit(req, total)
 
 	admins, err := s.repo.GetAdmins(req)
 	if err != nil {
@@ -57,7 +57,7 @@ func (s *UserService) GetAdmins(ctx context.Context, req *models.ListRequest) (*
 		Admins:  adminResponses,
 		Total:   total,
 		Current: req.Page,
-		Pages:   total / req.Limit,
+		Pages:   pages,
 	}, nil
 }
 

@@ -91,7 +91,7 @@ func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *mode
 	if err != nil {
 		return nil, err
 	}
-	valid.ValidateListRequest(req, total)
+	valid.Limit(req, total)
 
 	certs, err := s.certificateRepository.GetByUserID(claims.UserID, req)
 	if err != nil {

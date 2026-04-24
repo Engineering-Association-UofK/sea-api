@@ -32,7 +32,7 @@ func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse,
 	if err != nil {
 		return nil, err
 	}
-	valid.Limit(req, total)
+	pages := valid.Limit(req, total)
 
 	users, err := s.repo.GetAll(req.Limit, req.Page)
 	if err != nil {
@@ -55,7 +55,7 @@ func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse,
 	return &models.UserListResponse{
 		Users:   userResponses,
 		Current: req.Page,
-		Pages:   total / req.Limit,
+		Pages:   pages,
 	}, nil
 }
 
