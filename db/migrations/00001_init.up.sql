@@ -29,7 +29,7 @@ CREATE TABLE users (
 
     is_loggable TINYINT DEFAULT 1,
     is_editable TINYINT DEFAULT 1,
-    anonymous TINYINT DEFAULT 0,
+    is_anonymous TINYINT DEFAULT 0,
 
     UNIQUE (profile_image_id),
     FOREIGN KEY (profile_image_id) REFERENCES files(id)
@@ -277,7 +277,6 @@ CREATE TABLE forms (
     created_by INT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (header_image_id) REFERENCES gallery_assets(id),
     FOREIGN KEY (created_by) REFERENCES users(id) ON UPDATE CASCADE
 );
 

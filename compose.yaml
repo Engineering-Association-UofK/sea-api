@@ -36,7 +36,7 @@ services:
       - 9325:9325
     command: 'volume -ip=volume -master="master:9333" -ip.bind=0.0.0.0 -port=8080 -metricsPort=9325 -dir=/data'
     volumes:
-      - ~/docker/container/sea-api/seaweed-volume:/data
+      - ~/.docker/container/sea-api/seaweed-volume:/data
     depends_on:
       - master
     deploy:
@@ -69,9 +69,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 250M
+          memory: 350M
     ports:
-      - 8008:3306
+      - 3306:3306
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 20s
