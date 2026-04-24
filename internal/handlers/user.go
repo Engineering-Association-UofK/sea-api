@@ -88,14 +88,22 @@ func (u *UserHandler) GetAllTempUsers(c *gin.Context) {
 //	@Description	Get a list of all administrative users
 //	@Tags			User
 //	@Produce		json
-//	@Success		200	{array}		models.AdminResponse
+//	@Param			limit	query		int	true	"Content count limit"
+//	@Param			page	query		int	true	"Page number"
+//	@Success		200	{object}		models.AdminResponseList
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/admin [get]
 //
 //	@Security		ApiKeyAuth
 func (u *UserHandler) GetAdmins(c *gin.Context) {
-	admins, err := u.service.GetAdmins()
+	req := &models.ListRequest{}
+	if err := c.ShouldBindQuery(req); err != nil {
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+	ctx := c.Request.Context()
+	admins, err := u.service.GetAdmins(ctx, req)
 	if err != nil {
 		c.Error(err)
 		return

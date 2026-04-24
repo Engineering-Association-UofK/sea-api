@@ -4,33 +4,43 @@ import (
 	"context"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
-	"sea-api/internal/utils"
+	"sea-api/internal/utils/valid"
 	"slices"
 )
 
-func (s *UserService) GetAdmins() ([]models.AdminResponse, error) {
-	admins, err := s.repo.GetAdmins()
+func (s *UserService) GetAdmins(ctx context.Context, req *models.ListRequest) (*models.AdminResponseList, error) {
+	total, err := s.repo.GetAdminsCount()
 	if err != nil {
 		return nil, err
 	}
-	if len(admins) == 0 {
-		return []models.AdminResponse{}, nil
-	}
-	rolesModels, err := s.repo.GetAllRolesByUserIDs(utils.ExtractField(admins, func(u models.UserModel) int64 { return u.ID }))
+	valid.Limit(req, total)
+
+	admins, err := s.repo.GetAdmins(req)
 	if err != nil {
 		return nil, err
 	}
-	rolesMap := extractRoles(rolesModels)
+
+	adminMap := map[int64]models.AdminRow{}
+	adminRoles := map[int64][]models.Role{}
+	for _, a := range admins {
+		role := a.Role
+		if _, ok := adminRoles[a.ID]; !ok {
+			adminRoles[a.ID] = []models.Role{}
+		}
+		adminRoles[a.ID] = append(adminRoles[a.ID], role)
+		if _, ok := adminMap[a.ID]; !ok {
+			adminMap[a.ID] = a
+		}
+	}
 
 	var adminResponses []models.AdminResponse
 	for _, a := range admins {
 		url := ""
-		if a.ProfileImageID.Valid {
-			link, err := s.S3.GenerateDownloadUrlByID(context.Background(), a.ProfileImageID.Int64)
+		if a.ProfilePic.Valid {
+			url, err = s.S3.GenerateDownloadUrlByKey(ctx, a.ProfilePic.String)
 			if err != nil {
 				return nil, err
 			}
-			url = link
 		}
 		adminResponses = append(adminResponses, models.AdminResponse{
 			ID:         a.ID,
@@ -39,11 +49,16 @@ func (s *UserService) GetAdmins() ([]models.AdminResponse, error) {
 			NameAr:     a.NameAr,
 			Username:   a.Username,
 			Gender:     a.Gender,
-			Roles:      rolesMap[a.ID],
+			Roles:      adminRoles[a.ID],
 		})
 	}
 
-	return adminResponses, nil
+	return &models.AdminResponseList{
+		Admins:  adminResponses,
+		Total:   total,
+		Current: req.Page,
+		Pages:   total / req.Limit,
+	}, nil
 }
 
 func (s *UserService) AddAdmin(ID int64) error {

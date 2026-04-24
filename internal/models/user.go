@@ -176,6 +176,16 @@ type UserRow struct {
 	Status         Status         `db:"status"`
 }
 
+type AdminRow struct {
+	ID         int64          `db:"id"`
+	Email      string         `db:"email"`
+	ProfilePic sql.NullString `db:"profile_pic"`
+	NameAr     string         `db:"name_ar"`
+	Username   string         `db:"username"`
+	Gender     Gender         `db:"gender"`
+	Role       Role           `db:"role"`
+}
+
 //////////////////
 ////   DTOS   ////
 //////////////////
@@ -222,6 +232,13 @@ type AdminResponse struct {
 	Username   string `json:"username"`
 	Gender     Gender `json:"gender"`
 	Roles      []Role `json:"roles"`
+}
+
+type AdminResponseList struct {
+	Admins  []AdminResponse `json:"admins"`
+	Total   int64           `json:"total"`
+	Pages   int64           `json:"pages"`
+	Current int64           `json:"current"`
 }
 
 type AdminRequest struct {

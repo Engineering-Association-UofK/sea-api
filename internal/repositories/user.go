@@ -136,17 +136,41 @@ func (r *UserRepository) GetRolesByUserID(id int64) ([]models.UserRole, error) {
 	return roles, nil
 }
 
-func (r *UserRepository) GetAdmins() ([]models.UserModel, error) {
-	var users []models.UserModel
-	err := r.DB.Select(&users, fmt.Sprintf(`
-		SELECT u.* FROM %s u
+func (r *UserRepository) GetAdmins(req *models.ListRequest) ([]models.AdminRow, error) {
+	var admins []models.AdminRow
+	offset := (req.Page - 1) * req.Limit
+	query := fmt.Sprintf(`
+		SELECT 
+			u.id, u.email, u.name_ar, u.username, u.gender, ur.role,
+			f.file_key AS profile_pic
+		FROM %s u
 		JOIN %s ur ON u.id = ur.user_id
-		WHERE ur.role = ?
-	`, models.TableUsers, models.TableUserRoles), models.RoleSystemAdmin)
+		LEFT JOIN %s f ON u.profile_image_id = f.id
+		WHERE u.id IN (
+			SELECT user_id FROM %s WHERE role = ?
+		)
+		ORDER BY u.id DESC
+		LIMIT ? OFFSET ?
+	`, models.TableUsers, models.TableUserRoles, models.TableFiles, models.TableUserRoles)
+
+	err := r.DB.Select(&admins, query, models.RoleSystemAdmin, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	return users, nil
+	return admins, nil
+}
+
+func (r *UserRepository) GetAdminsCount() (int64, error) {
+	var count int64
+	err := r.DB.Get(&count, fmt.Sprintf(`
+		SELECT COUNT(*) FROM %s u 
+		JOIN %s ur ON u.id = ur.user_id 
+		WHERE ur.role = ?
+	`, models.TableUsers, models.TableUserRoles), models.RoleSystemAdmin)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 // ======== GET ========
