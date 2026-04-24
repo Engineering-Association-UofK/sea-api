@@ -14,6 +14,13 @@ const (
 	PostPhilosophy PostType = "DONATIONS"
 )
 
+var AllowedPostTypes = map[PostType]bool{
+	PostNews:       true,
+	PostIssues:     true,
+	PostBlog:       true,
+	PostPhilosophy: true,
+}
+
 // Models
 
 type PostModel struct {

@@ -113,14 +113,23 @@ func (s *CmsService) GetViewPostBySlug(slug string) (*models.PostViewResponse, e
 }
 
 func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.BatchPostListViewResponse, error) {
-	total, err := s.CmsRepo.GetTotalPosts(models.PostBlog, true)
+	if !models.AllowedPostTypes[models.PostType(req.Type)] {
+		return nil, errs.New(errs.BadRequest, "invalid post type", nil)
+	}
+	total, err := s.CmsRepo.GetTotalPosts(models.PostType(req.Type), true)
 	if err != nil {
 		return nil, err
 	}
+	slog.Info("Post Details",
+		"Limit", req.Limit,
+		"Page", req.Page,
+		"Total", total,
+		"Type", req.Type,
+	)
 
 	valid.Limit(req, total)
 
-	postsRows, err := s.CmsRepo.GetPostsViewListByType(req, models.PostBlog)
+	postsRows, err := s.CmsRepo.GetPostsViewListByType(req, models.PostType(req.Type))
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +165,9 @@ func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.BatchPost
 }
 
 func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.BatchPostAdminListViewResponse, error) {
+	if !models.AllowedPostTypes[models.PostType(req.Type)] {
+		return nil, errs.New(errs.BadRequest, "invalid post type", nil)
+	}
 	total, err := s.CmsRepo.GetTotalPosts("", false)
 	if err != nil {
 		return nil, err
