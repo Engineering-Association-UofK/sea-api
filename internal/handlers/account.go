@@ -131,7 +131,7 @@ func (a *AccountHandler) GetCertificates(c *gin.Context) {
 //	@Failure		400	{object}	response.ErrorResponse
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/account/certificates [put]
+//	@Router			/account [put]
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdateProfile(c *gin.Context) {
@@ -168,7 +168,7 @@ func (a *AccountHandler) UpdateProfile(c *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/account/certificates/picture [put]
+//	@Router			/account/picture [put]
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdatePicture(c *gin.Context) {
@@ -199,8 +199,8 @@ func (a *AccountHandler) UpdatePicture(c *gin.Context) {
 
 // UpdatePassword godocs
 //
-//	@Summary		Update profile picture
-//	@Description	Update user profile picture
+//	@Summary		Update password
+//	@Description	Update user password
 //	@Tags			Account:profile
 //	@Produce		json
 //	@Param			body	body	models.UpdatePasswordRequest 	true	"Request body"
@@ -208,7 +208,7 @@ func (a *AccountHandler) UpdatePicture(c *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/account/certificates/password [put]
+//	@Router			/account/password [put]
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdatePassword(c *gin.Context) {
@@ -242,7 +242,7 @@ func (a *AccountHandler) UpdatePassword(c *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/account/certificates/email [put]
+//	@Router			/account/email [put]
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdateEmail(c *gin.Context) {
@@ -277,7 +277,7 @@ func (a *AccountHandler) UpdateEmail(c *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/account/certificates/username [put]
+//	@Router			/account/username [put]
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdateUsername(c *gin.Context) {
