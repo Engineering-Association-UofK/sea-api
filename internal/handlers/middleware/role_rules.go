@@ -20,9 +20,11 @@ func RequireRole(role models.Role) gin.HandlerFunc {
 
 		claims := userData.(*models.ManagedClaims)
 
-		if !slices.Contains(claims.Roles, role) {
-			c.AbortWithStatus(403)
-			return
+		if !slices.Contains(claims.Roles, models.RoleSystemSuperAdmin) {
+			if !slices.Contains(claims.Roles, role) {
+				c.AbortWithStatus(403)
+				return
+			}
 		}
 
 		c.Next()
@@ -30,11 +32,8 @@ func RequireRole(role models.Role) gin.HandlerFunc {
 }
 
 func RequireAnyRole(roles ...models.Role) gin.HandlerFunc {
-
 	return func(c *gin.Context) {
-
 		userData, exists := c.Get("user")
-
 		if !exists {
 			c.AbortWithStatus(401)
 			return
@@ -42,17 +41,19 @@ func RequireAnyRole(roles ...models.Role) gin.HandlerFunc {
 
 		claims := userData.(*models.ManagedClaims)
 
-		hasRole := false
-		for _, role := range roles {
-			if slices.Contains(claims.Roles, role) {
-				hasRole = true
-				break
+		if !slices.Contains(claims.Roles, models.RoleSystemSuperAdmin) {
+			hasRole := false
+			for _, role := range roles {
+				if slices.Contains(claims.Roles, role) {
+					hasRole = true
+					break
+				}
 			}
-		}
 
-		if !hasRole {
-			c.AbortWithStatus(403)
-			return
+			if !hasRole {
+				c.AbortWithStatus(403)
+				return
+			}
 		}
 
 		c.Next()
