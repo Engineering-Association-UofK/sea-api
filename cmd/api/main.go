@@ -44,7 +44,7 @@ func main() {
 
 func Go() {
 	gin.SetMode(gin.ReleaseMode)
-	logger := config.NewMultiHandlerLog()
+	logger := config.NewMultiHandlerLog(slog.Level(config.App.LoggingLevel))
 	slog.SetDefault(logger)
 
 	// Initialize database

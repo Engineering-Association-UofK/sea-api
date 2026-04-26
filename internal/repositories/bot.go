@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"sea-api/internal/config"
 	"sea-api/internal/models"
 	"strings"
 
@@ -163,8 +164,9 @@ func (r *BotRepository) ResetDefault() error {
 		return err
 	}
 
+	resourcesPath := config.App.ResourcesDir
 	var sqlContent []byte
-	sqlContent, err = os.ReadFile("resources/bot_default.sql")
+	sqlContent, err = os.ReadFile(resourcesPath + "/bot_default.sql")
 	if err != nil {
 		return err
 	}

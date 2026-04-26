@@ -9,7 +9,7 @@ var App Config
 
 type Config struct {
 	Port         string `env:"PORT" envDefault:"8000"`
-	LoggingLevel string `env:"LOGGING_LEVEL" envDefault:"INFO"`
+	LoggingLevel int    `env:"LOGGING_LEVEL" envDefault:"0"`
 
 	MainUrl   string `env:"MAIN_URL" envDefault:"http://localhost:5173"`
 	ApiUrl    string `env:"API_URL" envDefault:"http://localhost:8000"`

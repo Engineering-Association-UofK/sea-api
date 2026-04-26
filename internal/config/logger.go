@@ -10,27 +10,28 @@ import (
 
 type MultiHandler struct {
 	handlers []slog.Handler
+	level    slog.Level
 }
 
-func NewMultiHandlerLog() *slog.Logger {
+func NewMultiHandlerLog(level slog.Level) *slog.Logger {
 	// Setup JSON file output
-	file, _ := os.Create(App.ResourcesDir + "/logs.json")
-	jsonHandler := slog.NewJSONHandler(file, nil)
+	file, _ := os.OpenFile(App.ResourcesDir+"/logs.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	opts := &slog.HandlerOptions{Level: slog.LevelDebug}
 
-	// Setup Terminal (Tint) output
-	terminalHandler := tint.NewHandler(os.Stdout, &tint.Options{
-		Level:      slog.LevelDebug,
-		TimeFormat: "2006-01-02 3:04PM",
-	})
-
-	// Combine loggers
 	return slog.New(&MultiHandler{
-		handlers: []slog.Handler{jsonHandler, terminalHandler},
+		level: level,
+		handlers: []slog.Handler{
+			slog.NewJSONHandler(file, opts),
+			tint.NewHandler(os.Stdout, &tint.Options{
+				Level:      slog.LevelDebug,
+				TimeFormat: "2006-01-02 3:04PM",
+			}),
+		},
 	})
 }
 
 func (m *MultiHandler) Enabled(ctx context.Context, l slog.Level) bool {
-	return true
+	return l >= m.level
 }
 
 func (m *MultiHandler) Handle(ctx context.Context, r slog.Record) error {
