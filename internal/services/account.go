@@ -184,12 +184,15 @@ func (s *AccountService) UpdatePassword(claims *models.ManagedClaims, req models
 	if err != nil {
 		return err
 	}
-	if !isPasswordStrongEnough(req.NewPassword) || req.NewPassword != req.ConfirmPassword {
-		return errs.New(errs.BadRequest, "Password is not strong enough, or passwords do not match", nil)
-	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword))
 	if err != nil {
-		return errs.New(errs.Forbidden, "Invalid credentials", nil)
+		return errs.New(errs.Forbidden, "Invalid old password", nil)
+	}
+	if req.NewPassword != req.ConfirmPassword {
+		return errs.New(errs.BadRequest, "passwords do not match", nil)
+	}
+	if msgs := isPasswordStrongEnough(req.NewPassword); msgs != nil {
+		return errs.New(errs.MultiBadRequest, "password is not strong enough", msgs)
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
@@ -249,9 +252,10 @@ func isEmailFormatCorrect(email string) bool {
 	return strings.Contains(email, "@") && strings.Contains(email, ".")
 }
 
-func isPasswordStrongEnough(password string) bool {
+func isPasswordStrongEnough(password string) map[string]string {
+	msgs := make(map[string]string)
 	if len(password) < 8 {
-		return false
+		msgs["length"] = "Password must be at least 8 characters long"
 	}
 	var hasUpper, hasLower, hasNumber, hasSpecial bool
 	for _, char := range password {
@@ -266,8 +270,22 @@ func isPasswordStrongEnough(password string) bool {
 			hasSpecial = true
 		}
 	}
-	return hasUpper && hasLower && hasNumber && hasSpecial
-
+	if !hasUpper {
+		msgs["upper"] = "Password must contain at least one uppercase letter"
+	}
+	if !hasLower {
+		msgs["lower"] = "Password must contain at least one lowercase letter"
+	}
+	if !hasNumber {
+		msgs["number"] = "Password must contain at least one number"
+	}
+	if !hasSpecial {
+		msgs["special"] = "Password must contain at least one special character"
+	}
+	if len(msgs) == 0 {
+		return nil
+	}
+	return msgs
 }
 
 var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9._]+$`)
