@@ -57,10 +57,12 @@ const (
 
 	// Bot
 
-	TableBotCommands            TableName = "bot_commands"
-	TableBotCommandTranslations TableName = "bot_command_translations"
-	TableBotCommandTriggers     TableName = "bot_command_triggers"
-	TableBotCommandOptions      TableName = "bot_command_options"
+	TableBotNodes            TableName = "bot_nodes"
+	TableBotEdges            TableName = "bot_edges"
+	TableBotNodeTranslations TableName = "bot_node_translations"
+	TableBotEdgeTranslations TableName = "bot_edge_translations"
+	TableBotUserStates       TableName = "bot_user_states"
+	TableBotActions          TableName = "bot_actions"
 
 	// Notifications
 
@@ -81,6 +83,8 @@ const (
 	// Rate Limit
 
 	TableRateLimits TableName = "rate_limits"
+
+	TableFeedback TableName = "feedback"
 )
 
 type ListRequest struct {

@@ -31,6 +31,7 @@ var (
 	FormHandler         *handlers.FormHandler
 	CollaboratorHandler *handlers.CollaboratorHandler
 	NotificationHandler *handlers.NotificationHandler
+	BotHandler          *handlers.BotHandler
 )
 
 var (
@@ -78,13 +79,17 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		auth.POST("/check-username", AccountHandler.CheckUsernameAvailability)
 	}
 
-	{ // ==== CMS
+	{ // ==== OPEN
 		cms := apiV1.Group("/cms")
 		cms.GET("/blogs/:slug", CmsHandler.GetViewPostBySlug)
 		cms.GET("/blogs", CmsHandler.GetViewPostsList)
 		cms.GET("/team", CmsHandler.GetViewTeamMembers)
 		cms.GET("/events", EventHandler.GetViewEvents)
 		cms.GET("/events/:id", EventHandler.GetViewEventByID)
+
+		open := apiV1.Group("/open")
+		open.POST("/bot", BotHandler.GetNodeView)
+		open.POST("/bot/back", BotHandler.GoBackView)
 	}
 
 	{ // ==== ACCOUNT
@@ -154,6 +159,12 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			posts.POST("", CmsHandler.CreatePost)
 			posts.PUT("", CmsHandler.UpdatePost)
 			posts.DELETE("/:id", CmsHandler.DeletePost)
+		}
+
+		{ // ==== BOT
+			bot := admin.Group("/bot")
+			bot.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
+			bot.POST("/reset", BotHandler.ResetDefault)
 		}
 
 		{ // ==== GALLERY

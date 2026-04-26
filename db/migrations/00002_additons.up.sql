@@ -23,30 +23,53 @@ CREATE TABLE event_applications (
 
 -- ------ BOT SCHEMA
 
-CREATE TABLE bot_commands (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    keyword VARCHAR(50) NOT NULL,
-    description VARCHAR(255)
+CREATE TABLE bot_nodes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    node_type VARCHAR(20) DEFAULT 'message', -- 'message', 'input', 'action'
+    is_start BOOLEAN DEFAULT FALSE,          -- True for the Welcome node only
+    is_locked BOOLEAN DEFAULT FALSE, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE bot_command_translations (
-    command_id INT NOT NULL,
-    text TEXT NOT NULL,
-    language VARCHAR(10) NOT NULL,
-    FOREIGN KEY (command_id) REFERENCES bot_commands(id)
+CREATE TABLE bot_node_translations (
+    node_id INT NOT NULL,
+    language VARCHAR(5) NOT NULL,            -- 'en', 'ar'
+    content TEXT NOT NULL,
+    PRIMARY KEY (node_id, language),
+    FOREIGN KEY (node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE
 );
 
-CREATE TABLE bot_command_triggers (
-    command_id INT NOT NULL,
-    trigger_text VARCHAR(50) NOT NULL,
-    language VARCHAR(10) NOT NULL,
-    FOREIGN KEY (command_id) REFERENCES bot_commands(id)
+CREATE TABLE bot_edges (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    from_node_id INT NOT NULL,
+    to_node_id INT NOT NULL,
+    keyword VARCHAR(50) NOT NULL,           
+    FOREIGN KEY (from_node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE,
+    FOREIGN KEY (to_node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE
 );
 
-CREATE TABLE bot_command_options (
-    command_id INT NOT NULL,
-    next_keyword VARCHAR(50) NOT NULL,
-    FOREIGN KEY (command_id) REFERENCES bot_commands(id)
+CREATE TABLE bot_actions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    node_id INT NOT NULL UNIQUE,
+    action_type VARCHAR(100) NOT NULL,
+    action_text TEXT NOT NULL,
+    FOREIGN KEY (node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE
+);
+
+CREATE TABLE bot_edge_translations (
+    edge_id INT NOT NULL,
+    language VARCHAR(5) NOT NULL,
+    label VARCHAR(255) NOT NULL,
+    PRIMARY KEY (edge_id, language),
+    FOREIGN KEY (edge_id) REFERENCES bot_edges(id) ON DELETE CASCADE
+);
+
+CREATE TABLE bot_user_states (
+    session_id VARCHAR(255) PRIMARY KEY,
+    current_node_id INT NOT NULL,
+    user_id BIGINT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (current_node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE
 );
 
 -- ------ NOTIFICATIONS SCHEMA
@@ -76,3 +99,12 @@ CREATE TABLE logs (
     FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+CREATE TABLE feedback (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    message TEXT NOT NULL,
+    user_id INT,
+    type VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+);

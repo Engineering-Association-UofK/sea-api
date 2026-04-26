@@ -7,6 +7,7 @@ import (
 	"sea-api/internal/handlers"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
+	"sea-api/internal/services/bot"
 	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
 	st "sea-api/internal/services/storage"
@@ -63,6 +64,8 @@ func Go() {
 	rateLimitRepository := repositories.NewRateLimitRepository(db)
 	documentRepository := repositories.NewDocumentRepository(db)
 	notificationRepository := repositories.NewNotificationRepository(db)
+	botRepository := repositories.NewBotRepository(db)
+	feedbackRepository := repositories.NewFeedbackRepository(db)
 
 	// Initialize services
 	pdfService := services.NewPDFService(10)
@@ -71,7 +74,9 @@ func Go() {
 	rateLimitService := services.NewRateLimitService(rateLimitRepository)
 	collaboratorService := services.NewCollaboratorService(collaboratorRepository, S3)
 	notificationService := services.NewNotificationService(notificationRepository)
+	feedbackService := services.NewFeedbackService(feedbackRepository)
 
+	botService := bot.NewBotService(botRepository, feedbackService)
 	eventService := services.NewEventService(notificationService, eventRepository, collaboratorRepository, userRepository)
 	accountService := services.NewAccountService(userRepository, S3, certificateRepository)
 
@@ -98,6 +103,9 @@ func Go() {
 	routes.FormHandler = handlers.NewFormHandler(FormService)
 	routes.CollaboratorHandler = handlers.NewCollaboratorHandler(collaboratorService)
 	routes.NotificationHandler = handlers.NewNotificationHandler(notificationService)
+	routes.BotHandler = handlers.NewBotHandler(botService)
+
+	// Initialize routes
 
 	r := routes.SetupRouter(userService, rateLimitService)
 	slog.Info("Starting server on port " + config.App.Port)
