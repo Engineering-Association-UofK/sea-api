@@ -50,6 +50,7 @@ func NewCertificateService(
 	pdfService *PDFService,
 	mailService *MailService,
 	CollaboratorService *CollaboratorService,
+	NotificationService *NotificationService,
 	CertificateRepository *repositories.CertificateRepository,
 	DocumentRepository *repositories.DocumentRepository,
 ) *CertificateService {
@@ -59,6 +60,7 @@ func NewCertificateService(
 		eventService:          eventService,
 		S3StoreService:        S3StoreService,
 		mailService:           mailService,
+		NotificationService:   NotificationService,
 		CollaboratorService:   CollaboratorService,
 		certificateRepository: CertificateRepository,
 		documentRepository:    DocumentRepository,
@@ -192,9 +194,11 @@ func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequ
 func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, eventId int64, progressChan chan string) error {
 	defer close(progressChan)
 	progressChan <- "started"
+	slog.Debug("making certificates for event", "event_id", eventId)
 
 	event, err := c.eventService.GetEventByID(eventId)
 	if err != nil {
+		slog.Debug("error getting event", "error", err, "event_id", eventId)
 		return err
 	}
 
@@ -212,12 +216,18 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, event
 			}
 		}
 	}
+	slog.Debug("got participants", "count", len(ids))
+	if len(ids) == 0 {
+		progressChan <- "done"
+		return nil
+	}
 
 	users, err := c.userRepo.GetAllByIndices(ids)
 	if err != nil {
 		slog.Error("error getting users", "error", err, "event_id", eventId)
 		return err
 	}
+	slog.Debug("got users", "count", len(users))
 
 	for i, user := range users {
 		hash, _, err := c.CreateWorkshopCertificate(ctx, user.ID, eventId)
@@ -324,6 +334,7 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, userUserID, eventId int64) (string, int64, error) {
 	cert, err := c.certificateRepository.GetByUserIDAndEventID(userUserID, eventId)
 	if err == nil {
+		slog.Debug("certificate already exists", "user_id", userUserID, "event_id", eventId)
 		return cert.Hash, cert.ID, nil
 	}
 
@@ -333,6 +344,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 		return "", 0, err
 	}
 	if !participant.Completed {
+		slog.Debug("participant did not complete event", "user_id", userUserID, "event_id", eventId)
 		return "", 0, errs.New(errs.NotFound, fmt.Sprintf("Participant %d did not complete event %d yet", userUserID, eventId), nil)
 	}
 	event, err := c.eventService.GetEventByID(eventId)
@@ -354,6 +366,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 
 	signature := ""
 	if collab.SignatureID.Valid {
+		slog.Debug("getting signature", "signature_id", collab.SignatureID.Int64)
 		signatureImage, err := c.S3StoreService.Download(ctx, collab.SignatureID.Int64)
 		if err != nil {
 			slog.Error("error getting signature", "error", err, "signature_id", collab.SignatureID.Int64)
@@ -366,6 +379,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	hash := sha256.Sum256([]byte(stringToHash))
 	hashString := hex.EncodeToString(hash[:])
 	url := CERT_VERIFICATION_PATH + hashString
+	slog.Debug("generating qr", "url", url)
 
 	qr, err := utils.GenerateGearQR(url, 512, 512)
 	if err != nil {

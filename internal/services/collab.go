@@ -98,7 +98,7 @@ func (s *CollaboratorService) Create(ctx context.Context, req *models.Collaborat
 
 	hash := fnv.New64()
 	hash.Write([]byte(string(req.NameAr) + string(req.NameEn) + string(req.Email) + config.App.SecretSalt))
-	fileKey := fmt.Sprintf("%s/%d-%s.%s", s.signaturePath, hash.Sum64(), strings.Split(req.NameEn, " ")[0], contentType[6:])
+	fileKey := fmt.Sprintf("%s/%d-%s%s", s.signaturePath, hash.Sum64(), strings.Split(req.NameEn, " ")[0], contentType[6:])
 
 	id, err := s.S3.Upload(ctx, fileKey, fileBytes, contentType)
 	if err != nil {

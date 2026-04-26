@@ -87,7 +87,17 @@ func Go() {
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
 	FormService := forms.NewFormService(formRepository, galleryService)
 
-	certificateService := services.NewCertificateService(userRepository, eventService, S3, pdfService, mailService, collaboratorService, certificateRepository, documentRepository)
+	certificateService := services.NewCertificateService(
+		userRepository,
+		eventService,
+		S3,
+		pdfService,
+		mailService,
+		collaboratorService,
+		notificationService,
+		certificateRepository,
+		documentRepository,
+	)
 	schedularService := schedular.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService, rateLimitService)
 	schedularService.Run()
 

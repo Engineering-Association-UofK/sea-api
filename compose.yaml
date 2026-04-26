@@ -1,24 +1,24 @@
 services:
-  # server:
-  #   image: techseauofk/sea-api-server:latest
-  #   env_file:
-  #     - .env.compose
-  #   ports:
-  #     - 8000:8000
-  #   volumes:
-  #     - ./.keys/sea_key.p12:/app/keys/sea_key.p12:ro
-  #     - ./resources:/app/resources
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 200M
-  #   shm_size: 128mb
+  server:
+    image: techseauofk/sea-api-server:latest
+    env_file:
+      - .env.compose
+    ports:
+      - 8000:8000
+    volumes:
+      - ./.keys/sea_key.p12:/app/keys/sea_key.p12:ro
+      - ./resources:/app/resources
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+    shm_size: 128mb
 
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #     master:
-  #       condition: service_started
+    depends_on:
+      db:
+        condition: service_healthy
+      master:
+        condition: service_started
 
   master:
     image: chrislusf/seaweedfs:4.15

@@ -31,7 +31,7 @@ func (r *CertificateRepository) CreateFile(item models.CertificateFileModel) (in
 	query := fmt.Sprintf(`
 	INSERT INTO %s (certificate_id, store_id, lang)
 	VALUES (:certificate_id, :store_id, :lang)
-	`, models.TableCertificates)
+	`, models.TableCertificateFiles)
 	res, err := r.DB.NamedExec(query, &item)
 	if err != nil {
 		return 0, err
