@@ -89,7 +89,6 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 		open := apiV1.Group("/open")
 		open.POST("/bot", BotHandler.GetNodeView)
-		open.POST("/bot/back", BotHandler.GoBackView)
 	}
 
 	{ // ==== ACCOUNT
@@ -164,6 +163,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		{ // ==== BOT
 			bot := admin.Group("/bot")
 			bot.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
+			bot.GET("/graph", BotHandler.GetBotGraph)
+			bot.PUT("/graph", BotHandler.UpdateBotGraph)
 			bot.POST("/reset", BotHandler.ResetDefault)
 		}
 
