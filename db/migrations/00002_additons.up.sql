@@ -24,15 +24,17 @@ CREATE TABLE event_applications (
 -- ------ BOT SCHEMA
 
 CREATE TABLE bot_nodes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id VARCHAR(255) PRIMARY KEY,
     node_type VARCHAR(20) DEFAULT 'message', -- 'message', 'input', 'action'
+    pos_x INT DEFAULT 0 NOT NULL,
+    pos_y INT DEFAULT 0 NOT NULL,
     is_start BOOLEAN DEFAULT FALSE,          -- True for the Welcome node only
     is_locked BOOLEAN DEFAULT FALSE, 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE bot_node_translations (
-    node_id INT NOT NULL,
+    node_id VARCHAR(255) NOT NULL,
     language VARCHAR(5) NOT NULL,            -- 'en', 'ar'
     content TEXT NOT NULL,
     PRIMARY KEY (node_id, language),
@@ -40,24 +42,23 @@ CREATE TABLE bot_node_translations (
 );
 
 CREATE TABLE bot_edges (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    from_node_id INT NOT NULL,
-    to_node_id INT NOT NULL,
+    id VARCHAR(255) PRIMARY KEY,
+    from_node_id VARCHAR(255) NOT NULL,
+    to_node_id VARCHAR(255) NOT NULL,
     keyword VARCHAR(50) NOT NULL,           
     FOREIGN KEY (from_node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE,
     FOREIGN KEY (to_node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE
 );
 
 CREATE TABLE bot_actions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    node_id INT NOT NULL UNIQUE,
+    node_id VARCHAR(255) NOT NULL UNIQUE,
     action_type VARCHAR(100) NOT NULL,
     action_text TEXT NOT NULL,
     FOREIGN KEY (node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE
 );
 
 CREATE TABLE bot_edge_translations (
-    edge_id INT NOT NULL,
+    edge_id VARCHAR(255) NOT NULL,
     language VARCHAR(5) NOT NULL,
     label VARCHAR(255) NOT NULL,
     PRIMARY KEY (edge_id, language),
@@ -66,7 +67,7 @@ CREATE TABLE bot_edge_translations (
 
 CREATE TABLE bot_user_states (
     session_id VARCHAR(255) PRIMARY KEY,
-    current_node_id INT NOT NULL,
+    current_node_id VARCHAR(255) NOT NULL,
     user_id BIGINT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (current_node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE

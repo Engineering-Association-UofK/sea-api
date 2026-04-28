@@ -36,11 +36,13 @@ func (s *BotService) handleActions(req models.BotRequest, nextNode *models.NodeR
 		metadata := getMetadata(data)
 
 		slog.Debug(fmt.Sprintf("%v", metadata))
-		return &models.BotResponse{
-			NodeType: nextNode.Type,
-			Content:  nextNode.Content,
-			Metadata: metadata,
-		}, nil
+		view, err := s.getNodeView(nextNode, req.Language)
+		if err != nil {
+			return nil, err
+		}
+		view.Metadata = metadata
+
+		return view, nil
 	}
 	slog.Error("action not found in actionsMap", "keyword", req.Keyword)
 	return nil, errs.New(errs.Conflict, "invalid action", nil)

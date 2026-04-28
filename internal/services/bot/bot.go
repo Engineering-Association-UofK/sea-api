@@ -30,7 +30,7 @@ func (s *BotService) HandleSession(req models.BotRequest, claims *models.Managed
 	}
 
 	var userID *int64
-	var currentNodeID int64
+	var currentNodeID string
 
 	var nextNode *models.NodeRow
 	var nodeResponse *models.BotResponse
@@ -87,31 +87,6 @@ func (s *BotService) HandleSession(req models.BotRequest, claims *models.Managed
 	return nodeResponse, nil
 }
 
-func (s *BotService) GoBackView(req models.BotRequest) (*models.BotResponse, error) {
-	state, err := s.repo.GetSession(req.SessionID)
-	if err != nil {
-		slog.Debug("Session not found")
-		return nil, err
-	}
-	if state == nil {
-		slog.Debug("No session found, starting from the beginning")
-		return s.HandleSession(req, nil)
-	}
-
-	parentNode, err := s.repo.GetParentOrStartNodeRow(state.CurrentNodeID, req.Language, req.Keyword)
-	if err != nil {
-		slog.Debug("Parent node not found")
-		return nil, err
-	}
-
-	if err := s.repo.UpsertSession(req.SessionID, parentNode.ID, state.UserID); err != nil {
-		slog.Debug("Failed to update session")
-		return nil, err
-	}
-
-	return s.getNodeView(parentNode, req.Language)
-}
-
 func (s *BotService) getNodeView(node *models.NodeRow, lang models.Language) (*models.BotResponse, error) {
 	// Get Options and translation
 	edges, err := s.repo.GetEdgesForNode(node.ID, lang)
@@ -126,6 +101,12 @@ func (s *BotService) getNodeView(node *models.NodeRow, lang models.Language) (*m
 		Content:  node.Content,
 		Options:  make([]models.BotOptionView, 0, len(edges)),
 	}
+
+	return s.mapEdges(edges, response)
+}
+
+func (s *BotService) mapEdges(edges []models.EdgeRow, response *models.BotResponse) (*models.BotResponse, error) {
+	response.Options = make([]models.BotOptionView, 0, len(edges))
 
 	for _, edge := range edges {
 		response.Options = append(response.Options, models.BotOptionView{
