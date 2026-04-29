@@ -12,28 +12,40 @@ type SchedularService struct {
 	UserRepo         *repositories.UserRepository
 	VerificationRepo *repositories.VerificationRepo
 	SuspensionsRepo  *repositories.SuspensionsRepo
+	BotRepo          *repositories.BotRepository
 	MailService      *services.MailService
 	RateLimitService *services.RateLimitService
 }
 
-func NewSchedularService(userRepo *repositories.UserRepository, verificationRepo *repositories.VerificationRepo, suspensionsRepo *repositories.SuspensionsRepo, mailService *services.MailService, rateLimitService *services.RateLimitService) *SchedularService {
+func NewSchedularService(
+	userRepo *repositories.UserRepository,
+	verificationRepo *repositories.VerificationRepo,
+	suspensionsRepo *repositories.SuspensionsRepo,
+	botRepo *repositories.BotRepository,
+	mailService *services.MailService,
+	rateLimitService *services.RateLimitService,
+) *SchedularService {
 	return &SchedularService{
 		UserRepo:         userRepo,
 		VerificationRepo: verificationRepo,
 		SuspensionsRepo:  suspensionsRepo,
+		BotRepo:          botRepo,
 		MailService:      mailService,
 		RateLimitService: rateLimitService,
 	}
 }
 
 func (s *SchedularService) Run() {
-	go s.cleanUpCodes(24 * time.Hour)
+	go s.cleanUpAuthCodes(24 * time.Hour)
 	go s.cleanUpSuspensions(2 * time.Hour)
 	go s.cleanUpRateLimits(time.Hour)
+	go s.cleanUpBotSessions(5 * time.Hour)
 }
 
-func (s *SchedularService) cleanUpCodes(duration time.Duration) {
+// For removing codes sent in emails for authentication
+func (s *SchedularService) cleanUpAuthCodes(duration time.Duration) {
 	cleanCodeTicker := time.NewTicker(duration)
+	slog.Debug("codes cleanup service started", "duration", duration)
 
 	s.VerificationRepo.Clean()
 	for range cleanCodeTicker.C {
@@ -43,6 +55,7 @@ func (s *SchedularService) cleanUpCodes(duration time.Duration) {
 
 func (s *SchedularService) cleanUpSuspensions(duration time.Duration) {
 	cleanSuspensionsTicker := time.NewTicker(duration)
+	slog.Debug("suspensions cleanup service started", "duration", duration)
 
 	for range cleanSuspensionsTicker.C {
 		ids, err := s.SuspensionsRepo.CleanExpired()
@@ -61,6 +74,7 @@ func (s *SchedularService) cleanUpSuspensions(duration time.Duration) {
 
 func (s *SchedularService) cleanUpRateLimits(duration time.Duration) {
 	ticker := time.NewTicker(duration)
+	slog.Debug("rate limits cleanup service started", "duration", duration)
 
 	for range ticker.C {
 		s.RateLimitService.Clean()
@@ -72,5 +86,16 @@ func (s *SchedularService) cleanUpRateLimits(duration time.Duration) {
 			}
 		}
 		middleware.LimiterMu.Unlock()
+	}
+}
+
+func (s *SchedularService) cleanUpBotSessions(duration time.Duration) {
+	ticker := time.NewTicker(duration)
+	slog.Debug("bot sessions cleanup service started", "duration", duration)
+
+	for range ticker.C {
+		if err := s.BotRepo.ClearSessions(); err != nil {
+			slog.Error("error cleaning expired bot sessions", "error", err)
+		}
 	}
 }

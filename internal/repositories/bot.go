@@ -311,6 +311,16 @@ func (r *BotRepository) GetLockedNodes() ([]models.NodeActionRow, error) {
 ////  TOOLS  ////
 /////////////////
 
+// Clear sessions older than 5 hour
+func (r *BotRepository) ClearSessions() error {
+	query := fmt.Sprintf(`
+	DELETE FROM %s
+    WHERE created_at < NOW() - INTERVAL 5 HOUR
+	`, models.TableBotUserStates)
+	_, err := r.db.Exec(query)
+	return err
+}
+
 func (r *BotRepository) ClearBotDatabase(tx *sqlx.Tx) error {
 	tables := []models.TableName{
 		models.TableBotEdgeTranslations,

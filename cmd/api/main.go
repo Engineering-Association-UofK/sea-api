@@ -98,7 +98,14 @@ func Go() {
 		certificateRepository,
 		documentRepository,
 	)
-	schedularService := schedular.NewSchedularService(userRepository, verificationRepo, suspensionsRepo, mailService, rateLimitService)
+	schedularService := schedular.NewSchedularService(
+		userRepository,
+		verificationRepo,
+		suspensionsRepo,
+		botRepository,
+		mailService,
+		rateLimitService,
+	)
 	schedularService.Run()
 
 	// Initialize handlers
