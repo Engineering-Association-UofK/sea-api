@@ -20,19 +20,18 @@ func NewMySQLConnection() *sqlx.DB {
 	slog.Info("Starting MySQL connection...")
 	app := &config.App
 
-	mysql.RegisterTLSConfig(app.DbName, &tls.Config{
+	mysql.RegisterTLSConfig("custom", &tls.Config{
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: app.DbSkipVerify,
 		ServerName:         app.DbHost,
 	})
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=%s&parseTime=true&multiStatements=true",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=custom&parseTime=true&multiStatements=true",
 		app.DbUsername,
 		app.DbPassword,
 		app.DbHost,
 		app.DbPort,
 		app.DbDatabase,
-		app.DbName,
 	)
 
 	db, err := sqlx.Open("mysql", dsn)
@@ -50,13 +49,9 @@ func NewMySQLConnection() *sqlx.DB {
 		panic(err)
 	}
 
-	if app.DbName == "tidb" {
-		_, err := db.Exec("SET SESSION tidb_skip_isolation_level_check=1")
-		if err != nil {
-			panic(err)
-		}
+	if _, err = db.Exec("SET SESSION tidb_skip_isolation_level_check=1"); err != nil {
+		slog.Warn("Failed to set tidb_skip_isolation_level_check, ignore if not using TiDB.")
 	}
-
 	runMigrations(db)
 
 	slog.Info("Database connection and migrations ready.")

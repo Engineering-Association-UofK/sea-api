@@ -11,47 +11,41 @@ type Config struct {
 	Port         string `env:"PORT" envDefault:"8000"`
 	LoggingLevel int    `env:"LOGGING_LEVEL" envDefault:"0"`
 
-	MainUrl   string `env:"MAIN_URL" envDefault:"http://localhost:5173"`
-	ApiUrl    string `env:"API_URL" envDefault:"http://localhost:8000"`
-	StoreUrl  string `env:"STORE_URL" envDefault:"http://localhost:8333"`
-	HelperUrl string `env:"HELPER_URL" envDefault:"http://localhost:8888"`
-
+	// Resouses directories relative to where the backend server is launched in the file system
 	ResourcesDir  string `env:"RESOURCES_DIR" envDefault:"./resources"`
 	MigrationsDir string `env:"MIGRATIONS_DIR" envDefault:"file://db/migrations"`
 
-	DbName       string `env:"DB_NAME" envDefault:"mysql"`
-	DbDSN        string `env:"DB_DSN" envDefault:"localhost"`
+	// Database details
 	DbHost       string `env:"DB_HOST" envDefault:"localhost"`
 	DbPort       string `env:"DB_PORT" envDefault:"3306"`
 	DbUsername   string `env:"DB_USERNAME" envDefault:"root"`
 	DbPassword   string `env:"DB_PASSWORD" envDefault:"root"`
 	DbDatabase   string `env:"DB_DATABASE" envDefault:"sea_db"`
-	DbSkipVerify bool   `env:"DB_SKIP_VERIFY" envDefault:"true"`
+	DbSkipVerify bool   `env:"DB_SKIP_VERIFY" envDefault:"true"` // Whether to skip SSL verification
 
+	// STMP details for sending emails
 	MailHost string `env:"MAIL_HOST" envDefault:"smtp.gmail.com"`
 	MailPort string `env:"MAIL_PORT" envDefault:"587"`
 	MailUser string `env:"MAIL_USER" required:"true"`
 	MailPass string `env:"MAIL_PASS" required:"true"`
 
-	CloudinaryUrl       string `env:"CLOUDINARY_URL" required:"true"`
-	CloudinaryApiKey    string `env:"CLOUDINARY_API_KEY" required:"true"`
-	CloudinaryApiSecret string `env:"CLOUDINARY_API_SECRET" required:"true"`
+	// Secret keys
+	JwtSecret  string `env:"JWT_SECRET" required:"true"`
+	SecretSalt string `env:"SECRET_SALT" required:"true"`
 
-	JwtSecret        string `env:"JWT_SECRET" required:"true"`
-	SecretSalt       string `env:"SECRET_SALT" required:"true"`
-	KeystorePassword string `env:"KEYSTORE_PASSWORD" required:"true"`
-	keystorePath     string `env:"KEYSTORE_PATH" envDefault:"/app/certs/sea_key.p12"`
+	///////////////////////////
+	// ### S3 Properties ### //
+	///////////////////////////
 
-	StoreMasterURL string `env:"STORE_MASTER_URL" envDefault:"http://localhost:9333"`
-	StorePublicURL string `env:"STORE_PUBLIC_URL" envDefault:"http://localhost:8080"`
-	StoreFilerUrl  string `env:"STORE_FILER_URL" envDefault:"http://localhost:8888"`
-	StoreS3ApiUrl  string `env:"STORE_S3API_URL" envDefault:"http://localhost:8333"`
-
+	// Access keys for the S3 service
 	S3AccessKey string `env:"S3_ACCESS_KEY" required:"true"`
 	S3SecretKey string `env:"S3_SECRET_KEY" required:"true"`
+
+	StoreUrl      string `env:"STORE_S3_URL" envDefault:"http://localhost:8333"`     // The url for the S3 store, for image links generation
+	StoreS3ApiUrl string `env:"STORE_S3_API_URL" envDefault:"http://localhost:8333"` // S3 url relative to the backend server
 }
 
 func Load() error {
-	godotenv.Load()
-	return env.Parse(&App)
+	godotenv.Load()        // godotenv library to load .env files
+	return env.Parse(&App) // Parse the .env file into the Config struct
 }
