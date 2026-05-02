@@ -49,18 +49,33 @@ func StatefulRateLimiter(endpoint models.RateLimitEndpoints, service *services.R
 	return func(ctx *gin.Context) {
 		ip := ctx.ClientIP()
 
-		isRateLimited, timeRemaining, err := service.IsRateLimited(ip, endpoint)
+		isRateLimited, limitModel, err := service.IsRateLimited(ip, endpoint)
 		if err != nil {
 			slog.Error("error checking rate limit", "error", err)
 			ctx.Next()
 			return
 		}
+
 		if isRateLimited {
+			timeRemaining, err := service.ApplyRateLimit(endpoint, limitModel)
+			if err != nil {
+				slog.Error("error applying rate limit", "error", err)
+			}
 			response.TooManyRequestsErrorResponse(timeRemaining, getMessage(timeRemaining), ctx)
 			ctx.Abort()
 			return
 		}
+
 		ctx.Next()
+
+		// if request failed, don't increment ratelimit
+		if ctx.Writer.Status() <= 200 && ctx.Writer.Status() >= 300 {
+			err = service.IncrementRequestCount(limitModel, ip, endpoint)
+			if err != nil {
+				slog.Error("error incrementing rate limit", "error", err)
+			}
+		}
+
 	}
 }
 
