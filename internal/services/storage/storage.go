@@ -123,7 +123,7 @@ func (s *S3) GenerateDownloadUrlByKey(ctx context.Context, key string) (string, 
 		Bucket: &s.Bucket,
 		Key:    &key,
 	}, func(opts *s3.PresignOptions) {
-		opts.Expires = 15 * time.Minute
+		opts.Expires = 10 * time.Hour
 	})
 
 	if err != nil {
