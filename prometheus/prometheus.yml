@@ -9,3 +9,6 @@ scrape_configs:
           - volume:9325
           - filer:9326
           - s3:9327
+  - job_name: 'sea-api'
+    static_configs:
+      - targets: ['server:8000']

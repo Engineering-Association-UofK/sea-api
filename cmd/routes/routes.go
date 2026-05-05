@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/time/rate"
@@ -57,6 +58,7 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			MaxAge:           12 * time.Hour,
 		}))
 		r.Use(middleware.ErrorHandlerMiddleware())
+		r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 		r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"status": 200}) })
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
