@@ -1,7 +1,9 @@
 package repositories
 
 import (
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"sea-api/internal/models"
 
 	"github.com/jmoiron/sqlx"
@@ -288,6 +290,94 @@ func (r *EventRepository) MassUpdateScore(scores []models.ComponentScoreModel) e
 
 // ======== GET BY ID ========
 
+func (r *EventRepository) GetEventDetails(eventID int64, userID *int64) (*models.EventViewDetailsResponse, error) {
+	var resp models.EventViewDetailsResponse
+	var presentersJSON, gradingJSON, userRegJSON, outcomesJSON []byte
+
+	query := fmt.Sprintf(`
+	SELECT 
+		e.id, 
+		e.name, 
+		e.description, 
+		e.event_type, 
+		e.start_date, 
+		e.end_date,
+		-- Outcomes: Assuming stored as JSON or simple string in TEXT
+		e.outcomes, 
+		-- Aggregate Presenters (handling the slice in your struct)
+		(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', c.id, 'name', c.name_ar))
+		FROM %s c WHERE c.id = e.presenter_id) AS presenters_json,
+		-- Aggregate Grading Scheme
+		(SELECT JSON_ARRAYAGG(JSON_OBJECT(
+			'id', ec.id, 
+			'name', ec.name, 
+			'description', ec.description, 
+			'max_score', ec.max_score
+		))
+		FROM %s ec WHERE ec.event_id = e.id) AS grading_json
+	FROM 
+		%s e
+	`, models.TableCollaborators, models.TableEventComponents, models.TableEvents)
+
+	if userID != nil {
+		query += fmt.Sprintf(`
+		-- User Registration Status (Optional based on logged-in user)
+		JSON_OBJECT(
+			'is_registered', IF(ep.id IS NOT NULL, 1, 0),
+			'status', ep.status
+		) AS user_reg_json
+
+		LEFT JOIN %s ep ON e.id = ep.event_id AND ep.user_id = %d
+		`, models.TableEventParticipants, userID)
+	}
+
+	query += ` WHERE e.id = ?`
+
+	if userID != nil {
+		err := r.db.QueryRow(query, eventID).Scan(
+			&resp.ID,
+			&resp.Name,
+			&resp.Description,
+			&resp.EventType,
+			&resp.Schedule.Start,
+			&resp.Schedule.End,
+			&outcomesJSON,
+			&presentersJSON,
+			&gradingJSON,
+			&userRegJSON,
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := r.db.QueryRow(query, eventID).Scan(
+			&resp.ID,
+			&resp.Name,
+			&resp.Description,
+			&resp.EventType,
+			&resp.Schedule.Start,
+			&resp.Schedule.End,
+			&outcomesJSON,
+			&presentersJSON,
+			&gradingJSON,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	json.Unmarshal(outcomesJSON, &resp.Outcomes)
+	json.Unmarshal(presentersJSON, &resp.Presenters)
+	json.Unmarshal(gradingJSON, &resp.GradingScheme)
+
+	var regStatus models.UserRegStatus
+	if err := json.Unmarshal(userRegJSON, &regStatus); err == nil && regStatus.IsRegistered {
+		resp.UserRegistration = &regStatus
+	}
+
+	return &resp, nil
+}
+
 func (r *EventRepository) GetEventByID(id int64) (*models.EventModel, error) {
 	var event models.EventModel
 	err := r.db.Get(&event, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableEvents), id)
@@ -426,15 +516,132 @@ func (r *EventRepository) GetParticipantByUserAndEventIDs(user_id int, eventID i
 
 // ======== GET ALL ========
 
-func (r *EventRepository) GetAllEvents(req models.ListRequest) ([]models.EventModel, error) {
-	var events []models.EventModel
-	query := fmt.Sprintf(`SELECT * FROM %s ORDER BY start_date DESC LIMIT ? OFFSET ?`, models.TableEvents)
-	err := r.db.Select(&events, query, req.Limit, (req.Page-1)*req.Limit)
+func (r *EventRepository) GetEventList(req models.QueryEventPublicRequest) ([]models.EventViewListItemResponse, error) {
+	var events = []models.EventViewListItemResponse{}
+	query := fmt.Sprintf(`
+	SELECT 
+		e.id,
+		e.name,
+		e.presenter_id,
+		e.event_type,
+		e.max_participants,
+		e.start_date,
+		e.end_date,
+		(SELECT COUNT(*) FROM %s p WHERE p.event_id = e.id) as participants_count,
+		CASE 
+			WHEN NOW() < e.start_date THEN 'UPCOMING'
+			WHEN NOW() BETWEEN e.start_date AND e.end_date THEN 'ONGOING'
+			ELSE 'COMPLETED'
+		END as status
+	FROM %s e
+	WHERE 1=1
+	`, models.TableEventParticipants, models.TableEvents)
+
+	var args []interface{}
+	if req.Type != "" {
+		query += " AND e.event_type = ?"
+		args = append(args, req.Type)
+	}
+
+	if req.Status != "" {
+		query += ` AND (
+			CASE 
+				WHEN NOW() < e.start_date THEN 'UPCOMING'
+				WHEN NOW() BETWEEN e.start_date AND e.end_date THEN 'ONGOING'
+				ELSE 'COMPLETED'
+			END
+		) = ?`
+		args = append(args, req.Status)
+	}
+
+	query += " ORDER BY e.start_date DESC LIMIT ? OFFSET ?"
+	args = append(args, req.Limit, (req.Page-1)*req.Limit)
+
+	err := r.db.Select(&events, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	return events, nil
 }
+
+func (r *EventRepository) GetEventParticipantsList(req models.ListRequest, eventID int64) ([]models.ParticipantDetails, error) {
+	// 1. Fixed the semicolon and the table alias (ep vs p)
+	query := fmt.Sprintf(`
+    SELECT 
+        ep.id AS registration_id,
+        ep.user_id,
+        u.name_ar,
+        u.name_en,
+        ep.joined_at,
+        ep.status,
+        ep.completed,
+        COALESCE(
+            (SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'component_id', cs.component_id,
+                    'score', cs.score
+                )
+            )
+            FROM %s cs
+            WHERE cs.participant_id = ep.id), 
+            JSON_ARRAY()
+        ) AS grades_json
+    FROM 
+        %s ep
+    JOIN 
+        %s u ON ep.user_id = u.id
+    WHERE 
+        ep.event_id = ?
+    ORDER BY ep.joined_at DESC 
+    LIMIT ? OFFSET ?
+    `, models.TableComponentScores, models.TableEventParticipants, models.TableUsers)
+
+	rows, err := r.db.Query(query, eventID, req.Limit, (req.Page-1)*req.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var participants = []models.ParticipantDetails{}
+	for rows.Next() {
+		var p models.ParticipantDetails
+		var gradesRaw []byte
+
+		err := rows.Scan(
+			&p.RegistrationID,
+			&p.UserID,
+			&p.NameAr,
+			&p.NameEn,
+			&p.JoinedAt,
+			&p.Status,
+			&p.Completed,
+			&gradesRaw,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(gradesRaw) > 0 {
+			if err := json.Unmarshal(gradesRaw, &p.Grades); err != nil {
+				slog.Error("failed to unmarshal grades", "error", err)
+			}
+		}
+
+		participants = append(participants, p)
+	}
+
+	return participants, nil
+}
+
+// func (r *EventRepository) GetAllEvents(req models.ListRequest) ([]models.EventModel, error) {
+// 	var events []models.EventModel
+// 	query := fmt.Sprintf(`SELECT * FROM %s ORDER BY start_date DESC LIMIT ? OFFSET ?`, models.TableEvents)
+// 	err := r.db.Select(&events, query, req.Limit, (req.Page-1)*req.Limit)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return events, nil
+// }
 
 func (r *EventRepository) GetTotalEvents() (int64, error) {
 	var total int64

@@ -4,76 +4,50 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
-	"sea-api/internal/services"
+	"sea-api/internal/services/event"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type EventHandler struct {
-	EventService *services.EventService
+	EventService *event.EventService
 }
 
-func NewEventHandler(eventService *services.EventService) *EventHandler {
+func NewEventHandler(eventService *event.EventService) *EventHandler {
 	return &EventHandler{
 		EventService: eventService,
 	}
 }
 
-// GetAllEvents godocs
+// GetEventsList godocs
 //
-//	@Summary		Get all events
-//	@Description	Get a list of all events for administration
-//	@Tags			Events
-//	@Produce		json
-//	@Param			limit	query		int	true	"Content count limit"
-//	@Param			page	query		int	true	"Page number"
-//	@Success		200	{object}		models.EventListLimitResponse
-//	@Failure		401	{object}	response.BaseError
-//	@Failure		500	{object}	response.BaseError
-//	@Router			/admin/event [get]
-//
-//	@Security		ApiKeyAuth
-func (h *EventHandler) GetAllEvents(ctx *gin.Context) {
-	var req models.ListRequest
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
-		return
-	}
-
-	events, err := h.EventService.GetAllEvents(req)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-	ctx.JSON(200, events)
-}
-
-// GetViewEvents godocs
-//
-//	@Summary		Get events for view
-//	@Description	Get a list of events for public view
+//	@Summary		Get events list
+//	@Description	Get a paginated list of events with filters for public view
 //	@Tags			Public
 //	@Produce		json
-//	@Param			limit	query		int	true	"Content count limit"
-//	@Param			page	query		int	true	"Page number"
-//	@Success		200		{object}	models.EventViewListLimitResponse
+//	@Param			limit	query		int		true	"Content count limit"
+//	@Param			page	query		int		true	"Page number"
+//	@Param			type	query		string	false	"Event type filter"
+//	@Param			status	query		string	false	"Event status filter"
+//	@Success		200		{object}	models.EventViewListResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/cms/events [get]
-func (h *EventHandler) GetViewEvents(ctx *gin.Context) {
-	var req models.ListRequest
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
+//	@Router			/event [get]
+func (h *EventHandler) GetEventsList(ctx *gin.Context) {
+	var query models.QueryEventPublicRequest
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Invalid query parameters", nil))
 		return
 	}
 
-	events, err := h.EventService.GetAllViewEvents(req)
+	resp, err := h.EventService.GetViewList(query)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
-	ctx.JSON(200, events)
+
+	ctx.JSON(200, resp)
 }
 
 // GetEventByID godocs
@@ -83,43 +57,15 @@ func (h *EventHandler) GetViewEvents(ctx *gin.Context) {
 //	@Tags			Events
 //	@Produce		json
 //	@Param			id	path	int	true	"Event ID"
-//	@Success		200	{object}	models.EventDTO
+//	@Success		200	{object}	models.EventViewDetailsResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/admin/event/{id} [get]
+//	@Router			/event/{id} [get]
 //
 //	@Security		ApiKeyAuth
 func (h *EventHandler) GetEventByID(ctx *gin.Context) {
-	id := ctx.Param("id")
-	intId, err := strconv.Atoi(id)
-	if err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
-
-	event, err := h.EventService.GetEventByID(int64(intId))
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-	ctx.JSON(200, event)
-}
-
-// GetViewEventByID godocs
-//
-//	@Summary		Get event by ID for view
-//	@Description	Get event details by ID for public view
-//	@Tags			Public
-//	@Produce		json
-//	@Param			id	path		int	true	"Event ID"
-//	@Success		200	{object}	models.EventViewResponse
-//	@Failure		400	{object}	response.BaseError
-//	@Failure		404	{object}	response.BaseError
-//	@Failure		500	{object}	response.BaseError
-//	@Router			/cms/events/{id} [get]
-func (h *EventHandler) GetViewEventByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
@@ -127,7 +73,7 @@ func (h *EventHandler) GetViewEventByID(ctx *gin.Context) {
 		return
 	}
 
-	event, err := h.EventService.GetViewEventByID(intId)
+	event, err := h.EventService.GetEventViewDetails(intId)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -135,67 +81,106 @@ func (h *EventHandler) GetViewEventByID(ctx *gin.Context) {
 	ctx.JSON(200, event)
 }
 
-// CreateEvent godocs
+// GetEventParticipants godocs
 //
-//	@Summary		Create event
-//	@Description	Create a new event
+//	@Summary		Get event participants
+//	@Description	Get a paginated list of participants for a specific event
 //	@Tags			Events
-//	@Accept			json
 //	@Produce		json
-//	@Param			body	body		models.EventDTO	true	"Event data"
-//	@Success		201		{object}	response.TransactionResponse
+//	@Param			id		path		int	true	"Event ID"
+//	@Param			limit	query		int	true	"Content count limit"
+//	@Param			page	query		int	true	"Page number"
+//	@Success		200		{array}		models.EventParticipantsResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/admin/event [post]
+//	@Router			/admin/event/{id}/participants [get]
 //
 //	@Security		ApiKeyAuth
-func (h *EventHandler) CreateEvent(ctx *gin.Context) {
-	var event models.EventDTO
-	if err := ctx.ShouldBindJSON(&event); err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+func (h *EventHandler) GetEventParticipants(ctx *gin.Context) {
+	id := ctx.Param("id")
+	intId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Invalid event ID", nil))
 		return
 	}
 
-	id, err := h.EventService.CreateEvent(&event)
+	var req models.ListRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Invalid pagination parameters", nil))
+		return
+	}
+
+	resp, err := h.EventService.GetEventParticipants(intId, req)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
-	event.ID = id
-	response.NewTransactionResponse(201, "Event created successfully", id, ctx)
+
+	ctx.JSON(200, resp)
 }
 
-// UpdateEvent godocs
-//
-//	@Summary		Update event
-//	@Description	Update an existing event
-//	@Tags			Events
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body		models.EventDTO	true	"Event update data"
-//	@Success		200		{object}	response.TransactionResponse
-//	@Failure		400		{object}	response.BaseError
-//	@Failure		401		{object}	response.BaseError
-//	@Failure		404		{object}	response.BaseError
-//	@Failure		500		{object}	response.BaseError
-//	@Router			/admin/event [put]
-//
-//	@Security		ApiKeyAuth
-func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
-	var event models.EventDTO
-	if err := ctx.ShouldBindJSON(&event); err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
+// // CreateEvent godocs
+// //
+// //	@Summary		Create event
+// //	@Description	Create a new event
+// //	@Tags			Events
+// //	@Accept			json
+// //	@Produce		json
+// //	@Param			body	body		models.EventDTO	true	"Event data"
+// //	@Success		201		{object}	response.TransactionResponse
+// //	@Failure		400		{object}	response.BaseError
+// //	@Failure		401		{object}	response.BaseError
+// //	@Failure		500		{object}	response.BaseError
+// //	@Router			/admin/event [post]
+// //
+// //	@Security		ApiKeyAuth
+// func (h *EventHandler) CreateEvent(ctx *gin.Context) {
+// 	var event models.EventDTO
+// 	if err := ctx.ShouldBindJSON(&event); err != nil {
+// 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+// 		return
+// 	}
 
-	if err := h.EventService.UpdateEvent(&event); err != nil {
-		ctx.Error(err)
-		return
-	}
+// 	id, err := h.EventService.CreateEvent(&event)
+// 	if err != nil {
+// 		ctx.Error(err)
+// 		return
+// 	}
+// 	event.ID = id
+// 	response.NewTransactionResponse(201, "Event created successfully", id, ctx)
+// }
 
-	response.NewTransactionResponse(200, "Event updated successfully", event.ID, ctx)
-}
+// // UpdateEvent godocs
+// //
+// //	@Summary		Update event
+// //	@Description	Update an existing event
+// //	@Tags			Events
+// //	@Accept			json
+// //	@Produce		json
+// //	@Param			body	body		models.EventDTO	true	"Event update data"
+// //	@Success		200		{object}	response.TransactionResponse
+// //	@Failure		400		{object}	response.BaseError
+// //	@Failure		401		{object}	response.BaseError
+// //	@Failure		404		{object}	response.BaseError
+// //	@Failure		500		{object}	response.BaseError
+// //	@Router			/admin/event [put]
+// //
+// //	@Security		ApiKeyAuth
+// func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
+// 	var event models.EventDTO
+// 	if err := ctx.ShouldBindJSON(&event); err != nil {
+// 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+// 		return
+// 	}
+
+// 	if err := h.EventService.UpdateEvent(&event); err != nil {
+// 		ctx.Error(err)
+// 		return
+// 	}
+
+// 	response.NewTransactionResponse(200, "Event updated successfully", event.ID, ctx)
+// }
 
 // DeleteEvent godocs
 //

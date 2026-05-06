@@ -8,6 +8,7 @@ import (
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
 	"sea-api/internal/services/bot"
+	"sea-api/internal/services/event"
 	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
 	st "sea-api/internal/services/storage"
@@ -62,13 +63,13 @@ func Go() {
 	formRepository := repositories.NewFormRepository(db)
 	collaboratorRepository := repositories.NewCollaboratorRepo(db)
 	rateLimitRepository := repositories.NewRateLimitRepository(db)
-	documentRepository := repositories.NewDocumentRepository(db)
+	// documentRepository := repositories.NewDocumentRepository(db)
 	notificationRepository := repositories.NewNotificationRepository(db)
 	botRepository := repositories.NewBotRepository(db)
 	feedbackRepository := repositories.NewFeedbackRepository(db)
 
 	// Initialize services
-	pdfService := services.NewPDFService(10)
+	// pdfService := services.NewPDFService(10)
 	S3 := st.NewS3Service(fileRepo)
 	galleryService := services.NewGalleryService(galleryRepository, S3)
 	rateLimitService := services.NewRateLimitService(rateLimitRepository)
@@ -77,7 +78,7 @@ func Go() {
 	feedbackService := services.NewFeedbackService(feedbackRepository)
 
 	botService := bot.NewBotService(botRepository, feedbackService)
-	eventService := services.NewEventService(notificationService, eventRepository, collaboratorRepository, userRepository)
+	eventService := event.NewEventService(notificationService, eventRepository, collaboratorRepository, userRepository)
 	accountService := services.NewAccountService(userRepository, S3, certificateRepository)
 
 	userService := user.NewUserService(userRepository, suspensionsRepo, S3)
@@ -87,17 +88,17 @@ func Go() {
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
 	FormService := forms.NewFormService(formRepository, galleryService)
 
-	certificateService := services.NewCertificateService(
-		userRepository,
-		eventService,
-		S3,
-		pdfService,
-		mailService,
-		collaboratorService,
-		notificationService,
-		certificateRepository,
-		documentRepository,
-	)
+	// certificateService := services.NewCertificateService(
+	// 	userRepository,
+	// 	eventService,
+	// 	S3,
+	// 	pdfService,
+	// 	mailService,
+	// 	collaboratorService,
+	// 	notificationService,
+	// 	certificateRepository,
+	// 	documentRepository,
+	// )
 	schedularService := schedular.NewSchedularService(
 		userRepository,
 		verificationRepo,
@@ -112,7 +113,7 @@ func Go() {
 	routes.UserHandler = handlers.NewUserHandler(userService)
 	routes.EventHandler = handlers.NewEventHandler(eventService)
 	routes.MailHandler = handlers.NewMailHandler(mailService)
-	routes.CertificateHandler = handlers.NewCertificateHandler(certificateService)
+	// routes.CertificateHandler = handlers.NewCertificateHandler(certificateService)
 	routes.AuthHandler = handlers.NewAuthHandler(authService)
 	routes.AccountHandler = handlers.NewAccountHandler(accountService)
 	routes.GalleryHandler = handlers.NewGalleryHandler(galleryService)

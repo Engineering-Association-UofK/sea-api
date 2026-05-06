@@ -21,10 +21,10 @@ import (
 )
 
 var (
-	UserHandler         *handlers.UserHandler
-	EventHandler        *handlers.EventHandler
-	MailHandler         *handlers.MailHandler
-	CertificateHandler  *handlers.CertificateHandler
+	UserHandler  *handlers.UserHandler
+	EventHandler *handlers.EventHandler
+	MailHandler  *handlers.MailHandler
+	// CertificateHandler  *handlers.CertificateHandler
 	AuthHandler         *handlers.AuthHandler
 	AccountHandler      *handlers.AccountHandler
 	GalleryHandler      *handlers.GalleryHandler
@@ -66,10 +66,10 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 	apiV1.Use(basicLimit)
 
 	{ // ==== CERTIFICATES
-		cert := apiV1.Group("/cert")
-		cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
-		cert.GET("/download/:hash", midLimit, CertificateHandler.GetCertificates)
-		cert.GET("/verify-document/:hash", CertificateHandler.VerifyDocument)
+		// cert := apiV1.Group("/cert")
+		// cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
+		// cert.GET("/download/:hash", midLimit, CertificateHandler.GetCertificates)
+		// cert.GET("/verify-document/:hash", CertificateHandler.VerifyDocument)
 	}
 
 	{ // ==== AUTHENTICATION
@@ -81,13 +81,17 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		auth.POST("/check-username", AccountHandler.CheckUsernameAvailability)
 	}
 
+	{ // ==== EVENTS
+		event := apiV1.Group("/event")
+		event.GET("", EventHandler.GetEventsList)
+		event.GET("/:id", EventHandler.GetEventByID)
+	}
+
 	{ // ==== OPEN
 		cms := apiV1.Group("/cms")
 		cms.GET("/blogs/:slug", CmsHandler.GetViewPostBySlug)
 		cms.GET("/blogs", CmsHandler.GetViewPostsList)
 		cms.GET("/team", CmsHandler.GetViewTeamMembers)
-		cms.GET("/events", EventHandler.GetViewEvents)
-		cms.GET("/events/:id", EventHandler.GetViewEventByID)
 
 		open := apiV1.Group("/open")
 		open.POST("/bot", BotHandler.GetNodeView)
@@ -228,12 +232,11 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		{ // ==== EVENTS
 			event := admin.Group("/event")
 			event.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
-			event.GET("", EventHandler.GetAllEvents)
-			event.GET("/:id", EventHandler.GetEventByID)
-			event.POST("", EventHandler.CreateEvent)
-			event.PUT("", EventHandler.UpdateEvent)
+			// event.POST("", EventHandler.CreateEvent)
+			// event.PUT("", EventHandler.UpdateEvent)
+			event.GET("/:id/participants", EventHandler.GetEventParticipants)
 			event.DELETE("/:id", EventHandler.DeleteEvent)
-			event.GET("/send-all-emails", strictLimit, CertificateHandler.SendCertificatesEmailsForEvent)
+			// event.GET("/send-all-emails", strictLimit, CertificateHandler.SendCertificatesEmailsForEvent)
 		}
 
 		{ // ==== Collaborators
@@ -249,8 +252,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		{ // ==== CERTIFICATES
 			certificate := admin.Group("/certificate")
 			certificate.Use(middleware.RequireAnyRole(models.RoleCertifier, models.RoleSystemSuperAdmin))
-			certificate.GET("/generate-all-for-event", strictLimit, CertificateHandler.MakeCertificatesForEvent)
-			certificate.POST("/sign", midLimit, CertificateHandler.SignPDF)
+			// certificate.GET("/generate-all-for-event", strictLimit, CertificateHandler.MakeCertificatesForEvent)
+			// certificate.POST("/sign", midLimit, CertificateHandler.SignPDF)
 		}
 
 		{ // ==== MAIL
