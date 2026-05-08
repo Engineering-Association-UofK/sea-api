@@ -51,7 +51,7 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		}), gin.Logger())
 		r.Use(cors.New(cors.Config{
 			AllowOrigins:     []string{"*"},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 			ExposeHeaders:    []string{"Content-Length"},
 			AllowCredentials: false,
@@ -182,9 +182,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		// TODO: Add bot commands
 
 		{ // ==== FORMS
-			// form := admin.Group("/form")
-			form := apiV1.Group("/form")
-			// form.Use(middleware.RequireAnyRole(models.RoleContentFormMgr, models.RoleSystemSuperAdmin))
+			form := admin.Group("/form")
+			form.Use(middleware.RequireAnyRole(models.RoleContentFormMgr, models.RoleSystemSuperAdmin))
 
 			form.GET("", FormHandler.GetAllForms)
 			form.POST("", FormHandler.CreateForm)
@@ -205,6 +204,9 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 			form.GET("/analysis/:id", FormHandler.GetFormAnalysis)
 			form.GET("/detailed-responses/:id", FormHandler.GetFormDetailedResponses)
+
+			form.POST("/publish/:id", FormHandler.PublishForm)
+			form.POST("/unpublish/:id", FormHandler.UnpublishForm)
 
 			// form.GET("/user-response/:id", FormHandler.GetResponseByID)
 			// form.GET("/user-responses/:id", FormHandler.GetUserResponsesForForm)

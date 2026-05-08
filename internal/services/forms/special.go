@@ -20,16 +20,16 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 		return nil, err
 	}
 
-	form := models.UpdateFormRequest{
-		ID: rows[0].FormID,
-		CreateFormRequest: models.CreateFormRequest{
-			Title:                rows[0].Title,
-			Description:          rows[0].Description,
-			AllowMultipleEntries: rows[0].AllowMultiple,
-			StartDate:            rows[0].StartDate,
-			EndDate:              rows[0].EndDate,
-			Type:                 rows[0].Type,
-		},
+	form := models.FormSummaryResponse{
+		ID:                   rows[0].FormID,
+		Title:                rows[0].Title,
+		Description:          rows[0].Description,
+		AllowMultipleEntries: rows[0].AllowMultiple,
+		StartDate:            rows[0].StartDate,
+		EndDate:              rows[0].EndDate,
+		IsPublished:          rows[0].IsPublished,
+		Type:                 rows[0].Type,
+		CreatedAt:            rows[0].CreatedAt,
 	}
 
 	pageMap := make(map[int64]models.UpdatePageRequest)
@@ -71,7 +71,6 @@ func (s *FormService) GetFormForEdit(formID int64) (*models.FormForEditDTO, erro
 	}
 
 	return &models.FormForEditDTO{
-		Type:      rows[0].Type,
 		Form:      form,
 		Pages:     pages,
 		Questions: questions,
@@ -84,12 +83,18 @@ func (s *FormService) GetFormForUser(formID int64) (*models.FormForUserDTO, erro
 		return nil, err
 	}
 
+	if rows[0].IsPublished == false || rows[0].EndDate.Before(time.Now()) {
+		return nil, errs.New(errs.NotFound, "form not found", nil)
+	}
+
 	dto := &models.FormForUserDTO{
-		Form: models.FormDTO{
-			ID:          rows[0].FormID,
-			Title:       rows[0].Title,
-			Description: rows[0].Description,
-			Type:        rows[0].Type,
+		Form: models.FormSummaryResponse{
+			ID:                   rows[0].FormID,
+			Title:                rows[0].Title,
+			Description:          rows[0].Description,
+			EndDate:              rows[0].EndDate,
+			AllowMultipleEntries: rows[0].AllowMultiple,
+			Type:                 rows[0].Type,
 		},
 		Pages:     []models.FormPageDTO{},
 		Questions: []models.FormQuestionDTO{},
@@ -242,4 +247,28 @@ func (s *FormService) isValidSubmitFormRequest(userID int64, req *models.SubmitF
 	}
 
 	return answers, nil
+}
+
+func (s *FormService) PublishForm(id int64) error {
+	form, err := s.formRepo.GetFormByID(id)
+	if err != nil {
+		return errs.New(errs.NotFound, "form not found", nil)
+	}
+	if !form.IsPublished {
+		form.IsPublished = true
+		return s.formRepo.UpdateForm(form)
+	}
+	return nil
+}
+
+func (s *FormService) UnpublishForm(id int64) error {
+	form, err := s.formRepo.GetFormByID(id)
+	if err != nil {
+		return errs.New(errs.NotFound, "form not found", nil)
+	}
+	if form.IsPublished {
+		form.IsPublished = false
+		return s.formRepo.UpdateForm(form)
+	}
+	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
+	"sea-api/internal/utils/valid"
 	"strings"
 	"time"
 )
@@ -80,8 +81,15 @@ func (s *FormService) GetFormByID(id int64) (*models.FormModel, error) {
 
 // ======== GET MANY ========
 
-func (s *FormService) GetAllForms() ([]models.FormSummaryResponse, error) {
-	forms, err := s.formRepo.GetAllForms()
+func (s *FormService) GetAllForms(req *models.ListRequest) (*models.FormSummaryListResponse, error) {
+	total, err := s.formRepo.GetTotalForms()
+	if err != nil {
+		return nil, err
+	}
+
+	pages := valid.Limit(req, total)
+
+	forms, err := s.formRepo.GetAllForms(req)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +107,12 @@ func (s *FormService) GetAllForms() ([]models.FormSummaryResponse, error) {
 			CreatedAt:            f.CreatedAt,
 		})
 	}
-	return responses, nil
+	return &models.FormSummaryListResponse{
+		Total:   total,
+		Forms:   responses,
+		Pages:   pages,
+		Current: req.Page,
+	}, nil
 }
 
 // ======== DELETE ========

@@ -84,7 +84,7 @@ func (r *FormRepository) GetFormWithQuestions(formID int64) ([]models.FormRow, e
 	var rows []models.FormRow
 	query := fmt.Sprintf(`
 	SELECT 
-		f.id AS form_id, f.title, f.description, f.allow_multiple, f.start_date, f.end_date, f.type,
+		f.id AS form_id, f.title, f.description, f.allow_multiple, f.start_date, f.end_date, f.is_published, f.type, f.created_at,
 		p.id AS page_id, p.page_num,
 		q.id AS question_id, q.question_text, q.type AS question_type, q.options, q.is_required, q.display_order
 	FROM %s f
@@ -129,8 +129,8 @@ func (r *FormRepository) CreateAnswersBatch(answers []models.FormAnswerModel) er
 // ======== CREATE ========
 
 func (r *FormRepository) CreateForm(form *models.FormModel) (int64, error) {
-	query := fmt.Sprintf(`INSERT INTO %s (title, description, type, allow_multiple, start_date, end_date, created_by, created_at)
-	VALUES (:title, :description, :type, :allow_multiple, :start_date, :end_date, :created_by, :created_at)
+	query := fmt.Sprintf(`INSERT INTO %s (title, description, type, allow_multiple, start_date, end_date, is_published, created_by, created_at)
+	VALUES (:title, :description, :type, :allow_multiple, :start_date, :end_date, :is_published, :created_by, :created_at)
 	`, models.TableForms)
 	res, err := r.db.NamedExec(query, form)
 	if err != nil {
@@ -248,13 +248,33 @@ func (r *FormRepository) GetResponseByID(id int64) (*models.FormResponseModel, e
 
 // ======== GET MANY ========
 
-func (r *FormRepository) GetAllForms() ([]models.FormModel, error) {
+func (r *FormRepository) GetAllForms(req *models.ListRequest) ([]models.FormModel, error) {
 	var forms []models.FormModel
-	err := r.db.Select(&forms, fmt.Sprintf(`SELECT * FROM %s`, models.TableForms))
+	offset := (req.Page - 1) * req.Limit
+
+	query := fmt.Sprintf(`SELECT * FROM %s`, models.TableForms)
+
+	if req.Type != "" {
+		query += fmt.Sprintf(` WHERE type = %s`, req.Type)
+	}
+
+	query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`
+
+	err := r.db.Select(&forms, query, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
 	return forms, nil
+
+}
+
+func (r *FormRepository) GetTotalForms() (int64, error) {
+	var count int64
+	err := r.db.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TableForms))
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (r *FormRepository) GetPagesByFormID(formID int64) ([]models.FormPageModel, error) {
@@ -362,7 +382,13 @@ func (r *FormRepository) GetUserResponsesForForm(userID, formID int64) ([]models
 func (r *FormRepository) UpdateForm(form *models.FormModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
-	SET title = :title, description = :description, allow_multiple = :allow_multiple, type = :type, start_date = :start_date, end_date = :end_date
+		SET title = :title,
+		description = :description,
+		allow_multiple = :allow_multiple,
+		type = :type,
+		start_date = :start_date,
+		end_date = :end_date,
+		is_published = :is_published
 	WHERE id = :id
 	`, models.TableForms)
 	_, err := r.db.NamedExec(query, form)

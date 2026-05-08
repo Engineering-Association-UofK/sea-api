@@ -41,6 +41,7 @@ type FormModel struct {
 	AllowMultipleEntries bool      `db:"allow_multiple" json:"allow_multiple"`
 	StartDate            time.Time `db:"start_date" json:"start_date"`
 	EndDate              time.Time `db:"end_date" json:"end_date"`
+	IsPublished          bool      `db:"is_published" json:"is_published"`
 	Type                 string    `db:"type" json:"type"`
 	CreatedBy            int64     `db:"created_by" json:"created_by"`
 	CreatedAt            time.Time `db:"created_at" json:"created_at"`
@@ -99,7 +100,9 @@ type FormRow struct {
 	AllowMultiple bool      `db:"allow_multiple"`
 	StartDate     time.Time `db:"start_date"`
 	EndDate       time.Time `db:"end_date"`
+	IsPublished   bool      `db:"is_published"`
 	Type          string    `db:"type"`
+	CreatedAt     time.Time `db:"created_at"`
 
 	PageID  *int64 `db:"page_id"`
 	PageNum *int   `db:"page_num"`
@@ -124,16 +127,15 @@ type FormAnalysisRow struct {
 // Full render DTOs
 
 type FormForEditDTO struct {
-	Type      string                  `json:"type"`
-	Form      UpdateFormRequest       `json:"form"`
+	Form      FormSummaryResponse     `json:"form"`
 	Pages     []UpdatePageRequest     `json:"pages"`
 	Questions []UpdateQuestionRequest `json:"questions"`
 }
 
 type FormForUserDTO struct {
-	Form      FormDTO           `json:"form"`
-	Pages     []FormPageDTO     `json:"pages"`
-	Questions []FormQuestionDTO `json:"questions"`
+	Form      FormSummaryResponse `json:"form"`
+	Pages     []FormPageDTO       `json:"pages"`
+	Questions []FormQuestionDTO   `json:"questions"`
 }
 
 // DTOs
@@ -240,9 +242,17 @@ type FormSummaryResponse struct {
 	Description          string    `json:"description"`
 	StartDate            time.Time `json:"start_date"`
 	EndDate              time.Time `json:"end_date"`
+	IsPublished          bool      `json:"is_published"`
 	Type                 string    `json:"type"`
 	AllowMultipleEntries bool      `json:"allow_multiple"`
 	CreatedAt            time.Time `json:"created_at"`
+}
+
+type FormSummaryListResponse struct {
+	Forms   []FormSummaryResponse `json:"forms"`
+	Total   int64                 `json:"total"`
+	Pages   int64                 `json:"pages"`
+	Current int64                 `json:"current"`
 }
 
 type FormDerailedResponse struct {

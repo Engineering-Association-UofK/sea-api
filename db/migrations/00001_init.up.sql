@@ -273,6 +273,7 @@ CREATE TABLE forms (
     allow_multiple BOOLEAN DEFAULT FALSE,
     start_date DATETIME NOT NULL,
     end_date DATETIME NOT NULL,
+    is_published BOOLEAN DEFAULT FALSE,
     type VARCHAR(50) NOT NULL,
     created_by INT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
