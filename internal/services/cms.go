@@ -218,10 +218,10 @@ func (s *CmsService) UpdatePost(req *models.PostUpdateRequest) error {
 		return err
 	}
 	if req.CoverImageID != post.CoverImageID {
-		s.GalleryService.RemoveReference(models.ObjPost, post.ID)
 		if _, err := s.GalleryService.GetAssetByID(req.CoverImageID); err != nil {
 			return errs.New(errs.BadRequest, "invalid image ID provided", nil)
 		}
+		s.GalleryService.RemoveReference(models.ObjPost, post.ID)
 		s.GalleryService.AttachAssetToObject(req.CoverImageID, models.ObjPost, req.ID)
 	}
 
