@@ -229,7 +229,7 @@ func (s *CmsService) UpdatePost(req *models.PostUpdateRequest) error {
 	post.Title = req.Title
 	if req.Slug != "" {
 		_, err := s.CmsRepo.GetPostDetailsBySlug(req.Slug)
-		if err == nil {
+		if err == nil && req.Slug != post.Slug {
 			return errs.New(errs.Conflict, "Slug already exists", nil)
 		}
 		post.Slug = req.Slug
