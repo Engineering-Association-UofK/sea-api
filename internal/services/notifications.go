@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
@@ -49,22 +48,12 @@ func (s *NotificationService) GetNotificationsByUserID(userID int64, limit model
 		return nil, err
 	}
 
-	valid.Limit(&limit, total)
-
-	numPages := total / limit.Limit
-	if total%limit.Limit != 0 {
-		numPages++
-	}
-
-	if limit.Page >= numPages {
-		limit.Page = numPages
-	}
+	pages := valid.Limit(&limit, total)
 
 	responses, err := s.repo.GetByUserIDWithLimit(userID, limit)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("%d notifications found\n", len(responses))
 
 	var notifications = []models.NotificationResponse{}
 	for _, r := range responses {
@@ -98,8 +87,8 @@ func (s *NotificationService) GetNotificationsByUserID(userID int64, limit model
 
 	return &models.NotificationsListResponse{
 		Notifications: notifications,
-		Pages:         numPages,
-		Total:         total,
+		Pages:         pages,
+		Current:       limit.Page,
 	}, nil
 }
 

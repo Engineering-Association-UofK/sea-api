@@ -32,7 +32,7 @@ func NewFormHandler(service *forms.FormService) *FormHandler {
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/analysis/{id} [get]				// <------- add admin endpoint
+//	@Router			/admin/form/analysis/{id} [get]				// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) GetFormAnalysis(ctx *gin.Context) {
@@ -64,7 +64,7 @@ func (h *FormHandler) GetFormAnalysis(ctx *gin.Context) {
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/detailed-responses/{id} [get]			// <------- add admin endpoint
+//	@Router			/admin/form/detailed-responses/{id} [get]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) GetFormDetailedResponses(ctx *gin.Context) {
@@ -98,7 +98,7 @@ func (h *FormHandler) GetFormDetailedResponses(ctx *gin.Context) {
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/{id} [get]			// <------- add admin endpoint
+//	@Router			/admin/form/{id} [get]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) GetEntireForEditForm(ctx *gin.Context) {
@@ -158,7 +158,7 @@ func (h *FormHandler) GetEntireForUserForm(ctx *gin.Context) {
 //	@Success		201		{object}	response.TransactionResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/form/submit [post]			// <------- add event endpoint ----------
+//	@Router			/admin/form/submit [post]			// <------- add event endpoint ----------
 func (h *FormHandler) SubmitForm(ctx *gin.Context) {
 	var req models.SubmitFormRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -182,6 +182,71 @@ func (h *FormHandler) SubmitForm(ctx *gin.Context) {
 	response.NewTransactionResponse(201, "Form submitted successfully", id, ctx)
 }
 
+// PublishForm godocs
+//
+//	@Summary		Publish form
+//	@Description	Set form status to published
+//	@Tags			Forms
+//	@Produce		json
+//	@Param			id	path		int	true	"Form ID"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/form/publish/{id} [post]
+//
+//	@Security		ApiKeyAuth
+func (h *FormHandler) PublishForm(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	err = h.service.PublishForm(id)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Form published successfully", id, ctx)
+}
+
+// UnpublishForm godocs
+//
+//	@Summary		Unpublish form
+//	@Description	Set form status to unpublished
+//	@Tags			Forms
+//	@Produce		json
+//	@Param			id	path		int	true	"Form ID"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/form/unpublish/{id} [post]
+//
+//	@Security		ApiKeyAuth
+func (h *FormHandler) UnpublishForm(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	err = h.service.UnpublishForm(id)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Form unpublished successfully", id, ctx)
+
+}
+
 // ======== CREATE ========
 
 // CreateForm godocs
@@ -196,7 +261,7 @@ func (h *FormHandler) SubmitForm(ctx *gin.Context) {
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/form [post]			// <------- add admin endpoint
+//	@Router			/admin/form [post]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) CreateForm(ctx *gin.Context) {
@@ -234,7 +299,7 @@ func (h *FormHandler) CreateForm(ctx *gin.Context) {
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/form/page [post]			// <------- add admin endpoint
+//	@Router			/admin/form/page [post]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) CreatePage(ctx *gin.Context) {
@@ -265,7 +330,7 @@ func (h *FormHandler) CreatePage(ctx *gin.Context) {
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/form/question [post]			// <------- add admin endpoint
+//	@Router			/admin/form/question [post]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) CreateQuestion(ctx *gin.Context) {
@@ -299,7 +364,7 @@ func (h *FormHandler) CreateQuestion(ctx *gin.Context) {
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		404		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/form [put]			// <------- add admin endpoint
+//	@Router			/admin/form [put]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) UpdateForm(ctx *gin.Context) {
@@ -331,7 +396,7 @@ func (h *FormHandler) UpdateForm(ctx *gin.Context) {
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		404		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/form/page [put]			// <------- add admin endpoint
+//	@Router			/admin/form/page [put]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) UpdatePage(ctx *gin.Context) {
@@ -363,7 +428,7 @@ func (h *FormHandler) UpdatePage(ctx *gin.Context) {
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		404		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/form/question [put]			// <------- add admin endpoint
+//	@Router			/admin/form/question [put]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) UpdateQuestion(ctx *gin.Context) {
@@ -395,7 +460,7 @@ func (h *FormHandler) UpdateQuestion(ctx *gin.Context) {
 // 	@Failure		401		{object}	response.BaseError
 // 	@Failure		404		{object}	response.BaseError
 // 	@Failure		500		{object}	response.BaseError
-// 	@Router			/form/response/status [put]			// <------- add admin endpoint
+// 	@Router			/admin/form/response/status [put]			// <------- add admin endpoint
 
 // @Security		ApiKeyAuth
 
@@ -429,7 +494,7 @@ func (h *FormHandler) UpdateResponseStatus(ctx *gin.Context) {
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/response/{id} [get]			// <------- add admin endpoint
+//	@Router			/admin/form/response/{id} [get]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 
@@ -458,14 +523,23 @@ func (h *FormHandler) GetResponseByID(ctx *gin.Context) {
 //	@Description	Get a list of all forms for administration
 //	@Tags			Forms
 //	@Produce		json
-//	@Success		200	{array}		models.FormSummaryResponse
+//	@Param			page	query		int		false	"Page number"
+//	@Param			limit	query		int		false	"Items per page"
+//	@Param			type	query		string	false	"Filter by form type"
+//	@Success		200	{array}		models.FormSummaryListResponse
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form [get]			// <------- add admin endpoint
+//	@Router			/admin/form [get]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) GetAllForms(ctx *gin.Context) {
-	forms, err := h.service.GetAllForms()
+	req := &models.ListRequest{}
+	if err := ctx.ShouldBindQuery(req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	forms, err := h.service.GetAllForms(req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -485,7 +559,7 @@ func (h *FormHandler) GetAllForms(ctx *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/responses/{id} [get]			// <------- add admin endpoint
+//	@Router			/admin/form/responses/{id} [get]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 
@@ -517,7 +591,7 @@ func (h *FormHandler) GetResponsesByFormID(ctx *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/responses/{id} [get]
+//	@Router			/admin/form/responses/{id} [get]
 //
 //	@Security		ApiKeyAuth
 
@@ -559,7 +633,7 @@ func (h *FormHandler) GetUserResponsesForForm(ctx *gin.Context) {
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/{id} [delete]			// <------- add admin endpoint
+//	@Router			/admin/form/{id} [delete]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) DeleteForm(ctx *gin.Context) {
@@ -591,7 +665,7 @@ func (h *FormHandler) DeleteForm(ctx *gin.Context) {
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/page/{id} [delete]			// <------- add admin endpoint
+//	@Router			/admin/form/page/{id} [delete]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) DeletePage(ctx *gin.Context) {
@@ -623,7 +697,7 @@ func (h *FormHandler) DeletePage(ctx *gin.Context) {
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/question/{id} [delete]			// <------- add admin endpoint
+//	@Router			/admin/form/question/{id} [delete]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) DeleteQuestion(ctx *gin.Context) {
@@ -655,7 +729,7 @@ func (h *FormHandler) DeleteQuestion(ctx *gin.Context) {
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/form/response/{id} [delete]			// <------- add admin endpoint
+//	@Router			/admin/form/response/{id} [delete]			// <------- add admin endpoint
 //
 //	@Security		ApiKeyAuth
 

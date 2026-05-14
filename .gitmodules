@@ -1,0 +1,3 @@
+[submodule "resources/static-assets"]
+	path = resources/static-assets
+	url = https://github.com/Engineering-Association-UofK/association-website-static.git
