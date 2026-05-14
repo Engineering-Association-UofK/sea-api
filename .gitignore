@@ -27,11 +27,13 @@ go.work.sum
 
 # Folders
 /docs
-/resources
 /.vscode
 /.keys
+/.secrets
 
 # Files
 *.html
 *.pdf
 *.png
+*.json
+bot_default.sql
