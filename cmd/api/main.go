@@ -8,6 +8,7 @@ import (
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
 	"sea-api/internal/services/bot"
+	"sea-api/internal/services/cert"
 	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
 	st "sea-api/internal/services/storage"
@@ -87,7 +88,7 @@ func Go() {
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
 	FormService := forms.NewFormService(formRepository, galleryService)
 
-	certificateService := services.NewCertificateService(
+	certificateService := cert.NewCertificateService(
 		userRepository,
 		eventService,
 		S3,

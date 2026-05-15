@@ -256,8 +256,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		}
 
 		{ // ==== MAIL
-			mail := apiV1.Group("/mail")
-			mail.POST("", MailHandler.SendMail)
+			// mail := apiV1.Group("/mail")
+			// mail.POST("", MailHandler.SendMail)
 		}
 	}
 	return r
