@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"sea-api/internal/models"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -20,8 +21,8 @@ func NewEventRepository(db *sqlx.DB) *EventRepository {
 func (r *EventRepository) CreateEvent(event *models.EventModel) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s
-	(name, description, event_type, max_participants, presenter_id, outcomes, start_date, end_date)
-	VALUES (:name, :description, :event_type, :max_participants, :presenter_id, :outcomes, :start_date, :end_date)
+	(name, description, event_type, max_participants, coordinator_id, presenter_id, outcomes, start_date, end_date)
+	VALUES (:name, :description, :event_type, :max_participants, :coordinator_id, :presenter_id, :outcomes, :start_date, :end_date)
 	`, models.TableEvents)
 	res, err := r.db.NamedExec(query, &event)
 	if err != nil {
@@ -140,8 +141,10 @@ func (r *EventRepository) MassCreateScore(scores []models.ComponentScoreModel, t
 func (r *EventRepository) UpdateEvent(event *models.EventModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
-	SET name = :name, description = :description, event_type = :event_type, max_participants = :max_participants,
-	presenter_id = :presenter_id, outcomes = :outcomes, start_date = :start_date, end_date = :end_date
+	SET name = :name, description = :description, event_type = :event_type,
+	max_participants = :max_participants, coordinator_id = :coordinator_id,
+	presenter_id = :presenter_id, outcomes = :outcomes, 
+	start_date = :start_date, end_date = :end_date
 	WHERE id = :id
 	`, models.TableEvents)
 	_, err := r.db.NamedExec(query, &event)
@@ -288,6 +291,27 @@ func (r *EventRepository) MassUpdateScore(scores []models.ComponentScoreModel) e
 
 // ======== GET BY ID ========
 
+func (r *EventRepository) GetEventRowByID(id int64) (*models.EventViewResponse, error) {
+	var event models.EventViewResponse
+	query := fmt.Sprintf(`
+		SELECT 
+			e.id, e.name, e.description, e.event_type, e.start_date, e.end_date, e.outcomes,
+			c.name_en AS presenter_name,
+			coord.name_en AS coordinator_name
+		FROM %s e
+		LEFT JOIN %s c ON e.presenter_id = c.id
+		LEFT JOIN %s coord ON e.coordinator_id = coord.id
+		WHERE e.id = ?`,
+		models.TableEvents, models.TableCollaborators, models.TableCollaborators)
+
+	err := r.db.Get(&event, query, id)
+	if err != nil {
+		return nil, err
+	}
+	event.Outcomes = strings.Split(event.Outcomes[0], ",")
+	return &event, nil
+}
+
 func (r *EventRepository) GetEventByID(id int64) (*models.EventModel, error) {
 	var event models.EventModel
 	err := r.db.Get(&event, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableEvents), id)
@@ -425,6 +449,27 @@ func (r *EventRepository) GetParticipantByUserAndEventIDs(user_id int, eventID i
 }
 
 // ======== GET ALL ========
+
+func (r *EventRepository) GetEventsRows(req models.ListRequest) ([]models.EventDetailsRow, error) {
+	var events []models.EventDetailsRow
+	query := fmt.Sprintf(`
+		SELECT 
+			e.id, e.name, e.description, e.event_type, e.max_participants, e.start_date, e.end_date, e.outcomes,
+			e.presenter_id, c.name_en AS presenter_name,
+			e.coordinator_id, coord.name_en AS coordinator_name
+		FROM %s e
+		LEFT JOIN %s c ON e.presenter_id = c.id
+		LEFT JOIN %s coord ON e.coordinator_id = coord.id
+		ORDER BY e.start_date DESC 
+		LIMIT ? OFFSET ?`,
+		models.TableEvents, models.TableCollaborators, models.TableCollaborators)
+
+	err := r.db.Select(&events, query, req.Limit, (req.Page-1)*req.Limit)
+	if err != nil {
+		return nil, err
+	}
+	return events, nil
+}
 
 func (r *EventRepository) GetAllEvents(req models.ListRequest) ([]models.EventModel, error) {
 	var events []models.EventModel

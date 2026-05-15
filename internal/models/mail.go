@@ -5,13 +5,21 @@ import "encoding/json"
 type EmailType string
 
 const (
-	ANNOUNCEMENT EmailType = "ANNOUNCEMENT"
-	NOTIFICATION EmailType = "NOTIFICATION"
-	INVITATION   EmailType = "INVITATION"
-	WELCOME      EmailType = "WELCOME"
-	RESET_PASS   EmailType = "RESET_PASS"
-	TECHNICAL    EmailType = "TECHNICAL"
-	CERTIFICATE  EmailType = "CERTIFICATE"
+	EmailAccCode        EmailType = "acc_code_verification"
+	EmailAccLink        EmailType = "acc_link_verification"
+	EmailAccPassChanged EmailType = "acc_password_change_success"
+	EmailAccPassReset   EmailType = "acc_password_reset"
+	EmailAccSuspension  EmailType = "acc_suspension"
+
+	EmailEventAcceptance    EmailType = "event_acceptance"
+	EmailEventRejection     EmailType = "event_rejection"
+	EmailEventCertificate   EmailType = "event_certificate"
+	EmailEventAnnounce      EmailType = "event_announcement"
+	EmailEventReminder      EmailType = "event_reminder"
+	EmailEventThankyou      EmailType = "event_post_event_thankyou"
+	EmailEventSpeakerInvite EmailType = "event_speaker_invitation"
+
+	EmailTechnicalNotify EmailType = "tech_system_notification"
 )
 
 type Email struct {
@@ -51,6 +59,5 @@ type CertificateEmailData struct {
 	Username  string
 	EventName string
 	EventType string
-	CertURL   string
 	Year      int
 }

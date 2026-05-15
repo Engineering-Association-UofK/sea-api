@@ -25,6 +25,7 @@ type EventModel struct {
 	ID              int64     `db:"id"`
 	Name            string    `db:"name"`
 	Description     string    `db:"description"`
+	CoordinatorID   int64     `db:"coordinator_id"`
 	PresenterID     int64     `db:"presenter_id"`
 	EventType       EventType `db:"event_type"`
 	MaxParticipants int       `db:"max_participants"`
@@ -78,6 +79,7 @@ type EventDTO struct {
 	ID              int64            `json:"id"`
 	Name            string           `json:"name" binding:"required"`
 	Description     string           `json:"description" binding:"required"`
+	CoordinatorID   int64            `json:"coordinator_id" binding:"required"`
 	PresenterID     int64            `json:"presenter_id" binding:"required"`
 	EventType       EventType        `json:"event_type" binding:"required"`
 	MaxParticipants int              `json:"max_participants" binding:"required"`
@@ -113,16 +115,19 @@ type ComScoreDTO struct {
 	Score       float64 `json:"score"`
 }
 
-type EventListLimitResponse struct {
-	Current int64               `json:"current"`
-	Pages   int64               `json:"pages"`
-	Events  []EventListResponse `json:"events"`
+type EventListResponse struct {
+	Current int64           `json:"current"`
+	Pages   int64           `json:"pages"`
+	Events  []EventResponse `json:"events"`
 }
 
-type EventListResponse struct {
+type EventResponse struct {
 	ID              int64     `json:"id"`
 	Name            string    `json:"name"`
+	CoordinatorID   int64     `json:"coordinator_id"`
+	CoordinatorName string    `json:"coordinator_name"`
 	PresenterID     int64     `json:"presenter_id"`
+	PresenterName   string    `json:"presenter_name"`
 	EventType       EventType `json:"event_type"`
 	MaxParticipants int       `json:"max_participants"`
 	StartDate       time.Time `json:"start_date"`
@@ -139,20 +144,38 @@ type ComponentScoreRequest struct {
 }
 
 type MakeCertificatesForEventRequest struct {
-	EventID int64 `json:"event_id" binding:"required"`
+	EventID            int64       `json:"event_id" binding:"required"`
+	CertificateType    CertType    `json:"certificate_type" binding:"required"`
+	CertificateVersion CertVersion `json:"certificate_version" binding:"required"`
 }
 
 // Open Endpoints
 
+type EventDetailsRow struct {
+	ID              int64     `db:"id"`
+	Name            string    `db:"name"`
+	Description     string    `db:"description"`
+	CoordinatorID   int64     `db:"coordinator_id"`
+	CoordinatorName string    `db:"coordinator_name"`
+	PresenterID     int64     `db:"presenter_id"`
+	PresenterName   string    `db:"presenter_name"`
+	EventType       EventType `db:"event_type"`
+	MaxParticipants int       `db:"max_participants"`
+	StartDate       time.Time `db:"start_date"`
+	EndDate         time.Time `db:"end_date"`
+	Outcomes        string    `db:"outcomes"`
+}
+
 type EventViewResponse struct {
-	ID            int64     `json:"id"`
-	Name          string    `json:"name"`
-	Description   string    `json:"description"`
-	Outcomes      []string  `json:"outcomes"`
-	PresenterName string    `json:"presenter_name"`
-	EventType     EventType `json:"event_type"`
-	StartDate     time.Time `json:"start_date"`
-	EndDate       time.Time `json:"end_date"`
+	ID              int64     `json:"id"`
+	Name            string    `json:"name"`
+	Description     string    `json:"description"`
+	Outcomes        []string  `json:"outcomes"`
+	CoordinatorName string    `json:"coordinator_name"`
+	PresenterName   string    `json:"presenter_name"`
+	EventType       EventType `json:"event_type"`
+	StartDate       time.Time `json:"start_date"`
+	EndDate         time.Time `json:"end_date"`
 }
 
 type EventViewListLimitResponse struct {
@@ -162,10 +185,11 @@ type EventViewListLimitResponse struct {
 }
 
 type EventViewListResponse struct {
-	ID            int64     `json:"id"`
-	Name          string    `json:"name"`
-	PresenterName string    `json:"presenter_name"`
-	EventType     EventType `json:"event_type"`
-	StartDate     time.Time `json:"start_date"`
-	EndDate       time.Time `json:"end_date"`
+	ID              int64     `json:"id"`
+	Name            string    `json:"name"`
+	PresenterName   string    `json:"presenter_name"`
+	CoordinatorName string    `json:"coordinator_name"`
+	EventType       EventType `json:"event_type"`
+	StartDate       time.Time `json:"start_date"`
+	EndDate         time.Time `json:"end_date"`
 }
