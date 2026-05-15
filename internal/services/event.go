@@ -55,6 +55,7 @@ func (s *EventService) GetEventByID(id int64) (*models.EventDTO, error) {
 		ID:              event.ID,
 		Name:            event.Name,
 		Description:     event.Description,
+		CoordinatorID:   event.CoordinatorID,
 		PresenterID:     event.PresenterID,
 		EventType:       event.EventType,
 		MaxParticipants: event.MaxParticipants,
@@ -67,53 +68,36 @@ func (s *EventService) GetEventByID(id int64) (*models.EventDTO, error) {
 }
 
 func (s *EventService) GetViewEventByID(id int64) (*models.EventViewResponse, error) {
-	event, err := s.EventRepo.GetEventByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	presenter, err := s.CollabRepo.GetByID(event.PresenterID)
-	if err != nil {
-		slog.Info("Presenter not found for event", "presenter_id", event.PresenterID)
-		return nil, err
-	}
-
-	return &models.EventViewResponse{
-		ID:            event.ID,
-		Name:          event.Name,
-		Description:   event.Description,
-		Outcomes:      strings.Split(event.Outcomes, ","),
-		PresenterName: presenter.NameEn,
-		EventType:     event.EventType,
-		StartDate:     event.StartDate,
-		EndDate:       event.EndDate,
-	}, nil
+	return s.EventRepo.GetEventRowByID(id)
 }
 
-func (s *EventService) GetAllEvents(req models.ListRequest) (*models.EventListLimitResponse, error) {
+func (s *EventService) GetAllEvents(req models.ListRequest) (*models.EventListResponse, error) {
 	total, err := s.EventRepo.GetTotalEvents()
 	if err != nil {
 		return nil, err
 	}
 	pages := valid.Limit(&req, total)
 
-	events, err := s.EventRepo.GetAllEvents(req)
+	events, err := s.EventRepo.GetEventsRows(req)
 	if err != nil {
 		return nil, err
 	}
-	eventList := make([]models.EventListResponse, 0)
+	eventList := make([]models.EventResponse, 0)
 	for _, event := range events {
-		eventList = append(eventList, models.EventListResponse{
+		eventList = append(eventList, models.EventResponse{
 			ID:              event.ID,
 			Name:            event.Name,
 			EventType:       event.EventType,
+			CoordinatorID:   event.CoordinatorID,
+			CoordinatorName: event.CoordinatorName,
 			PresenterID:     event.PresenterID,
+			PresenterName:   event.PresenterName,
 			MaxParticipants: event.MaxParticipants,
 			StartDate:       event.StartDate,
 			EndDate:         event.EndDate,
 		})
 	}
-	return &models.EventListLimitResponse{
+	return &models.EventListResponse{
 		Events:  eventList,
 		Pages:   pages,
 		Current: req.Page,
@@ -127,7 +111,7 @@ func (s *EventService) GetAllViewEvents(req models.ListRequest) (*models.EventVi
 	}
 	pages := valid.Limit(&req, total)
 
-	events, err := s.EventRepo.GetAllEvents(req)
+	events, err := s.EventRepo.GetEventsRows(req)
 	if err != nil {
 		return nil, err
 	}
@@ -139,11 +123,13 @@ func (s *EventService) GetAllViewEvents(req models.ListRequest) (*models.EventVi
 	eventList := make([]models.EventViewListResponse, 0)
 	for _, event := range events {
 		eventList = append(eventList, models.EventViewListResponse{
-			ID:        event.ID,
-			Name:      event.Name,
-			EventType: event.EventType,
-			StartDate: event.StartDate,
-			EndDate:   event.EndDate,
+			ID:              event.ID,
+			Name:            event.Name,
+			PresenterName:   event.PresenterName,
+			CoordinatorName: event.CoordinatorName,
+			EventType:       event.EventType,
+			StartDate:       event.StartDate,
+			EndDate:         event.EndDate,
 		})
 	}
 	return &models.EventViewListLimitResponse{
@@ -162,6 +148,7 @@ func (s *EventService) CreateEvent(event *models.EventDTO) (int64, error) {
 		Name:            event.Name,
 		Description:     event.Description,
 		EventType:       event.EventType,
+		CoordinatorID:   event.CoordinatorID,
 		PresenterID:     event.PresenterID,
 		MaxParticipants: event.MaxParticipants,
 		StartDate:       event.StartDate,

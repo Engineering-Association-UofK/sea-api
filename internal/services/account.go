@@ -86,31 +86,23 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 	}, nil
 }
 
-func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *models.ListRequest) ([]models.CertificateListResponse, error) {
+func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *models.ListRequest) (*models.CertificateListResponse, error) {
 	total, err := s.certificateRepository.GetTotalByUserID(claims.UserID)
 	if err != nil {
 		return nil, err
 	}
-	valid.Limit(req, total)
+	pages := valid.Limit(req, total)
 
-	certs, err := s.certificateRepository.GetByUserID(claims.UserID, req)
+	certs, err := s.certificateRepository.GetByCertsDetails(claims.UserID, req)
 	if err != nil {
 		return nil, err
 	}
 
-	var responses = []models.CertificateListResponse{}
-	for _, cert := range certs {
-		responses = append(responses, models.CertificateListResponse{
-			Hash:      cert.Hash,
-			UserID:    cert.UserID,
-			EventID:   cert.EventID,
-			Grade:     cert.Grade,
-			IssueDate: cert.IssueDate,
-			Status:    cert.Status,
-		})
-	}
-
-	return responses, nil
+	return &models.CertificateListResponse{
+		Current:      req.Page,
+		Pages:        pages,
+		Certificates: certs,
+	}, nil
 }
 
 func (s *AccountService) UpdateProfile(claims *models.ManagedClaims, req models.UpdateProfileRequest) error {
