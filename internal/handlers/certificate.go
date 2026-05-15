@@ -72,7 +72,7 @@ func (h *CertificateHandler) VerifyDocument(ctx *gin.Context) {
 //	@Success		200		{string}	string	"SSE stream"
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/admin/certificate/generate-all-for-event [get]
+//	@Router			/admin/event/generate-certs [get]
 //
 //	@Security		ApiKeyAuth
 func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {

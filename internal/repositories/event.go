@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sea-api/internal/models"
-	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -23,8 +23,8 @@ func NewEventRepository(db *sqlx.DB) *EventRepository {
 func (r *EventRepository) CreateEvent(event *models.EventModel) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s
-	(name, description, event_type, max_participants, coordinator_id, presenter_id, outcomes, start_date, end_date)
-	VALUES (:name, :description, :event_type, :max_participants, :coordinator_id, :presenter_id, :outcomes, :start_date, :end_date)
+	(name, description, event_type, form_application, max_participants, presenter_id, outcomes, start_date, end_date)
+	VALUES (:name, :description, :event_type, :form_application, :max_participants, :presenter_id, :outcomes, :start_date, :end_date)
 	`, models.TableEvents)
 	res, err := r.db.NamedExec(query, &event)
 	if err != nil {
@@ -143,10 +143,8 @@ func (r *EventRepository) MassCreateScore(scores []models.ComponentScoreModel, t
 func (r *EventRepository) UpdateEvent(event *models.EventModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
-	SET name = :name, description = :description, event_type = :event_type,
-	max_participants = :max_participants, coordinator_id = :coordinator_id,
-	presenter_id = :presenter_id, outcomes = :outcomes, 
-	start_date = :start_date, end_date = :end_date
+	SET name = :name, description = :description, event_type = :event_type, form_application = :form_application, max_participants = :max_participants,
+	presenter_id = :presenter_id, outcomes = :outcomes, start_date = :start_date, end_date = :end_date
 	WHERE id = :id
 	`, models.TableEvents)
 	_, err := r.db.NamedExec(query, &event)
@@ -296,12 +294,15 @@ func (r *EventRepository) MassUpdateScore(scores []models.ComponentScoreModel) e
 func (r *EventRepository) GetEventDetails(eventID int64, userID *int64) (*models.EventViewDetailsResponse, error) {
 	var resp models.EventViewDetailsResponse
 	var presentersJSON, gradingJSON, userRegJSON, outcomesJSON []byte
+	slog.Debug("Get event", "ID", eventID, "user ID", userID)
 
 	query := fmt.Sprintf(`
 	SELECT 
 		e.id, 
 		e.name, 
 		e.description, 
+		e.form_application, 
+		e.max_participants, 
 		e.event_type, 
 		e.start_date, 
 		e.end_date,
@@ -337,10 +338,13 @@ func (r *EventRepository) GetEventDetails(eventID int64, userID *int64) (*models
 	query += ` WHERE e.id = ?`
 
 	if userID != nil {
+		slog.Debug("User ID present, Starting scan")
 		err := r.db.QueryRow(query, eventID).Scan(
 			&resp.ID,
 			&resp.Name,
 			&resp.Description,
+			&resp.FormApplication,
+			&resp.MaxParticipants,
 			&resp.EventType,
 			&resp.Schedule.Start,
 			&resp.Schedule.End,
@@ -353,10 +357,13 @@ func (r *EventRepository) GetEventDetails(eventID int64, userID *int64) (*models
 			return nil, err
 		}
 	} else {
+		slog.Debug("User ID not present, Starting scan")
 		err := r.db.QueryRow(query, eventID).Scan(
 			&resp.ID,
 			&resp.Name,
 			&resp.Description,
+			&resp.FormApplication,
+			&resp.MaxParticipants,
 			&resp.EventType,
 			&resp.Schedule.Start,
 			&resp.Schedule.End,
@@ -368,6 +375,10 @@ func (r *EventRepository) GetEventDetails(eventID int64, userID *int64) (*models
 			return nil, err
 		}
 	}
+
+	resp.Outcomes = []string{}
+	resp.Presenters = []models.PresenterSummary{}
+	resp.GradingScheme = []models.ComponentDTO{}
 
 	json.Unmarshal(outcomesJSON, &resp.Outcomes)
 	json.Unmarshal(presentersJSON, &resp.Presenters)
@@ -653,6 +664,71 @@ func (r *EventRepository) GetTotalEvents() (int64, error) {
 		return 0, err
 	}
 	return total, nil
+}
+
+func (r *EventRepository) GetParticipantsCount(eventID int64) (int, error) {
+	var count int
+	err := r.db.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE event_id = ?`, models.TableEventParticipants), eventID)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// ======== APPLICATIONS ========
+
+func (r *EventRepository) Apply(userID, eventID int64) error {
+	query := fmt.Sprintf(`
+	INSERT INTO %s (event_id, user_id, status, joined_at)
+	VALUES (?, ?, ?, ?)
+	`, models.TableEventParticipants)
+	_, err := r.db.Exec(query, eventID, userID, models.PENDING, time.Now())
+	return err
+}
+
+func (r *EventRepository) Cancel(userID, eventID int64) error {
+	query := fmt.Sprintf(`DELETE FROM %s WHERE user_id = ? AND event_id = ?`, models.TableEventParticipants)
+	_, err := r.db.Exec(query, userID, eventID)
+	return err
+}
+
+func (r *EventRepository) GetTotalApplicationsForUser(userID, eventID int64) (int64, error) {
+	var total int64
+	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE user_id = ?`, models.TableEventParticipants)
+	if eventID != 0 {
+		query += " AND event_id = ?"
+		err := r.db.Get(&total, query, userID, eventID)
+		return total, err
+	}
+	err := r.db.Get(&total, query, userID)
+	return total, err
+}
+
+func (r *EventRepository) GetApplicationsForUser(userID, eventID int64, req models.ListRequest) ([]models.ApplicationStatus, error) {
+	var applications []models.ApplicationStatus
+	query := fmt.Sprintf(`
+	SELECT 
+		ep.event_id,
+		e.name as event_name,
+		ep.status
+	FROM %s ep
+	JOIN %s e ON ep.event_id = e.id
+	WHERE ep.user_id = ?
+	`, models.TableEventParticipants, models.TableEvents)
+
+	var args []interface{}
+	args = append(args, userID)
+
+	if eventID != 0 {
+		query += " AND ep.event_id = ?"
+		args = append(args, eventID)
+	}
+
+	query += " ORDER BY ep.joined_at DESC LIMIT ? OFFSET ?"
+	args = append(args, req.Limit, (req.Page-1)*req.Limit)
+
+	err := r.db.Select(&applications, query, args...)
+	return applications, err
 }
 
 // ======== DELETE ========

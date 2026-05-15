@@ -37,3 +37,9 @@ type CollaboratorResponse struct {
 	Email        string `json:"email"`
 	SignatureUrl string `json:"signature_url"`
 }
+
+type CollaboratorListResponse struct {
+	Current       int64                  `json:"current"`
+	Pages         int64                  `json:"pages"`
+	Collaborators []CollaboratorResponse `json:"collaborators"`
+}

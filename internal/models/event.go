@@ -30,6 +30,7 @@ type EventModel struct {
 	CoordinatorID   int64     `db:"coordinator_id"`
 	PresenterID     int64     `db:"presenter_id"`
 	EventType       EventType `db:"event_type"`
+	FormApplication bool      `db:"form_application"`
 	MaxParticipants int       `db:"max_participants"`
 	StartDate       time.Time `db:"start_date"`
 	EndDate         time.Time `db:"end_date"`
@@ -115,6 +116,8 @@ type EventViewDetailsResponse struct {
 	Name             string             `json:"name"`
 	Description      string             `json:"description"`
 	EventType        EventType          `json:"event_type"`
+	FormApplication  bool               `json:"form_application"`
+	MaxParticipants  int                `json:"max_participants"`
 	Schedule         EventSchedule      `json:"schedule"`
 	Presenters       []PresenterSummary `json:"presenter"`
 	Outcomes         []string           `json:"outcomes"`
@@ -169,21 +172,42 @@ type GradeDetail struct {
 	Score       float64 `json:"score"`
 }
 
+type ApplicationStatus struct {
+	EventID   int64  `json:"event_id"`
+	EventName string `json:"event_name"`
+	Status    string `json:"status"`
+}
+
+type ApplicationStatusList struct {
+	Current      int64               `json:"current"`
+	Pages        int64               `json:"pages"`
+	Applications []ApplicationStatus `json:"applications"`
+}
+
 ////////////////
 ///  UPDATE  ///
 ////////////////
 
-type EventUpdateRequest struct {
-	ID              int64          `json:"id"`
+type EventCreateRequest struct {
 	Name            string         `json:"name" binding:"required"`
 	Description     string         `json:"description" binding:"required"`
 	PresenterID     int64          `json:"presenter_id" binding:"required"`
 	EventType       EventType      `json:"event_type" binding:"required"`
+	FormApplication bool           `json:"form_application"`
 	MaxParticipants int            `json:"max_participants" binding:"required"`
 	StartDate       time.Time      `json:"start_date" binding:"required"`
 	EndDate         time.Time      `json:"end_date" binding:"required"`
 	Outcomes        []string       `json:"outcomes" binding:"required"`
 	Components      []ComponentDTO `json:"components"`
+}
+
+////////////////
+///  CREATE  ///
+////////////////
+
+type EventUpdateRequest struct {
+	ID int64 `json:"id"`
+	EventCreateRequest
 }
 
 type ParticipantUpdateRequest struct {
@@ -224,9 +248,11 @@ type ParticipantUpdateRequest struct {
 // 	Score       map[string]float64 `json:"score" binding:"required"`
 // }
 
-// type MakeCertificatesForEventRequest struct {
-// 	EventID int64 `json:"event_id" binding:"required"`
-// }
+type MakeCertificatesForEventRequest struct {
+	EventID            int64       `json:"event_id" binding:"required"`
+	CertificateType    CertType    `json:"certificate_type" binding:"required"`
+	CertificateVersion CertVersion `json:"certificate_version" binding:"required"`
+}
 
 // Open Endpoints
 

@@ -36,13 +36,23 @@ func (r *CollaboratorRepo) GetByID(id int64) (*models.CollaboratorModel, error) 
 	return &collab, nil
 }
 
-func (r *CollaboratorRepo) GetAll() ([]models.CollaboratorModel, error) {
+func (r *CollaboratorRepo) GetAll(req models.ListRequest) ([]models.CollaboratorModel, error) {
 	var collaborators []models.CollaboratorModel
-	err := r.DB.Select(&collaborators, fmt.Sprintf(`SELECT * FROM %s`, models.TableCollaborators))
+	query := fmt.Sprintf(`SELECT * FROM %s LIMIT ? OFFSET ?`, models.TableCollaborators)
+	err := r.DB.Select(&collaborators, query, req.Limit, (req.Page-1)*req.Limit)
 	if err != nil {
 		return nil, err
 	}
 	return collaborators, nil
+}
+
+func (r *CollaboratorRepo) GetTotal() int64 {
+	var count int64
+	err := r.DB.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TableCollaborators))
+	if err != nil {
+		return 0
+	}
+	return count
 }
 
 func (r *CollaboratorRepo) Update(collab *models.CollaboratorModel) error {

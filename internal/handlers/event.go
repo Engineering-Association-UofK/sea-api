@@ -120,67 +120,67 @@ func (h *EventHandler) GetEventParticipants(ctx *gin.Context) {
 	ctx.JSON(200, resp)
 }
 
-// // CreateEvent godocs
-// //
-// //	@Summary		Create event
-// //	@Description	Create a new event
-// //	@Tags			Events
-// //	@Accept			json
-// //	@Produce		json
-// //	@Param			body	body		models.EventDTO	true	"Event data"
-// //	@Success		201		{object}	response.TransactionResponse
-// //	@Failure		400		{object}	response.BaseError
-// //	@Failure		401		{object}	response.BaseError
-// //	@Failure		500		{object}	response.BaseError
-// //	@Router			/admin/event [post]
-// //
-// //	@Security		ApiKeyAuth
-// func (h *EventHandler) CreateEvent(ctx *gin.Context) {
-// 	var event models.EventDTO
-// 	if err := ctx.ShouldBindJSON(&event); err != nil {
-// 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-// 		return
-// 	}
+// CreateEvent godocs
+//
+//	@Summary		Create event
+//	@Description	Create a new event
+//	@Tags			Events
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.EventCreateRequest	true	"Event data"
+//	@Success		201		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/event [post]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) CreateEvent(ctx *gin.Context) {
+	var event models.EventCreateRequest
+	if err := ctx.ShouldBindJSON(&event); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
 
-// 	id, err := h.EventService.CreateEvent(&event)
-// 	if err != nil {
-// 		ctx.Error(err)
-// 		return
-// 	}
-// 	event.ID = id
-// 	response.NewTransactionResponse(201, "Event created successfully", id, ctx)
-// }
+	id, err := h.EventService.CreateEvent(&event)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
 
-// // UpdateEvent godocs
-// //
-// //	@Summary		Update event
-// //	@Description	Update an existing event
-// //	@Tags			Events
-// //	@Accept			json
-// //	@Produce		json
-// //	@Param			body	body		models.EventDTO	true	"Event update data"
-// //	@Success		200		{object}	response.TransactionResponse
-// //	@Failure		400		{object}	response.BaseError
-// //	@Failure		401		{object}	response.BaseError
-// //	@Failure		404		{object}	response.BaseError
-// //	@Failure		500		{object}	response.BaseError
-// //	@Router			/admin/event [put]
-// //
-// //	@Security		ApiKeyAuth
-// func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
-// 	var event models.EventDTO
-// 	if err := ctx.ShouldBindJSON(&event); err != nil {
-// 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-// 		return
-// 	}
+	response.NewTransactionResponse(201, "Event created successfully", id, ctx)
+}
 
-// 	if err := h.EventService.UpdateEvent(&event); err != nil {
-// 		ctx.Error(err)
-// 		return
-// 	}
+// UpdateEvent godocs
+//
+//	@Summary		Update event
+//	@Description	Update an existing event
+//	@Tags			Events
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.EventUpdateRequest	true	"Event update data"
+//	@Success		200		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		404		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/event [put]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
+	var event models.EventUpdateRequest
+	if err := ctx.ShouldBindJSON(&event); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
 
-// 	response.NewTransactionResponse(200, "Event updated successfully", event.ID, ctx)
-// }
+	if err := h.EventService.UpdateEvent(&event); err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Event updated successfully", event.ID, ctx)
+}
 
 // DeleteEvent godocs
 //

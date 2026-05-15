@@ -129,7 +129,7 @@ func (h *FormHandler) GetEntireForEditForm(ctx *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/event/form/{id} [get]
+//	@Router			/form/{id} [get]
 func (h *FormHandler) GetEntireForUserForm(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)

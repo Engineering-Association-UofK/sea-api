@@ -12,6 +12,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services/storage"
+	"sea-api/internal/utils/valid"
 	"strings"
 )
 
@@ -30,14 +31,21 @@ func NewCollaboratorService(repo *repositories.CollaboratorRepo, S3 *storage.S3)
 	}
 }
 
-func (s *CollaboratorService) GetAll(ctx context.Context) ([]models.CollaboratorResponse, error) {
-	collaborators, err := s.repo.GetAll()
+func (s *CollaboratorService) GetAll(req models.ListRequest, ctx context.Context) (*models.CollaboratorListResponse, error) {
+	total := s.repo.GetTotal()
+	if total == 0 {
+		return &models.CollaboratorListResponse{}, nil
+	}
+
+	pages := valid.Limit(&req, total)
+
+	collaborators, err := s.repo.GetAll(req)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(collaborators) == 0 {
-		return []models.CollaboratorResponse{}, nil
+		return &models.CollaboratorListResponse{}, nil
 	}
 
 	var collaboratorResponses []models.CollaboratorResponse
@@ -58,7 +66,11 @@ func (s *CollaboratorService) GetAll(ctx context.Context) ([]models.Collaborator
 			SignatureUrl: url,
 		})
 	}
-	return collaboratorResponses, nil
+	return &models.CollaboratorListResponse{
+		Current:       req.Page,
+		Pages:         pages,
+		Collaborators: collaboratorResponses,
+	}, nil
 }
 
 func (s *CollaboratorService) GetModelByID(id int64) (*models.CollaboratorModel, error) {

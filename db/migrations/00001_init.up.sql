@@ -89,6 +89,7 @@ CREATE TABLE event (
     presenter_id INT NOT NULL,
     event_type VARCHAR(255) NOT NULL,
     max_participants INT NOT NULL,
+    form_application TINYINT NOT NULL,
     outcomes TEXT NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,

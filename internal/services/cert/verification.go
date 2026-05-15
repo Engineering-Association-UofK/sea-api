@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sea-api/internal/models"
+	"strings"
 )
 
 func (c *CertificateService) VerifyCertificate(hash string) (*models.CertificateVerify, error) {
@@ -39,7 +40,7 @@ func (c *CertificateService) VerifyCertificate(hash string) (*models.Certificate
 		EventName: event.Name,
 		Status:    status,
 		Grade:     fmt.Sprintf("%.2f", cert.Grade),
-		Outcomes:  event.Outcomes,
+		Outcomes:  strings.Split(event.Outcomes, ","),
 		EndDate:   event.EndDate,
 		IssueDate: cert.IssueDate,
 	}, nil

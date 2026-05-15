@@ -17,7 +17,7 @@ import (
 var CertTypeMap = map[models.CertType]map[models.CertVersion]func(
 	*CertificateService,
 	context.Context,
-	*models.EventDTO,
+	*models.EventModel,
 	*models.EventParticipantModel,
 	*models.UserModel,
 	[]byte,
@@ -28,7 +28,7 @@ var CertTypeMap = map[models.CertType]map[models.CertVersion]func(
 var certParticipationVersionMap = map[models.CertVersion]func(
 	*CertificateService,
 	context.Context,
-	*models.EventDTO,
+	*models.EventModel,
 	*models.EventParticipantModel,
 	*models.UserModel,
 	[]byte,
@@ -39,7 +39,7 @@ var certParticipationVersionMap = map[models.CertVersion]func(
 func generateParticipationV0_1(
 	c *CertificateService,
 	ctx context.Context,
-	event *models.EventDTO,
+	event *models.EventModel,
 	participant *models.EventParticipantModel,
 	user *models.UserModel,
 	qrCode []byte,
@@ -91,7 +91,7 @@ func generateParticipationV0_1(
 		Name:        user.NameEn,
 		EventName:   event.Name,
 		Grade:       participant.Grade,
-		TaskColumns: make3x3Grid(event.Outcomes),
+		TaskColumns: make3x3Grid(strings.Split(event.Outcomes, ",")),
 		QRCode:      fmt.Sprintf("data:image/png;base64,%s", qrCode),
 
 		CoordinatorName:      coordinator.NameEn,
@@ -112,7 +112,7 @@ func generateParticipationV0_1(
 	dataAR := certs.V1_0{
 		Name:      user.NameAr,
 		EventName: event.Name,
-		Grade:     participant.Grade, TaskColumns: make3x3Grid(event.Outcomes),
+		Grade:     participant.Grade, TaskColumns: make3x3Grid(strings.Split(event.Outcomes, ",")),
 		QRCode: fmt.Sprintf("data:image/png;base64,%s", qrCode),
 
 		CoordinatorName:      coordinator.NameAr,

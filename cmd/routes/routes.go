@@ -21,10 +21,10 @@ import (
 )
 
 var (
-	UserHandler  *handlers.UserHandler
-	EventHandler *handlers.EventHandler
-	MailHandler  *handlers.MailHandler
-	// CertificateHandler  *handlers.CertificateHandler
+	UserHandler         *handlers.UserHandler
+	EventHandler        *handlers.EventHandler
+	MailHandler         *handlers.MailHandler
+	CertificateHandler  *handlers.CertificateHandler
 	AuthHandler         *handlers.AuthHandler
 	AccountHandler      *handlers.AccountHandler
 	GalleryHandler      *handlers.GalleryHandler
@@ -112,9 +112,16 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			account.PUT("/username", middleware.StatefulRateLimiter(models.LimitUpdateUsername, rateLimitService), AccountHandler.UpdateUsername)
 		}
 
-		{ // ==== EVENTS & FORMS
+		{ // ==== EVENTS
 			event := account.Group("/event")
-			event.GET("/form/:id", FormHandler.GetEntireForUserForm) // <------------------- New
+			event.GET("", EventHandler.GetEventsList)
+			event.GET("/:id", EventHandler.GetEventByID)
+		}
+
+		{ // ==== FORMS
+			form := account.Group("/form")
+			form.GET("", FormHandler.GetAllForms)
+			form.GET("/:id", FormHandler.GetEntireForUserForm)
 		}
 
 		{ // ==== Notifications
@@ -234,11 +241,16 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		{ // ==== EVENTS
 			event := admin.Group("/event")
 			event.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
-			// event.POST("", EventHandler.CreateEvent)
-			// event.PUT("", EventHandler.UpdateEvent)
-			event.GET("/:id/participants", EventHandler.GetEventParticipants)
+			event.POST("", EventHandler.CreateEvent)
+			event.PUT("", EventHandler.UpdateEvent)
 			event.DELETE("/:id", EventHandler.DeleteEvent)
-			// event.GET("/send-all-emails", strictLimit, CertificateHandler.SendCertificatesEmailsForEvent)
+
+			// Participants
+			event.GET("/:id/participants", EventHandler.GetEventParticipants)
+			// event.GET("/send_emails", strictLimit, CertificateHandler.SendEmails)
+			event.GET("/send-finish-emails", strictLimit, CertificateHandler.SendCertificatesEmailsForEvent)
+
+			event.GET("/generate-certs", strictLimit, CertificateHandler.MakeCertificatesForEvent)
 		}
 
 		{ // ==== Collaborators
@@ -248,14 +260,14 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			collabs.GET("/:id", CollaboratorHandler.GetByID)
 			collabs.POST("", CollaboratorHandler.Create)
 			collabs.PUT("", CollaboratorHandler.Update)
-			collabs.DELETE("/:id", CollaboratorHandler.Delete)
+
+			// collabs.DELETE("/:id", CollaboratorHandler.Delete)
 		}
 
 		{ // ==== CERTIFICATES
 			certificate := admin.Group("/certificate")
 			certificate.Use(middleware.RequireAnyRole(models.RoleCertifier, models.RoleSystemSuperAdmin))
-			// certificate.GET("/generate-all-for-event", strictLimit, CertificateHandler.MakeCertificatesForEvent)
-			// certificate.POST("/sign", midLimit, CertificateHandler.SignPDF)
+			certificate.POST("/sign", midLimit, CertificateHandler.SignPDF)
 		}
 
 		{ // ==== MAIL

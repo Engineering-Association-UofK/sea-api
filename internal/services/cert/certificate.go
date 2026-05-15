@@ -10,6 +10,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
+	"sea-api/internal/services/event"
 	"sea-api/internal/services/storage"
 	"sea-api/internal/utils"
 	"strings"
@@ -21,7 +22,7 @@ const DOC_VERIFICATION_PATH = `https://sea.uofk.edu/doc/verify/`
 
 type CertificateService struct {
 	userRepo            *repositories.UserRepository
-	eventService        *services.EventService
+	eventService        *event.EventService
 	S3StoreService      *storage.S3
 	pdfService          *services.PDFService
 	mailService         *services.MailService
@@ -36,7 +37,7 @@ type CertificateService struct {
 
 func NewCertificateService(
 	userRepo *repositories.UserRepository,
-	eventService *services.EventService,
+	eventService *event.EventService,
 	S3StoreService *storage.S3,
 	pdfService *services.PDFService,
 	mailService *services.MailService,
