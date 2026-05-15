@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"net/http"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
@@ -45,26 +44,18 @@ func (h *CollaboratorHandler) GetByID(ctx *gin.Context) {
 }
 
 func (h *CollaboratorHandler) Create(ctx *gin.Context) {
-	// file size limit
-	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, 2<<20)
-	if err := ctx.Request.ParseMultipartForm(2 << 20); err != nil {
+	var req models.CollaboratorCreateRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	if req.SignatureFile.Size > 2<<20 {
 		errs.New(errs.BadRequest, "Signature size too big, should be less than 2MB", nil)
 		return
 	}
 
-	var req models.CollaboratorCreateRequest
-	req.NameAr = ctx.PostForm("name_ar")
-	req.NameEn = ctx.PostForm("name_en")
-	req.Email = models.TrimmedString(ctx.PostForm("email"))
-
-	file, _, err := ctx.Request.FormFile("file")
-	if err != nil || req.NameAr == "" || req.NameEn == "" {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
-	defer file.Close()
-
-	id, err := h.service.Create(ctx.Request.Context(), &req, file)
+	id, err := h.service.Create(ctx.Request.Context(), &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -74,33 +65,18 @@ func (h *CollaboratorHandler) Create(ctx *gin.Context) {
 }
 
 func (h *CollaboratorHandler) Update(ctx *gin.Context) {
-	// file size limit
-	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, 2<<20)
-	if err := ctx.Request.ParseMultipartForm(2 << 20); err != nil {
+	var req models.CollaboratorUpdateRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	if req.SignatureFile.Size > 2<<20 {
 		errs.New(errs.BadRequest, "Signature size too big, should be less than 2MB", nil)
 		return
 	}
 
-	var req models.CollaboratorUpdateRequest
-	idStr := ctx.PostForm("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
-
-	req.ID = id
-	req.NameAr = ctx.PostForm("name_ar")
-	req.NameEn = ctx.PostForm("name_en")
-	req.Email = models.TrimmedString(ctx.PostForm("email"))
-	if id == 0 || req.NameAr == "" || req.NameEn == "" {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
-
-	file, _, _ := ctx.Request.FormFile("file")
-
-	err = h.service.Update(ctx.Request.Context(), &req, file)
+	err := h.service.Update(ctx.Request.Context(), &req)
 	if err != nil {
 		ctx.Error(err)
 		return

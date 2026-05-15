@@ -181,7 +181,7 @@ func (s *AuthService) Verify(req models.VerifyRequest) error {
 	if bcrypt.CompareHashAndPassword([]byte(code.Code), []byte(req.Code)) != nil {
 		return errs.New(errs.BadRequest, "Invalid verification code", nil)
 	}
-	if time.Now().After(code.CreatedAt.Add(time.Minute * 15)) {
+	if time.Now().After(code.CreatedAt.Add(time.Minute * 60)) {
 		return errs.New(errs.BadRequest, "Verification code has expired", nil)
 	}
 	err = s.UserRepo.Verify(req.UserID)

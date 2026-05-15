@@ -27,6 +27,7 @@ type EventModel struct {
 	ID              int64     `db:"id"`
 	Name            string    `db:"name"`
 	Description     string    `db:"description"`
+	CoordinatorID   int64     `db:"coordinator_id"`
 	PresenterID     int64     `db:"presenter_id"`
 	EventType       EventType `db:"event_type"`
 	MaxParticipants int       `db:"max_participants"`

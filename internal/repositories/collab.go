@@ -17,8 +17,8 @@ func NewCollaboratorRepo(db *sqlx.DB) *CollaboratorRepo {
 
 func (r *CollaboratorRepo) Create(collab *models.CollaboratorModel) (int64, error) {
 	query := fmt.Sprintf(`
-	INSERT INTO %s (name_ar, name_en, email, signature_id)
-	VALUES (:name_ar, :name_en, :email, :signature_id)
+	INSERT INTO %s (name_ar, name_en, title_ar, title_en, email, signature_id)
+	VALUES (:name_ar, :name_en, :title_ar, :title_en, email, :signature_id)
 	`, models.TableCollaborators)
 	res, err := r.DB.NamedExec(query, collab)
 	if err != nil {
@@ -48,7 +48,7 @@ func (r *CollaboratorRepo) GetAll() ([]models.CollaboratorModel, error) {
 func (r *CollaboratorRepo) Update(collab *models.CollaboratorModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
-	SET name_ar = :name_ar, name_en = :name_en, email = :email, signature_id = :signature_id
+	SET name_ar = :name_ar, name_en = :name_en, title_ar = :title_ar, title_en = :title_en, email = :email, signature_id = :signature_id
 	WHERE id = :id
 	`, models.TableCollaborators)
 	_, err := r.DB.NamedExec(query, collab)

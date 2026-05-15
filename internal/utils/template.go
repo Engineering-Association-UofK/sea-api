@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"sea-api/internal/config"
 	"sea-api/internal/models"
@@ -22,20 +23,31 @@ const (
 	EventCertificateEn Templates = "event-certificate-en"
 )
 
-func GetEmailTechnicalTemplate(data any) (string, error) {
-	return GetTemplate("email-technical-"+data.(models.TechnicalEmailTemplate).Lang, data)
+func GetCertTemplate(certType models.CertType, certVersion string, lang models.Language, data any) (string, error) {
+	fileName := fmt.Sprintf("%s_%s", certType, certVersion)
+	path := fmt.Sprintf(
+		"%s/static-assets/certificates/%s/%s.html",
+		config.App.ResourcesDir,
+		lang,
+		fileName,
+	)
+
+	return getTemplate(path, fileName, data)
 }
 
-func GetArabicCertificateTemplate(data any) (string, error) {
-	return GetTemplate("cert-ar", data)
+func GetEmailTemplate(emailType models.EmailType, lang models.Language, data any) (string, error) {
+	path := fmt.Sprintf(
+		"%s/static-assets/emails/%s/%s.html",
+		config.App.ResourcesDir,
+		lang,
+		emailType,
+	)
+
+	return getTemplate(path, string(emailType), data)
 }
 
-func GetEnglishCertificateTemplate(data any) (string, error) {
-	return GetTemplate("cert-en", data)
-}
-
-func GetTemplate(name string, data any) (string, error) {
-	content, err := os.ReadFile(config.App.ResourcesDir + "/templates/" + name + ".html")
+func getTemplate(path string, name string, data any) (string, error) {
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

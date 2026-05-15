@@ -85,6 +85,7 @@ CREATE TABLE event (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
+    coordinator INT NOT NULL,
     presenter_id INT NOT NULL,
     event_type VARCHAR(255) NOT NULL,
     max_participants INT NOT NULL,
@@ -92,6 +93,7 @@ CREATE TABLE event (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
 
+    FOREIGN KEY (coordinator) REFERENCES collaborators(id) ON UPDATE CASCADE,
     FOREIGN KEY (presenter_id) REFERENCES collaborators(id) ON UPDATE CASCADE
 );
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sea-api/internal/models"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -22,8 +23,8 @@ func NewEventRepository(db *sqlx.DB) *EventRepository {
 func (r *EventRepository) CreateEvent(event *models.EventModel) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s
-	(name, description, event_type, max_participants, presenter_id, outcomes, start_date, end_date)
-	VALUES (:name, :description, :event_type, :max_participants, :presenter_id, :outcomes, :start_date, :end_date)
+	(name, description, event_type, max_participants, coordinator_id, presenter_id, outcomes, start_date, end_date)
+	VALUES (:name, :description, :event_type, :max_participants, :coordinator_id, :presenter_id, :outcomes, :start_date, :end_date)
 	`, models.TableEvents)
 	res, err := r.db.NamedExec(query, &event)
 	if err != nil {
@@ -142,8 +143,10 @@ func (r *EventRepository) MassCreateScore(scores []models.ComponentScoreModel, t
 func (r *EventRepository) UpdateEvent(event *models.EventModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
-	SET name = :name, description = :description, event_type = :event_type, max_participants = :max_participants,
-	presenter_id = :presenter_id, outcomes = :outcomes, start_date = :start_date, end_date = :end_date
+	SET name = :name, description = :description, event_type = :event_type,
+	max_participants = :max_participants, coordinator_id = :coordinator_id,
+	presenter_id = :presenter_id, outcomes = :outcomes, 
+	start_date = :start_date, end_date = :end_date
 	WHERE id = :id
 	`, models.TableEvents)
 	_, err := r.db.NamedExec(query, &event)
