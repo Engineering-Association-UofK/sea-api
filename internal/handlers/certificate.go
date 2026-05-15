@@ -6,16 +6,16 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	_ "sea-api/internal/response"
-	"sea-api/internal/services"
+	"sea-api/internal/services/cert"
 
 	"github.com/gin-gonic/gin"
 )
 
 type CertificateHandler struct {
-	service *services.CertificateService
+	service *cert.CertificateService
 }
 
-func NewCertificateHandler(service *services.CertificateService) *CertificateHandler {
+func NewCertificateHandler(service *cert.CertificateService) *CertificateHandler {
 	return &CertificateHandler{service: service}
 }
 
@@ -89,7 +89,7 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 
 	progressChan := make(chan string)
 
-	go h.service.MakeCertificatesForEvent(ctx.Request.Context(), req.EventID, progressChan)
+	go h.service.MakeCertificatesForEvent(ctx.Request.Context(), &req, progressChan)
 
 	ctx.Stream(func(w io.Writer) bool {
 		msg, ok := <-progressChan
