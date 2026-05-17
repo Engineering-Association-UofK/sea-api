@@ -5,6 +5,7 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
+	"sea-api/internal/repositories/eventrepo"
 	"sea-api/internal/services"
 	"sea-api/internal/utils"
 	"sea-api/internal/utils/valid"
@@ -17,16 +18,24 @@ import (
 type EventService struct {
 	NotificationService *services.NotificationService
 
-	EventRepo  *repositories.EventRepository
+	EventRepo  *eventrepo.EventRepository
 	CollabRepo *repositories.CollaboratorRepo
+	FormRepo   *repositories.FormRepository
 	UserRepo   *repositories.UserRepository
 }
 
-func NewEventService(NotificationService *services.NotificationService, EventRepo *repositories.EventRepository, CollabRepo *repositories.CollaboratorRepo, UserRepo *repositories.UserRepository) *EventService {
+func NewEventService(
+	NotificationService *services.NotificationService,
+	EventRepo *eventrepo.EventRepository,
+	CollabRepo *repositories.CollaboratorRepo,
+	FormRepo *repositories.FormRepository,
+	UserRepo *repositories.UserRepository,
+) *EventService {
 	return &EventService{
 		NotificationService: NotificationService,
 		EventRepo:           EventRepo,
 		CollabRepo:          CollabRepo,
+		FormRepo:            FormRepo,
 		UserRepo:            UserRepo,
 	}
 }
@@ -57,12 +66,12 @@ func (s *EventService) GetViewList(query models.QueryEventPublicRequest) (models
 	}, nil
 }
 
-func (s *EventService) GetEventViewDetails(id int64) (models.EventViewDetailsResponse, error) {
-	resp, err := s.EventRepo.GetEventDetails(id, nil)
+func (s *EventService) GetEventViewDetails(id int64) (*models.EventViewDetailsResponse, error) {
+	resp, err := s.EventRepo.GetEventDetails(id)
 	if err != nil {
-		return models.EventViewDetailsResponse{}, err
+		return nil, err
 	}
-	return *resp, nil
+	return resp, nil
 }
 
 func (s *EventService) GetEventByID(id int64) (*models.EventModel, error) {

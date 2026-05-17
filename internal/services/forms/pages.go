@@ -44,19 +44,3 @@ func (s *FormService) DeletePage(id int64) error {
 	}
 	return s.formRepo.DeletePage(id)
 }
-
-// func (s *FormService) arePagesValid(pages []models.CreatePageRequest) error {
-// 	if len(pages) == 0 {
-// 		return nil
-// 	}
-// 	FormID := pages[0].FormID
-// 	for _, p := range pages {
-// 		if p.FormID != FormID {
-// 			return errs.New(errs.BadRequest, "All pages must belong to the same form", nil)
-// 		}
-// 		if p.PageNumber <= 0 {
-// 			return errs.New(errs.BadRequest, "Invalid page number", nil)
-// 		}
-// 	}
-// 	return nil
-// }

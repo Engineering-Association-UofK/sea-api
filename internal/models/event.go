@@ -173,9 +173,9 @@ type GradeDetail struct {
 }
 
 type ApplicationStatus struct {
-	EventID   int64  `json:"event_id"`
-	EventName string `json:"event_name"`
-	Status    string `json:"status"`
+	EventID   int64  `json:"event_id" db:"event_id"`
+	EventName string `json:"event_name" db:"event_name"`
+	Status    string `json:"status" db:"status"`
 }
 
 type ApplicationStatusList struct {
@@ -217,67 +217,18 @@ type ParticipantUpdateRequest struct {
 	Grades    []GradeDetail     `json:"grades"`
 }
 
-// type EventDTO struct {
-// 	ID              int64          `json:"id"`
-// 	Name            string         `json:"name" binding:"required"`
-// 	Description     string         `json:"description" binding:"required"`
-// 	PresenterID     int64          `json:"presenter_id" binding:"required"`
-// 	EventType       EventType      `json:"event_type" binding:"required"`
-// 	MaxParticipants int            `json:"max_participants" binding:"required"`
-// 	StartDate       time.Time      `json:"start_date" binding:"required"`
-// 	EndDate         time.Time      `json:"end_date" binding:"required"`
-// 	Outcomes        []string       `json:"outcomes" binding:"required"`
-// 	Components      []ComponentDTO `json:"components"`
-// }
-
-////
-
-// type ComScoreDTO struct {
-// 	ID          int64   `json:"id"`
-// 	Name        string  `json:"name"`
-// 	ComponentId int64   `json:"component_id"`
-// 	Score       float64 `json:"score"`
-// }
-
-// type MassApplyEventRequest struct {
-// 	UserIDs []int64 `json:"user_ids" binding:"required"`
-// }
-
-// type ComponentScoreRequest struct {
-// 	ComponentID int64              `json:"component_id" binding:"required"`
-// 	Score       map[string]float64 `json:"score" binding:"required"`
-// }
-
 type MakeCertificatesForEventRequest struct {
 	EventID            int64       `json:"event_id" binding:"required"`
 	CertificateType    CertType    `json:"certificate_type" binding:"required"`
 	CertificateVersion CertVersion `json:"certificate_version" binding:"required"`
 }
 
-// Open Endpoints
+type ApplyResponse struct {
+	FormRequired bool  `json:"form_required"`
+	FormID       int64 `json:"form_id"`
+}
 
-// type EventViewResponse struct {
-// 	ID            int64     `json:"id"`
-// 	Name          string    `json:"name"`
-// 	Description   string    `json:"description"`
-// 	Outcomes      []string  `json:"outcomes"`
-// 	PresenterName string    `json:"presenter_name"`
-// 	EventType     EventType `json:"event_type"`
-// 	StartDate     time.Time `json:"start_date"`
-// 	EndDate       time.Time `json:"end_date"`
-// }
-
-// type EventViewListLimitResponse struct {
-// 	Current int64                   `json:"current"`
-// 	Pages   int64                   `json:"pages"`
-// 	Events  []EventViewListResponse `json:"events"`
-// }
-
-// type EventViewListResponse struct {
-// 	ID            int64     `json:"id"`
-// 	Name          string    `json:"name"`
-// 	PresenterName string    `json:"presenter_name"`
-// 	EventType     EventType `json:"event_type"`
-// 	StartDate     time.Time `json:"start_date"`
-// 	EndDate       time.Time `json:"end_date"`
-// }
+type EventFormRequest struct {
+	EventID int64 `json:"event_id"`
+	FormID  int64 `json:"form_id"`
+}

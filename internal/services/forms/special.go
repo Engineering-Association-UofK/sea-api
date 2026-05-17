@@ -136,6 +136,14 @@ func (s *FormService) SubmitForm(userID int64, req *models.SubmitFormRequest) (i
 		return 0, err
 	}
 
+	eventForm, err := s.eventRepo.GetByFormID(req.FormID)
+	if err == nil {
+		err = s.eventRepo.Apply(userID, eventForm.EventID)
+		if err != nil {
+			return 0, err
+		}
+	}
+
 	response := &models.FormResponseModel{
 		FormID:      req.FormID,
 		UserID:      userID,

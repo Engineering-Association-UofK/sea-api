@@ -63,8 +63,6 @@ func (h *EventHandler) GetEventsList(ctx *gin.Context) {
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/event/{id} [get]
-//
-//	@Security		ApiKeyAuth
 func (h *EventHandler) GetEventByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
@@ -209,4 +207,85 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 		return
 	}
 	response.NewTransactionResponse(200, "Event deleted successfully", int64(intId), ctx)
+}
+
+///////////////////////
+///   Application   ///
+///////////////////////
+
+func (h *EventHandler) GetApplicationStatus(ctx *gin.Context) {
+	var req models.ListRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
+		return
+	}
+
+	eventId := ctx.Param("event_id")
+	intId, err := strconv.ParseInt(eventId, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	resp, err := h.EventService.Status(claims.UserID, intId, req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, resp)
+}
+
+func (h *EventHandler) ApplyForEvent(ctx *gin.Context) {
+	eventId := ctx.Param("event_id")
+	intId, err := strconv.ParseInt(eventId, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	resp, err := h.EventService.Apply(claims.UserID, intId)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, resp)
+}
+
+func (h *EventHandler) CancelApplicationForEvent(ctx *gin.Context) {
+	eventId := ctx.Param("event_id")
+	intId, err := strconv.ParseInt(eventId, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	if err := h.EventService.Cancel(claims.UserID, intId); err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Event Application Canceled successfully", int64(intId), ctx)
 }
