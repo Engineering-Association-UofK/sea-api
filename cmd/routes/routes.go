@@ -66,10 +66,10 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 	apiV1.Use(basicLimit)
 
 	{ // ==== CERTIFICATES
-		// cert := apiV1.Group("/cert")
-		// cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
-		// cert.GET("/download/:hash", midLimit, CertificateHandler.GetCertificates)
-		// cert.GET("/verify-document/:hash", CertificateHandler.VerifyDocument)
+		cert := apiV1.Group("/cert")
+		cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
+		cert.GET("/download/:hash", midLimit, CertificateHandler.GetCertificates)
+		cert.GET("/verify-document/:hash", CertificateHandler.VerifyDocument)
 	}
 
 	{ // ==== AUTHENTICATION
@@ -114,8 +114,9 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 		{ // ==== EVENTS
 			event := account.Group("/event")
-			event.GET("", EventHandler.GetEventsList)
-			event.GET("/:id", EventHandler.GetEventByID)
+			event.GET("/status", EventHandler.GetApplicationStatus)
+			event.POST("/apply/:id", EventHandler.ApplyForEvent)
+			event.POST("/cancel/:id", EventHandler.CancelApplicationForEvent)
 		}
 
 		{ // ==== FORMS
@@ -241,16 +242,17 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		{ // ==== EVENTS
 			event := admin.Group("/event")
 			event.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
+			event.GET("/:id", EventHandler.GetEventDetailsAdmin)
 			event.POST("", EventHandler.CreateEvent)
 			event.PUT("", EventHandler.UpdateEvent)
 			event.DELETE("/:id", EventHandler.DeleteEvent)
 
 			// Participants
 			event.GET("/:id/participants", EventHandler.GetEventParticipants)
-			// event.GET("/send_emails", strictLimit, CertificateHandler.SendEmails)
-			event.GET("/send-finish-emails", strictLimit, CertificateHandler.SendCertificatesEmailsForEvent)
+			event.PUT("/:id/participants", EventHandler.UpdateEventParticipants)
+			event.POST("/send-finish-emails", strictLimit, CertificateHandler.SendCertificatesEmailsForEvent)
 
-			event.GET("/generate-certs", strictLimit, CertificateHandler.MakeCertificatesForEvent)
+			event.POST("/generate-certs", strictLimit, CertificateHandler.MakeCertificatesForEvent)
 		}
 
 		{ // ==== Collaborators

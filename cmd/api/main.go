@@ -80,7 +80,7 @@ func Go() {
 	feedbackService := services.NewFeedbackService(feedbackRepository)
 
 	botService := bot.NewBotService(botRepository, feedbackService)
-	eventService := event.NewEventService(notificationService, eventRepository, collaboratorRepository, formRepository, userRepository)
+	eventService := event.NewEventService(notificationService, S3, galleryService, eventRepository, collaboratorRepository, formRepository, userRepository)
 	accountService := services.NewAccountService(userRepository, S3, certificateRepository)
 
 	userService := user.NewUserService(userRepository, suspensionsRepo, S3)
