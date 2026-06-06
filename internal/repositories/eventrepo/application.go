@@ -43,10 +43,15 @@ func (r *EventRepository) GetApplicationsForUser(userID, eventID int64, req mode
 	FROM %s ep
 	JOIN %s e ON ep.event_id = e.id
 	WHERE ep.user_id = ?
-	AND ep.event_id = ?
-	ORDER BY ep.joined_at DESC LIMIT ? OFFSET ?
 	`, models.TableEventParticipants, models.TableEvents)
 
-	err := r.db.Select(&applications, query, userID, eventID, req.Limit, (req.Page-1)*req.Limit)
+	if eventID != 0 {
+		query += ` AND ep.event_id = ? ORDER BY ep.joined_at DESC LIMIT ? OFFSET ?`
+		err := r.db.Select(&applications, query, userID, req.Limit, eventID, (req.Page-1)*req.Limit)
+		return applications, err
+	}
+
+	query += `ORDER BY ep.joined_at DESC LIMIT ? OFFSET ?`
+	err := r.db.Select(&applications, query, userID, req.Limit, (req.Page-1)*req.Limit)
 	return applications, err
 }

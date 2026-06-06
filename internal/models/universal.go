@@ -109,6 +109,11 @@ type Progress struct {
 	Name      string    `json:"name"`
 }
 
+type ProgressError struct {
+	Error     string    `json:"error"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
 type Language string
 
 const (

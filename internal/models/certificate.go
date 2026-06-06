@@ -13,11 +13,24 @@ const (
 	CertExpired CertStatus = "EXPIRED"
 	CertRevoked CertStatus = "REVOKED"
 
-	CertParticipation CertType = "Participation"
-	CertCompletion    CertType = "Completion"
+	CertParticipation CertType = "participation"
+	CertCompletion    CertType = "completion"
 
 	V0_1 CertVersion = "v0.1"
 )
+
+var AllowedCertStatus = map[CertStatus]bool{
+	CertActive:  true,
+	CertExpired: true,
+	CertRevoked: true,
+}
+var AllowedCertTypes = map[CertType]bool{
+	CertCompletion:    true,
+	CertParticipation: true,
+}
+var AllowedCertVersions = map[CertVersion]bool{
+	V0_1: true,
+}
 
 type CertificateModel struct {
 	ID          int64       `db:"id"`

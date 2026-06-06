@@ -94,7 +94,7 @@ func (r *EventRepository) MassUpdateParticipant(participants []models.EventParti
 
 func (r *EventRepository) GetParticipantByID(id int64) (*models.EventParticipantModel, error) {
 	var participant models.EventParticipantModel
-	err := r.db.Get(&participant, fmt.Sprintf(`SELECT * FROM %s WHERE user_id = ?`, models.TableEventParticipants), id)
+	err := r.db.Get(&participant, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableEventParticipants), id)
 	if err != nil {
 		return nil, err
 	}

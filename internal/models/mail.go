@@ -56,7 +56,7 @@ type TechnicalEmailTemplate struct {
 }
 
 type CertificateEmailData struct {
-	Username  string
+	Name      string
 	EventName string
 	EventType string
 	Year      int
