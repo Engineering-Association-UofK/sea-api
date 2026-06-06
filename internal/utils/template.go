@@ -49,17 +49,17 @@ func GetEmailTemplate(emailType models.EmailType, lang models.Language, data any
 func getTemplate(path string, name string, data any) (string, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error reading template data from disk: %w", err)
 	}
 
 	tmpl, err := template.New(name).Parse(string(content))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error creating template object: %w", err)
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", err
+		return "", fmt.Errorf("error parsing content struct to template: %w", err)
 	}
 
 	return buf.String(), nil
