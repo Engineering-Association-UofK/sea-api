@@ -29,10 +29,13 @@ func (s *EventService) GetEventParticipants(eventID int64, req models.ListReques
 	}, nil
 }
 
-func (s *EventService) UpdateParticipant(req models.ParticipantUpdateRequest) error {
+func (s *EventService) UpdateParticipant(id int64, req models.ParticipantUpdateRequest) error {
 	participant, err := s.EventRepo.GetParticipantByID(req.ID)
 	if err != nil {
 		return errs.New(errs.NotFound, "Participant not found", nil)
+	}
+	if participant.EventID != id {
+		return errs.New(errs.BadRequest, "Participant does not belong to this event", nil)
 	}
 
 	participant.Status = req.Status
@@ -92,9 +95,9 @@ func (s *EventService) UpdateParticipant(req models.ParticipantUpdateRequest) er
 	return nil
 }
 
-func (s *EventService) BatchUpdateParticipant(req []models.ParticipantUpdateRequest) error {
+func (s *EventService) BatchUpdateParticipant(id int64, req []models.ParticipantUpdateRequest) error {
 	for _, r := range req {
-		if err := s.UpdateParticipant(r); err != nil {
+		if err := s.UpdateParticipant(id, r); err != nil {
 			return err
 		}
 	}

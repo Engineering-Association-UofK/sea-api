@@ -22,12 +22,12 @@ const DOC_VERIFICATION_PATH = `https://sea.uofk.edu/doc/verify/`
 
 type CertificateService struct {
 	userRepo            *repositories.UserRepository
+	pdfService          *services.PDFService
 	eventService        *event.EventService
 	S3StoreService      *storage.S3
-	pdfService          *services.PDFService
 	mailService         *services.MailService
-	CollaboratorService *services.CollaboratorService
 	NotificationService *services.NotificationService
+	CollaboratorService *services.CollaboratorService
 
 	certificateRepository *repositories.CertificateRepository
 	documentRepository    *repositories.DocumentRepository
@@ -110,7 +110,7 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 		}
 		name := strings.Split(user.NameAr, " ")
 		data := models.CertificateEmailData{
-			Username:  name[0] + " " + name[1],
+			Name:      name[0] + " " + name[1],
 			EventName: event.Name,
 			EventType: string(event.EventType),
 			Year:      time.Now().Year(),

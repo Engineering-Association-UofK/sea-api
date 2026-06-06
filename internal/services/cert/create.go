@@ -104,8 +104,7 @@ func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequ
 	}, tx)
 	if err != nil {
 		c.S3StoreService.Delete(ctx, storeId)
-		slog.Error("error creating certificate", "error", err, "stored file", storeId)
-		return nil, err
+		return nil, fmt.Errorf("error creating certificate file record with ID '%d': %w", storeId, err)
 	}
 
 	_, err = c.documentRepository.CreateRelation(&models.DocumentRelationModel{
@@ -146,30 +145,42 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, req *
 	progressChan <- "started"
 
 	eventId := req.EventID
-	certTemplateVersion := req.CertificateVersion
 
 	slog.Debug("making certificates for event", "event_id", eventId)
 
 	event, err := c.eventService.GetEventByID(eventId)
 	if err != nil {
-		slog.Debug("error getting event", "error", err, "event_id", eventId)
+		slog.Error("error getting event", "error", err, "event_id", eventId)
+		e := fmt.Errorf("error getting event: %w", err)
+		utils.ParseProgressErrorStruct(e.Error(), progressChan)
 		return err
 	}
 
 	participants, err := c.eventService.EventRepo.GetParticipantByEventID(eventId)
 	if err != nil {
 		slog.Error("error getting participants", "error", err, "event_id", eventId)
+		e := fmt.Errorf("error getting participants: %w", err)
+		utils.ParseProgressErrorStruct(e.Error(), progressChan)
 		return err
 	}
 
+	if !models.AllowedCertTypes[req.CertificateType] || !models.AllowedCertVersions[req.CertificateVersion] {
+		e := fmt.Errorf("Not allowed Certificate Type or Version")
+		utils.ParseProgressErrorStruct(e.Error(), progressChan)
+		return e
+	}
+
+	var participantsMap = map[int64]models.EventParticipantModel{}
 	var ids []int64
 	for _, p := range participants {
 		if p.Completed {
 			if p.Grade >= 40 || p.Grade == 0 {
 				ids = append(ids, p.UserID)
+				participantsMap[p.UserID] = p
 			}
 		}
 	}
+
 	slog.Debug("got participants", "count", len(ids))
 	if len(ids) == 0 {
 		progressChan <- "done"
@@ -179,12 +190,15 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, req *
 	users, err := c.userRepo.GetAllByIndices(ids)
 	if err != nil {
 		slog.Error("error getting users", "error", err, "event_id", eventId)
+		e := fmt.Errorf("error getting users: %w", err)
+		utils.ParseProgressErrorStruct(e.Error(), progressChan)
 		return err
 	}
 	slog.Debug("got users", "count", len(users))
 
 	for i, user := range users {
-		hash, _, err := c.CreateWorkshopCertificate(ctx, user.ID, eventId, certTemplateVersion, req.CertificateType)
+		var p = participantsMap[user.ID]
+		hash, _, err := c.CreateWorkshopCertificate(ctx, &user, &p, event, req.CertificateVersion, req.CertificateType)
 		if err != nil {
 			slog.Error("error creating certificate", "error", err, "user_id", user.ID, "event_id", eventId)
 			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, user.NameAr, progressChan)
@@ -206,30 +220,18 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, req *
 	return nil
 }
 
-func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, userUserID, eventId int64, version models.CertVersion, certType models.CertType) (string, int64, error) {
-	cert, err := c.certificateRepository.GetByUserIDAndEventID(userUserID, eventId)
+func (c *CertificateService) CreateWorkshopCertificate(
+	ctx context.Context,
+	user *models.UserModel,
+	participant *models.EventParticipantModel,
+	event *models.EventModel,
+	version models.CertVersion,
+	certType models.CertType,
+) (string, int64, error) {
+	cert, err := c.certificateRepository.GetByUserIDAndEventID(user.ID, event.ID)
 	if err == nil {
-		slog.Debug("certificate already exists", "user_id", userUserID, "event_id", eventId)
+		slog.Debug("certificate already exists", "user_id", user.ID, "event_id", event.ID)
 		return cert.Hash, cert.ID, nil
-	}
-	participant, err := c.eventService.EventRepo.GetParticipantByEventAndUserIDs(eventId, userUserID)
-	if err != nil {
-		slog.Error("error getting participant", "error", err, "user_id", userUserID, "event_id", eventId)
-		return "", 0, err
-	}
-	if !participant.Completed {
-		slog.Debug("participant did not complete event", "user_id", userUserID, "event_id", eventId)
-		return "", 0, errs.New(errs.NotFound, fmt.Sprintf("Participant %d did not complete event %d yet", userUserID, eventId), nil)
-	}
-	event, err := c.eventService.GetEventByID(eventId)
-	if err != nil {
-		slog.Error("error getting event", "error", err, "event_id", eventId)
-		return "", 0, err
-	}
-	user, err := c.userRepo.GetByUserID(userUserID)
-	if err != nil {
-		slog.Error("error getting user", "error", err, "user_id", userUserID)
-		return "", 0, err
 	}
 
 	stringToHash := user.NameEn + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
@@ -247,8 +249,7 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 	// Get the right template dynamically
 	pdfAr, pdfEn, err := CertTypeMap[certType][version](c, ctx, event, participant, user, qr)
 	if err != nil {
-		slog.Error("error generating en pdf", "error", err)
-		return "", 0, err
+		return "", 0, fmt.Errorf("error generating certificate PDF from dynamic map: %w", err)
 	}
 
 	storeIdAr, err := c.S3StoreService.Upload(ctx, c.storePath+"/ar/"+hashString+".pdf", pdfAr, "application/pdf")
@@ -265,8 +266,8 @@ func (c *CertificateService) CreateWorkshopCertificate(ctx context.Context, user
 
 	id, err := c.certificateRepository.Create(models.CertificateModel{
 		Hash:        hashString,
-		UserID:      userUserID,
-		EventID:     eventId,
+		UserID:      user.ID,
+		EventID:     event.ID,
 		Type:        certType,
 		CertVersion: version,
 		Grade:       participant.Grade,

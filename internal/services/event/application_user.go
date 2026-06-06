@@ -63,8 +63,11 @@ func (s *EventService) Cancel(userID, eventID int64) error {
 }
 
 func (s *EventService) Status(userID, eventID int64, req models.ListRequest) (*models.ApplicationStatusList, error) {
-	if _, err := s.EventRepo.GetEventByID(eventID); err != nil {
-		return nil, errs.New(errs.NotFound, "Event not found", nil)
+	if eventID != 0 {
+		_, err := s.EventRepo.GetEventByID(eventID)
+		if err != nil {
+			return nil, errs.New(errs.NotFound, "Event not found", nil)
+		}
 	}
 
 	total, err := s.EventRepo.GetTotalApplicationsForUser(userID, eventID)

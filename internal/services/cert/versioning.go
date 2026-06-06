@@ -44,39 +44,38 @@ func generateParticipationV0_1(
 	user *models.UserModel,
 	qrCode []byte,
 ) ([]byte, []byte, error) {
+	slog.Debug("Got generateParticipationV0_1 function from the dynamic map")
 	presenter, err := c.CollaboratorService.GetModelByID(event.PresenterID)
 	if err != nil {
-		slog.Error("error getting collaborator", "error", err, "collaborator_id", event.PresenterID)
+		slog.Error("error getting presenter", "error", err, "collaborator_id", event.PresenterID)
 		return nil, nil, err
 	}
 
 	coordinator, err := c.CollaboratorService.GetModelByID(event.CoordinatorID)
 	if err != nil {
-		slog.Error("error getting collaborator", "error", err, "collaborator_id", event.PresenterID)
+		slog.Error("error getting coordinator", "error", err, "collaborator_id", event.CoordinatorID)
 		return nil, nil, err
 	}
 
+	slog.Debug("getting signature", "signature_id", presenter.SignatureID.Int64)
+	signatureImage, err := c.S3StoreService.Download(ctx, presenter.SignatureID.Int64)
+
 	preSignature := ""
 	if presenter.SignatureID.Valid {
-		slog.Debug("getting signature", "signature_id", presenter.SignatureID.Int64)
-		signatureImage, err := c.S3StoreService.Download(ctx, presenter.SignatureID.Int64)
 		if err != nil {
-			slog.Error("error getting signature", "error", err, "signature_id", presenter.SignatureID.Int64)
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("error getting signature with ID '%d': %w", presenter.SignatureID.Int64, err)
 		}
 		preSignature = base64.StdEncoding.EncodeToString(signatureImage)
 	}
 
 	coordSignature := ""
 	if coordinator.SignatureID.Valid {
-		slog.Debug("getting signature", "signature_id", coordinator.SignatureID.Int64)
-		signatureImage, err := c.S3StoreService.Download(ctx, coordinator.SignatureID.Int64)
 		if err != nil {
-			slog.Error("error getting signature", "error", err, "signature_id", coordinator.SignatureID.Int64)
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("error getting signature with ID '%d': %w", presenter.SignatureID.Int64, err)
 		}
 		coordSignature = base64.StdEncoding.EncodeToString(signatureImage)
 	}
+	slog.Debug("Signature IDs", "presenter", presenter.SignatureID.Int64, "coordinator", coordinator.SignatureID.Int64)
 
 	// Get stamp png from resources folder and then convert it to base64
 	stampPath := fmt.Sprintf("%s/stamp.png", config.App.ResourcesDir)
@@ -130,11 +129,13 @@ func generateParticipationV0_1(
 		NowDate:   toArabicDate(time.Now(), "Monday الموافق January 02, 2006"),
 	}
 
+	slog.Debug("Getting arabic certificate", "event ID", event.ID, "user ID", user.ID, "presenter ID", presenter.ID, "Coordinator ID", coordinator.ID)
 	pdfAR, err := c.getFile(models.CertParticipation, "v0.1", models.Arabic, dataAR)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	slog.Debug("Getting english certificate", "event ID", event.ID, "user ID", user.ID, "presenter ID", presenter.ID, "Coordinator ID", coordinator.ID)
 	pdfEN, err := c.getFile(models.CertParticipation, "v0.1", models.English, dataEN)
 	if err != nil {
 		return nil, nil, err
@@ -149,6 +150,7 @@ func (c *CertificateService) getFile(certType models.CertType, certVersion strin
 		return nil, err
 	}
 
+	slog.Debug("Generating the PDF")
 	pdf, err := c.pdfService.GeneratePDFFromHTML(context.Background(), html)
 	if err != nil {
 		return nil, err

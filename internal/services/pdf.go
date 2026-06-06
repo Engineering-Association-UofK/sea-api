@@ -35,5 +35,5 @@ func (s *PDFService) GeneratePDFFromHTML(ctx context.Context, html string) ([]by
 		return nil, err
 	}
 
-	return out.Bytes(), err
+	return out.Bytes(), nil
 }
