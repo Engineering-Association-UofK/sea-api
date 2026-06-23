@@ -246,6 +246,7 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			event.POST("", EventHandler.CreateEvent)
 			event.PUT("", EventHandler.UpdateEvent)
 			event.DELETE("/:id", EventHandler.DeleteEvent)
+			event.POST("/link-form", EventHandler.LinkForm)
 
 			// Participants
 			event.GET("/:id/participants", EventHandler.GetEventParticipants)

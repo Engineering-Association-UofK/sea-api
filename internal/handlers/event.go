@@ -278,6 +278,36 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 	response.NewTransactionResponse(200, "Event deleted successfully", int64(intId), ctx)
 }
 
+// / LinkForm godocs
+//
+//	@Summary		Link Form to Event
+//	@Description	Links form to event for form based applications
+//	@Tags			Events
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.EventFormRequest	true	"Event Form data"
+//	@Success		200	{object}	models.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/event/link-form [post]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) LinkForm(ctx *gin.Context) {
+	var req models.EventFormRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	id, err := h.EventService.LinkForm(req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Event linked to Form successfully", id, ctx)
+}
+
 ///////////////////////
 ///   Application   ///
 ///////////////////////
