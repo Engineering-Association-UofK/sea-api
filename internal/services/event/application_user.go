@@ -37,10 +37,14 @@ func (s *EventService) Apply(userID, eventID int64) (*models.ApplyResponse, erro
 	}, nil
 }
 
-func (s *EventService) FormApply(userID, eventID int64) error {
+func (s *EventService) FormApply(userID, formID, eventID int64) error {
 	_, err := s.ValidateRequest(userID, eventID)
 	if err != nil {
 		return fmt.Errorf("error applying for event with form (ID: %d, User ID: %d): %w", eventID, userID, err)
+	}
+
+	if _, err := s.EventRepo.GetByFormID(formID); err == nil {
+		return errs.New(errs.Forbidden, fmt.Sprintf("User already applied for form (Form ID: %d, Event ID): %d", formID, eventID), nil)
 	}
 
 	return s.EventRepo.Apply(userID, eventID)
