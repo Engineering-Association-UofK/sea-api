@@ -17,10 +17,6 @@ func (s *EventService) LinkForm(req models.EventFormRequest) (int64, error) {
 	return s.EventRepo.LinkForm(req)
 }
 
-func (s *EventService) GetFormID(eventID int64) (*models.EventFormModel, error) {
-	if _, err := s.EventRepo.GetEventByID(eventID); err != nil {
-		return nil, errs.New(errs.NotFound, "Event with ID not found", nil)
-	}
-
-	return s.EventRepo.GetByFormID(eventID)
+func (s *EventService) GetByFormID(formID int64) (*models.EventFormModel, error) {
+	return s.EventRepo.GetByFormID(formID)
 }

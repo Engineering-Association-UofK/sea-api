@@ -136,7 +136,7 @@ func (s *FormService) SubmitForm(userID int64, req *models.SubmitFormRequest) (i
 		return 0, err
 	}
 
-	eventForm, err := s.eventService.GetFormID(req.FormID)
+	eventForm, err := s.eventService.GetByFormID(req.FormID)
 	if err == nil {
 		err = s.eventService.FormApply(userID, req.FormID, eventForm.EventID)
 		if err != nil {
