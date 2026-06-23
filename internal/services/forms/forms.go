@@ -4,8 +4,8 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
-	"sea-api/internal/repositories/eventrepo"
 	"sea-api/internal/services"
+	"sea-api/internal/services/event"
 	"sea-api/internal/utils/valid"
 	"strings"
 	"time"
@@ -13,14 +13,14 @@ import (
 
 type FormService struct {
 	formRepo       *repositories.FormRepository
-	eventRepo      *eventrepo.EventRepository
+	eventService   *event.EventService
 	galleryService *services.GalleryService
 }
 
-func NewFormService(formRepo *repositories.FormRepository, eventRepo *eventrepo.EventRepository, galleryService *services.GalleryService) *FormService {
+func NewFormService(formRepo *repositories.FormRepository, eventService *event.EventService, galleryService *services.GalleryService) *FormService {
 	return &FormService{
 		formRepo:       formRepo,
-		eventRepo:      eventRepo,
+		eventService:   eventService,
 		galleryService: galleryService,
 	}
 }
