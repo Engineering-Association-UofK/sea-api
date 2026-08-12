@@ -6,7 +6,7 @@ import (
 	"sea-api/internal/utils/valid"
 )
 
-func (s *EventService) GetEventParticipants(eventID int64, req models.ListRequest) ([]models.EventParticipantsResponse, error) {
+func (s *EventService) GetEventParticipants(eventID int64, req models.ListRequest) (*models.EventParticipantsResponse, error) {
 	total, err := s.EventRepo.GetTotalEvents()
 	if err != nil {
 		return nil, err
@@ -19,13 +19,12 @@ func (s *EventService) GetEventParticipants(eventID int64, req models.ListReques
 		return nil, err
 	}
 
-	return []models.EventParticipantsResponse{
-		{
-			EventID:      eventID,
-			Participants: participants,
-			Page:         req.Page,
-			Current:      req.Page,
-		},
+	return &models.EventParticipantsResponse{
+		EventID:      eventID,
+		Participants: participants,
+		Page:         req.Page,
+		Current:      req.Page,
+		Total:        total,
 	}, nil
 }
 
