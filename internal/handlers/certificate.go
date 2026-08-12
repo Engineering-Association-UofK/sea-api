@@ -6,16 +6,16 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	_ "sea-api/internal/response"
-	"sea-api/internal/services"
+	"sea-api/internal/services/cert"
 
 	"github.com/gin-gonic/gin"
 )
 
 type CertificateHandler struct {
-	service *services.CertificateService
+	service *cert.CertificateService
 }
 
-func NewCertificateHandler(service *services.CertificateService) *CertificateHandler {
+func NewCertificateHandler(service *cert.CertificateService) *CertificateHandler {
 	return &CertificateHandler{service: service}
 }
 
@@ -65,14 +65,15 @@ func (h *CertificateHandler) VerifyDocument(ctx *gin.Context) {
 // MakeCertificatesForEvent godocs
 //
 //	@Summary		Make Certificates For Event
-//	@Description	Generate certificates for all eligible participants of an event
+//	@Description	Generate certificates for all eligible participants of an event, the stream always starts with "started" and ends with "done" if no errors occurred.
 //	@Tags			Certificate
 //	@Produce		text/event-stream
 //	@Param			body	body	models.MakeCertificatesForEventRequest	true	"Request body"
 //	@Success		200		{string}	string	"SSE stream"
+//	@Success		200		{object}	models.Progress
+//	@Failure		200		{object}	models.ProgressError
 //	@Failure		400		{object}	response.BaseError
-//	@Failure		500		{object}	response.BaseError
-//	@Router			/admin/certificate/generate-all-for-event [get]
+//	@Router			/admin/event/generate-certs [get]
 //
 //	@Security		ApiKeyAuth
 func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
@@ -89,7 +90,7 @@ func (h *CertificateHandler) MakeCertificatesForEvent(ctx *gin.Context) {
 
 	progressChan := make(chan string)
 
-	go h.service.MakeCertificatesForEvent(ctx.Request.Context(), req.EventID, progressChan)
+	go h.service.MakeCertificatesForEvent(ctx.Request.Context(), &req, progressChan)
 
 	ctx.Stream(func(w io.Writer) bool {
 		msg, ok := <-progressChan
@@ -142,13 +143,14 @@ func (h *CertificateHandler) SignPDF(ctx *gin.Context) {
 // SendCertificatesEmailsForEvent godocs
 //
 //	@Summary		Send Certificates Emails For Event
-//	@Description	Send certificate emails to all eligible participants of an event
+//	@Description	Send certificate emails to all eligible participants of an event, the stream always starts with "started" and ends with "done" if no errors occurred.
 //	@Tags			Certificate
 //	@Produce		text/event-stream
 //	@Param			body	body	models.CertificateSendEmailData	true	"Request body"
 //	@Success		200		{string}	string	"SSE stream"
+//	@Success		200		{object}	models.Progress
+//	@Failure		200		{object}	models.ProgressError
 //	@Failure		400		{object}	response.BaseError
-//	@Failure		500		{object}	response.BaseError
 //	@Router			/admin/event/send-all-emails [post]
 //
 //	@Security		ApiKeyAuth

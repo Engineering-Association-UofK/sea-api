@@ -17,8 +17,8 @@ func NewCertificateRepository(db *sqlx.DB) *CertificateRepository {
 
 func (r *CertificateRepository) Create(item models.CertificateModel) (int64, error) {
 	query := fmt.Sprintf(`
-	INSERT INTO %s (cert_hash, user_id, event_id, grade, issue_date, status)
-	VALUES (:cert_hash, :user_id, :event_id, :grade, :issue_date, :status)
+	INSERT INTO %s (cert_hash, user_id, event_id, type, cert_version, grade, issue_date, status)
+	VALUES (:cert_hash, :user_id, :event_id, :type, :cert_version, grade, :issue_date, :status)
 	`, models.TableCertificates)
 	res, err := r.DB.NamedExec(query, &item)
 	if err != nil {
@@ -67,6 +67,33 @@ func (r *CertificateRepository) GetByUserID(userID int64, req *models.ListReques
 	offset := (req.Page - 1) * req.Limit
 
 	var items = []models.CertificateModel{}
+	err := r.DB.Select(&items, query, userID, req.Limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (r *CertificateRepository) GetByCertsDetails(userID int64, req *models.ListRequest) ([]models.CertificateResponse, error) {
+	query := fmt.Sprintf(`
+	SELECT 
+		c.cert_hash, 
+		c.event_id, 
+		e.name AS event_name, 
+		c.type, 
+		c.cert_version, 
+		c.grade, 
+		c.issue_date, 
+		c.status
+	FROM %s c
+	JOIN %s e ON c.event_id = e.id
+	WHERE c.user_id = ? 
+	ORDER BY c.issue_date DESC
+	LIMIT ? OFFSET ?
+	`, models.TableCertificates, models.TableEvents)
+	offset := (req.Page - 1) * req.Limit
+
+	var items = []models.CertificateResponse{}
 	err := r.DB.Select(&items, query, userID, req.Limit, offset)
 	if err != nil {
 		return nil, err
@@ -155,7 +182,7 @@ func (r *CertificateRepository) GetFileByCertificateIDAndLang(certificateID int6
 func (r *CertificateRepository) Update(item *models.CertificateModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
-	SET cert_hash = :cert_hash, user_id = :user_id, event_id = :event_id, issue_date = :issue_date, status = :status
+	SET cert_hash = :cert_hash, user_id = :user_id, event_id = :event_id, type = :type, cert_version = :cert_version, grade = :grade, issue_date = :issue_date, status = :status
 	WHERE id = :id
 	`, models.TableCertificates)
 	_, err := r.DB.NamedExec(query, &item)

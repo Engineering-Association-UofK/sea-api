@@ -35,9 +35,19 @@ func RateLimiter(r rate.Limit, b int) gin.HandlerFunc {
 		}
 		LimiterMu.Unlock()
 
-		if !limiter.Allow() {
-			timeRemaining := limiter.Reserve().DelayFrom(time.Now())
-			response.TooManyRequestsErrorResponse(timeRemaining, getMessage(timeRemaining), c)
+		reservation := limiter.Reserve()
+
+		if !reservation.OK() {
+			response.TooManyRequestsErrorResponse(0, "Rate limit exceeded", c)
+			c.Abort()
+			return
+		}
+
+		delay := reservation.DelayFrom(time.Now())
+		if delay > 0 {
+			reservation.Cancel()
+
+			response.TooManyRequestsErrorResponse(delay, getMessage(delay), c)
 			c.Abort()
 			return
 		}

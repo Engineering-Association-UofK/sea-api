@@ -1,9 +1,7 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/smtp"
 	"sea-api/internal/config"
 	"sea-api/internal/models"
@@ -32,48 +30,8 @@ func NewMailService(userService *user.UserService) *MailService {
 	}
 }
 
-func (m *MailService) SendUsersEmails(e models.UsersEmails) error {
-	if e.Preview {
-		user, err := m.UserService.GetUserDetails(0)
-		if err != nil {
-			return err
-		}
-		slog.Info("Sending preview email")
-		template, err := checkEmailType(m, e, user.Username)
-		if err != nil {
-			return err
-		}
-		m.SendEmail(models.Email{
-			To:      []string{user.Email},
-			Subject: e.Subject,
-			HTML:    template,
-		})
-		return nil
-	}
-	users, err := m.UserService.GetAllByIndices(e.UserIDs)
-	if err != nil {
-		return err
-	}
-	if len(users) != len(e.UserIDs) || len(users) == 0 {
-		return fmt.Errorf("Some or all users not found")
-	}
-
-	for _, user := range users {
-		template, err := checkEmailType(m, e, user.Username)
-		if err != nil {
-			return err
-		}
-		m.SendEmail(models.Email{
-			To:      []string{user.Email},
-			Subject: e.Subject,
-			HTML:    template,
-		})
-	}
-	return nil
-}
-
 func (m *MailService) SendVerificationCode(to string, data models.VerifyEmail) error {
-	tem, err := utils.GetTemplate(string(utils.EmailVerificationCodeEn), data)
+	tem, err := utils.GetEmailTemplate(models.EmailAccCode, models.Arabic, data)
 	if err != nil {
 		return err
 	}
@@ -148,42 +106,4 @@ func (m *MailService) SendEmail(e models.Email) error {
 		message,
 	)
 	return err
-}
-
-// ======== HELPERS ========
-
-func checkEmailType(m *MailService, e models.UsersEmails, username string) (string, error) {
-	var template string
-	var err error
-	switch e.Type {
-	case models.TECHNICAL:
-		var data models.TechnicalEmail
-		if err := json.Unmarshal(e.Data, &data); err != nil {
-			return "", err
-		}
-		data.Message = strings.ReplaceAll(data.Message, "\n", "<br>")
-		template, err = utils.GetEmailTechnicalTemplate(models.TechnicalEmailTemplate{
-			TechnicalEmail: data,
-			Username:       username,
-			Year:           time.Now().Year(),
-		})
-		if err != nil {
-			return "", err
-		}
-
-	case models.CERTIFICATE:
-		var data models.CertificateEmailData
-		if err := json.Unmarshal(e.Data, &data); err != nil {
-			return "", err
-		}
-		template, err = utils.GetEnglishCertificateTemplate(data)
-		if err != nil {
-			return "", err
-		}
-
-	default:
-		return "", fmt.Errorf("invalid email type")
-	}
-
-	return template, nil
 }

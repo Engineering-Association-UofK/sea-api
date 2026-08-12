@@ -315,7 +315,7 @@ func (r *BotRepository) GetLockedNodes() ([]models.NodeActionRow, error) {
 func (r *BotRepository) ClearSessions() error {
 	query := fmt.Sprintf(`
 	DELETE FROM %s
-    WHERE created_at < NOW() - INTERVAL 5 HOUR
+    WHERE updated_at < NOW() - INTERVAL 5 HOUR
 	`, models.TableBotUserStates)
 	_, err := r.db.Exec(query)
 	return err

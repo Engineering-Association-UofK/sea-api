@@ -5,6 +5,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
+	"sea-api/internal/services/event"
 	"sea-api/internal/utils/valid"
 	"strings"
 	"time"
@@ -12,11 +13,16 @@ import (
 
 type FormService struct {
 	formRepo       *repositories.FormRepository
+	eventService   *event.EventService
 	galleryService *services.GalleryService
 }
 
-func NewFormService(formRepo *repositories.FormRepository, galleryService *services.GalleryService) *FormService {
-	return &FormService{formRepo: formRepo, galleryService: galleryService}
+func NewFormService(formRepo *repositories.FormRepository, eventService *event.EventService, galleryService *services.GalleryService) *FormService {
+	return &FormService{
+		formRepo:       formRepo,
+		eventService:   eventService,
+		galleryService: galleryService,
+	}
 }
 
 // ======== CREATE ========
@@ -102,6 +108,7 @@ func (s *FormService) GetAllForms(req *models.ListRequest) (*models.FormSummaryL
 			Description:          f.Description,
 			StartDate:            f.StartDate,
 			EndDate:              f.EndDate,
+			IsPublished:          f.IsPublished,
 			AllowMultipleEntries: f.AllowMultipleEntries,
 			Type:                 f.Type,
 			CreatedAt:            f.CreatedAt,

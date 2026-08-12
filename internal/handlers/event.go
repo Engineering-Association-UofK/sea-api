@@ -4,122 +4,66 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
-	"sea-api/internal/services"
+	"sea-api/internal/services/event"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type EventHandler struct {
-	EventService *services.EventService
+	EventService *event.EventService
 }
 
-func NewEventHandler(eventService *services.EventService) *EventHandler {
+func NewEventHandler(eventService *event.EventService) *EventHandler {
 	return &EventHandler{
 		EventService: eventService,
 	}
 }
 
-// GetAllEvents godocs
+// GetEventsList godocs
 //
-//	@Summary		Get all events
-//	@Description	Get a list of all events for administration
-//	@Tags			Events
-//	@Produce		json
-//	@Param			limit	query		int	true	"Content count limit"
-//	@Param			page	query		int	true	"Page number"
-//	@Success		200	{object}		models.EventListLimitResponse
-//	@Failure		401	{object}	response.BaseError
-//	@Failure		500	{object}	response.BaseError
-//	@Router			/admin/event [get]
-//
-//	@Security		ApiKeyAuth
-func (h *EventHandler) GetAllEvents(ctx *gin.Context) {
-	var req models.ListRequest
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
-		return
-	}
-
-	events, err := h.EventService.GetAllEvents(req)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-	ctx.JSON(200, events)
-}
-
-// GetViewEvents godocs
-//
-//	@Summary		Get events for view
-//	@Description	Get a list of events for public view
+//	@Summary		Get events list
+//	@Description	Get a paginated list of events with filters for public view
 //	@Tags			Public
 //	@Produce		json
-//	@Param			limit	query		int	true	"Content count limit"
-//	@Param			page	query		int	true	"Page number"
-//	@Success		200		{object}	models.EventViewListLimitResponse
+//	@Param			limit	query		int		true	"Content count limit"
+//	@Param			page	query		int		true	"Page number"
+//	@Param			type	query		string	false	"Event type filter"
+//	@Param			status	query		string	false	"Event status filter"
+//	@Success		200		{object}	models.EventViewListResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/cms/events [get]
-func (h *EventHandler) GetViewEvents(ctx *gin.Context) {
-	var req models.ListRequest
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
+//	@Router			/event [get]
+func (h *EventHandler) GetEventsList(ctx *gin.Context) {
+	var query models.QueryEventPublicRequest
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Invalid query parameters", nil))
 		return
 	}
 
-	events, err := h.EventService.GetAllViewEvents(req)
+	resp, err := h.EventService.GetViewList(query)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
-	ctx.JSON(200, events)
+
+	ctx.JSON(200, resp)
 }
 
 // GetEventByID godocs
 //
 //	@Summary		Get event by ID
 //	@Description	Get event details by ID for administration
-//	@Tags			Events
+//	@Tags			Public
 //	@Produce		json
 //	@Param			id	path	int	true	"Event ID"
-//	@Success		200	{object}	models.EventDTO
+//	@Success		200	{object}	models.EventViewDetailsResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/admin/event/{id} [get]
-//
-//	@Security		ApiKeyAuth
+//	@Router			/event/{id} [get]
 func (h *EventHandler) GetEventByID(ctx *gin.Context) {
-	id := ctx.Param("id")
-	intId, err := strconv.Atoi(id)
-	if err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
-
-	event, err := h.EventService.GetEventByID(int64(intId))
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-	ctx.JSON(200, event)
-}
-
-// GetViewEventByID godocs
-//
-//	@Summary		Get event by ID for view
-//	@Description	Get event details by ID for public view
-//	@Tags			Public
-//	@Produce		json
-//	@Param			id	path		int	true	"Event ID"
-//	@Success		200	{object}	models.EventViewResponse
-//	@Failure		400	{object}	response.BaseError
-//	@Failure		404	{object}	response.BaseError
-//	@Failure		500	{object}	response.BaseError
-//	@Router			/cms/events/{id} [get]
-func (h *EventHandler) GetViewEventByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
@@ -127,12 +71,120 @@ func (h *EventHandler) GetViewEventByID(ctx *gin.Context) {
 		return
 	}
 
-	event, err := h.EventService.GetViewEventByID(intId)
+	event, err := h.EventService.GetEventViewDetails(ctx.Request.Context(), intId)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
 	ctx.JSON(200, event)
+}
+
+// GetEventDetailsAdmin godocs
+//
+//	@Summary		Get event details for admin
+//	@Description	Get full event details including grading scheme and participants count for administration
+//	@Tags			Events
+//	@Produce		json
+//	@Param			id	path	int	true	"Event ID"
+//	@Success		200	{object}	models.EventDetailsAdminResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/event/{id} [get]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) GetEventDetailsAdmin(ctx *gin.Context) {
+	id := ctx.Param("id")
+	intId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Invalid event ID", nil))
+		return
+	}
+
+	event, err := h.EventService.GetEventDetailsAdmin(ctx.Request.Context(), intId)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+	ctx.JSON(200, event)
+}
+
+// GetEventParticipants godocs
+//
+//	@Summary		Get event participants
+//	@Description	Get a paginated list of participants for a specific event
+//	@Tags			Events
+//	@Produce		json
+//	@Param			id		path		int	true	"Event ID"
+//	@Param			limit	query		int	true	"Content count limit"
+//	@Param			page	query		int	true	"Page number"
+//	@Success		200		{object}	models.EventParticipantsResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/event/{id}/participants [get]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) GetEventParticipants(ctx *gin.Context) {
+	id := ctx.Param("id")
+	intId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Invalid event ID", nil))
+		return
+	}
+
+	var req models.ListRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Invalid pagination parameters", nil))
+		return
+	}
+
+	resp, err := h.EventService.GetEventParticipants(intId, req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, resp)
+}
+
+// UpdateEventParticipants godocs
+//
+//	@Summary		Update event participants
+//	@Description	Batch update status, completion, and grades for event participants
+//	@Tags			Events
+//	@Accept			json
+//	@Produce		json
+//	@Param			id				path		int	true	"Event ID"
+//	@Param			body	body		[]models.ParticipantUpdateRequest	true	"Participants update data"
+//	@Success		200		{object}	response.TransactionResponse
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/admin/event/{id}/participants [put]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) UpdateEventParticipants(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Invalid event ID", nil))
+		return
+	}
+
+	var req []models.ParticipantUpdateRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Invalid request body", nil))
+		return
+	}
+
+	if err := h.EventService.BatchUpdateParticipant(id, req); err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Participants updated successfully", 0, ctx)
 }
 
 // CreateEvent godocs
@@ -142,7 +194,7 @@ func (h *EventHandler) GetViewEventByID(ctx *gin.Context) {
 //	@Tags			Events
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		models.EventDTO	true	"Event data"
+//	@Param			body	body		models.EventCreateRequest	true	"Event data"
 //	@Success		201		{object}	response.TransactionResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
@@ -151,7 +203,7 @@ func (h *EventHandler) GetViewEventByID(ctx *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (h *EventHandler) CreateEvent(ctx *gin.Context) {
-	var event models.EventDTO
+	var event models.EventCreateRequest
 	if err := ctx.ShouldBindJSON(&event); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -162,7 +214,7 @@ func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 		ctx.Error(err)
 		return
 	}
-	event.ID = id
+
 	response.NewTransactionResponse(201, "Event created successfully", id, ctx)
 }
 
@@ -173,7 +225,7 @@ func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 //	@Tags			Events
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		models.EventDTO	true	"Event update data"
+//	@Param			body	body		models.EventUpdateRequest	true	"Event update data"
 //	@Success		200		{object}	response.TransactionResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
@@ -183,7 +235,7 @@ func (h *EventHandler) CreateEvent(ctx *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (h *EventHandler) UpdateEvent(ctx *gin.Context) {
-	var event models.EventDTO
+	var event models.EventUpdateRequest
 	if err := ctx.ShouldBindJSON(&event); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -224,4 +276,192 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 		return
 	}
 	response.NewTransactionResponse(200, "Event deleted successfully", int64(intId), ctx)
+}
+
+// LinkForm godocs
+//
+//	@Summary		Link Form to Event
+//	@Description	Links form to event for form based applications
+//	@Tags			Events
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.EventFormRequest	true	"Event Form data"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/event/link-form [post]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) LinkForm(ctx *gin.Context) {
+	var req models.EventFormRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	id, err := h.EventService.LinkForm(req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Event linked to Form successfully", id, ctx)
+}
+
+///////////////////////
+///   Application   ///
+///////////////////////
+
+// GetApplicationStatus godocs
+//
+//	@Summary		Get application status
+//	@Description	Get the registration status and details for all events for the current user
+//	@Tags			Applications
+//	@Produce		json
+//	@Param			limit	query		int	true	"Content count limit"
+//	@Param			page	query		int	true	"Page number"
+//	@Param			eventID	query		int	true	"Event ID (Send 0 for all events)"
+//	@Success		200	{object}	models.ApplicationStatusList
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/event/all-status [get]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) GetApplicationStatus(ctx *gin.Context) {
+	var req models.ListRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
+		return
+	}
+
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	resp, err := h.EventService.Status(claims.UserID, req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, resp)
+}
+
+// / GetOneApplicationStatus godocs
+//
+//	@Summary		Get one application status
+//	@Description	Get the registration status and details for one event for the current user
+//	@Tags			Applications
+//	@Produce		json
+//	@Param			id	path		int	true	"Event ID"
+//	@Success		200	{object}	models.ApplicationStatus
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/event/status/{id} [get]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) GetOneApplicationStatus(ctx *gin.Context) {
+	id := ctx.Param("id")
+	int64Id, err := strconv.ParseInt(id, 10, 64)
+
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	resp, err := h.EventService.ApplicationStatus(claims.UserID, int64Id)
+
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, resp)
+}
+
+// ApplyForEvent godocs
+//
+//	@Summary		Apply for event
+//	@Description	Submit an application for a specific event for the current user
+//	@Tags			Applications
+//	@Produce		json
+//	@Param			id	path		int	true	"Event ID"
+//	@Success		200	{object}	models.ApplyResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/event/apply/{id} [post]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) ApplyForEvent(ctx *gin.Context) {
+	eventId := ctx.Param("id")
+	intId, err := strconv.ParseInt(eventId, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	resp, err := h.EventService.Apply(claims.UserID, intId)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, resp)
+}
+
+// CancelApplicationForEvent godocs
+//
+//	@Summary		Cancel event application
+//	@Description	Cancel an existing application for a specific event for the current user
+//	@Tags			Applications
+//	@Produce		json
+//	@Param			id	path		int	true	"Event ID"
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/event/cancel/{id} [post]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) CancelApplicationForEvent(ctx *gin.Context) {
+	eventId := ctx.Param("id")
+	intId, err := strconv.ParseInt(eventId, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	if err := h.EventService.Cancel(claims.UserID, intId); err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(200, "Event Application Canceled successfully", int64(intId), ctx)
 }

@@ -5,6 +5,8 @@ CREATE TABLE event_form (
     id INT PRIMARY KEY AUTO_INCREMENT,
     form_id INT NOT NULL,
     event_id INT NOT NULL,
+    
+    UNIQUE KEY (form_id, event_id),
 
     FOREIGN KEY (form_id) REFERENCES forms(id) ON DELETE CASCADE,
     FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE
