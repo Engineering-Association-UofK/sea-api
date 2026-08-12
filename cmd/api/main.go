@@ -88,7 +88,7 @@ func Go() {
 	authService := services.NewAuthService(userRepository, mailService, verificationRepo)
 
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
-	FormService := forms.NewFormService(formRepository, eventRepository, galleryService)
+	FormService := forms.NewFormService(formRepository, eventService, galleryService)
 
 	certificateService := cert.NewCertificateService(
 		userRepository,
