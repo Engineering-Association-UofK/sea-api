@@ -216,6 +216,7 @@ type EventParticipantsResponse struct {
 	Participants []ParticipantDetails `json:"participants"`
 	Page         int64                `json:"page"`
 	Current      int64                `json:"current"`
+	Total        int64                `json:"total"`
 }
 
 type ParticipantDetails struct {
@@ -232,6 +233,11 @@ type ParticipantDetails struct {
 type GradeDetail struct {
 	ComponentID int64   `json:"component_id"`
 	Score       float64 `json:"score"`
+}
+
+type SingleApplicationStatus struct {
+	Applied bool `json:"applied"`
+	ApplicationStatus
 }
 
 type ApplicationStatus struct {
@@ -293,6 +299,6 @@ type ApplyResponse struct {
 }
 
 type EventFormRequest struct {
-	EventID int64 `json:"event_id"`
-	FormID  int64 `json:"form_id"`
+	EventID int64 `json:"event_id" db:"event_id"`
+	FormID  int64 `json:"form_id" db:"form_id"`
 }
