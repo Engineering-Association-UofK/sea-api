@@ -1,6 +1,7 @@
 package event
 
 import (
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"sea-api/internal/errs"
@@ -10,6 +11,10 @@ import (
 )
 
 func (s *EventService) Apply(userID, eventID int64) (*models.ApplyResponse, error) {
+	if _, err := s.EventRepo.GetParticipantByEventAndUserIDs(eventID, userID); err == nil {
+		return nil, errs.New(errs.Forbidden, "User already applied for this event", nil)
+	}
+
 	event, err := s.ValidateRequest(userID, eventID)
 	if err != nil {
 		return nil, fmt.Errorf("error applying for event (ID: %d, User ID: %d): %w", eventID, userID, err)
@@ -38,22 +43,21 @@ func (s *EventService) Apply(userID, eventID int64) (*models.ApplyResponse, erro
 }
 
 func (s *EventService) FormApply(userID, formID, eventID int64) error {
+	if _, err := s.EventRepo.GetParticipantByEventAndUserIDs(eventID, userID); err == nil {
+		return errs.New(errs.Forbidden, "User already applied for this event", nil)
+	}
+
 	_, err := s.ValidateRequest(userID, eventID)
 	if err != nil {
 		return fmt.Errorf("error applying for event with form (ID: %d, User ID: %d): %w", eventID, userID, err)
-	}
-
-	if _, err := s.EventRepo.GetByFormID(formID); err == nil {
-		return errs.New(errs.Forbidden, fmt.Sprintf("User already applied for form (Form ID: %d, Event ID): %d", formID, eventID), nil)
 	}
 
 	return s.EventRepo.Apply(userID, eventID)
 }
 
 func (s *EventService) Cancel(userID, eventID int64) error {
-	_, err := s.ValidateRequest(userID, eventID)
-	if err != nil {
-		return fmt.Errorf("error canceling for event application (ID: %d, User ID: %d): %w", eventID, userID, err)
+	if _, err := s.EventRepo.GetEventByID(eventID); err != nil {
+		return errs.New(errs.NotFound, "Event with ID not found", nil)
 	}
 
 	participant, err := s.EventRepo.GetParticipantByEventAndUserIDs(eventID, userID)
@@ -68,20 +72,15 @@ func (s *EventService) Cancel(userID, eventID int64) error {
 	return s.EventRepo.Cancel(userID, eventID)
 }
 
-func (s *EventService) Status(userID, eventID int64, req models.ListRequest) (*models.ApplicationStatusList, error) {
-	_, err := s.ValidateRequest(userID, eventID)
-	if err != nil {
-		return nil, fmt.Errorf("error applying for event with form (ID: %d, User ID: %d): %w", eventID, userID, err)
-	}
-
-	total, err := s.EventRepo.GetTotalApplicationsForUser(userID, eventID)
+func (s *EventService) Status(userID int64, req models.ListRequest) (*models.ApplicationStatusList, error) {
+	total, err := s.EventRepo.GetTotalApplicationsForUser(userID)
 	if err != nil {
 		return nil, errs.New(errs.InternalServerError, "Failed to get total applications for user: "+err.Error(), nil)
 	}
 
 	pages := valid.Limit(&req, total)
 
-	applications, err := s.EventRepo.GetApplicationsForUser(userID, eventID, req)
+	applications, err := s.EventRepo.GetApplicationsForUser(userID, req)
 	if err != nil {
 		slog.Error("Failed to get application", "error", err.Error())
 		return nil, errs.New(errs.NotFound, "Applications not found", nil)
@@ -91,6 +90,28 @@ func (s *EventService) Status(userID, eventID int64, req models.ListRequest) (*m
 		Current:      req.Page,
 		Pages:        pages,
 		Applications: applications,
+	}, nil
+}
+
+func (s *EventService) ApplicationStatus(userID, eventID int64) (*models.SingleApplicationStatus, error) {
+	_, err := s.EventRepo.GetEventByID(eventID)
+	if err != nil {
+		return nil, err
+	}
+
+	application, err := s.EventRepo.GetApplicationStatus(userID, eventID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &models.SingleApplicationStatus{
+				Applied: false,
+			}, nil
+		}
+		return nil, err
+	}
+
+	return &models.SingleApplicationStatus{
+		Applied:           false,
+		ApplicationStatus: *application,
 	}, nil
 }
 

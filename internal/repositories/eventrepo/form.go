@@ -6,6 +6,12 @@ import (
 )
 
 func (r *EventRepository) LinkForm(req models.EventFormRequest) (int64, error) {
+	deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE event_id = ?`, models.TableEventForms)
+	_, err := r.db.Exec(deleteQuery, req.EventID)
+	if err != nil {
+		return 0, err
+	}
+
 	query := fmt.Sprintf(`
 		INSERT INTO %s (form_id, event_id)
 		VALUES (:form_id, :event_id)
