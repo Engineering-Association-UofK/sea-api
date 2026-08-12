@@ -262,8 +262,10 @@ func (s *FormService) PublishForm(id int64) error {
 	if err != nil {
 		return errs.New(errs.NotFound, "form not found", nil)
 	}
+	fmt.Println(form)
 	if !form.IsPublished {
 		form.IsPublished = true
+		fmt.Println(form)
 		return s.formRepo.UpdateForm(form)
 	}
 	return nil
@@ -274,8 +276,10 @@ func (s *FormService) UnpublishForm(id int64) error {
 	if err != nil {
 		return errs.New(errs.NotFound, "form not found", nil)
 	}
+	fmt.Println(form)
 	if form.IsPublished {
 		form.IsPublished = false
+		fmt.Println(form)
 		return s.formRepo.UpdateForm(form)
 	}
 	return nil

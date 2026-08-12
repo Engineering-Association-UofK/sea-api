@@ -108,6 +108,7 @@ func (s *FormService) GetAllForms(req *models.ListRequest) (*models.FormSummaryL
 			Description:          f.Description,
 			StartDate:            f.StartDate,
 			EndDate:              f.EndDate,
+			IsPublished:          f.IsPublished,
 			AllowMultipleEntries: f.AllowMultipleEntries,
 			Type:                 f.Type,
 			CreatedAt:            f.CreatedAt,
