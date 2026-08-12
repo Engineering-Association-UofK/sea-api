@@ -85,13 +85,16 @@ CREATE TABLE event (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
+    coordinator_id INT NOT NULL,
     presenter_id INT NOT NULL,
     event_type VARCHAR(255) NOT NULL,
     max_participants INT NOT NULL,
+    form_application TINYINT NOT NULL,
     outcomes TEXT NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
 
+    FOREIGN KEY (coordinator_id) REFERENCES collaborators(id) ON UPDATE CASCADE,
     FOREIGN KEY (presenter_id) REFERENCES collaborators(id) ON UPDATE CASCADE
 );
 

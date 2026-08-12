@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"log/slog"
 	"sea-api/internal/config"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
@@ -84,6 +85,7 @@ func (s *S3) Download(ctx context.Context, id int64) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("Download file found", "file ID", file.ID, "File key", file.Key)
 
 	return s.DownloadWithKey(ctx, file.Key)
 }
@@ -114,6 +116,8 @@ func (s *S3) GenerateDownloadUrlByID(ctx context.Context, id int64) (string, err
 	if err != nil {
 		return "", err
 	}
+
+	slog.Debug("Link file found", "file ID", file.ID, "File key", file.Key)
 
 	return s.GenerateDownloadUrlByKey(ctx, file.Key)
 }

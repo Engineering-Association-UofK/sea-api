@@ -17,8 +17,8 @@ func NewCollaboratorRepo(db *sqlx.DB) *CollaboratorRepo {
 
 func (r *CollaboratorRepo) Create(collab *models.CollaboratorModel) (int64, error) {
 	query := fmt.Sprintf(`
-	INSERT INTO %s (name_ar, name_en, email, signature_id)
-	VALUES (:name_ar, :name_en, :email, :signature_id)
+	INSERT INTO %s (name_ar, name_en, title_ar, title_en, email, signature_id)
+	VALUES (:name_ar, :name_en, :title_ar, :title_en, email, :signature_id)
 	`, models.TableCollaborators)
 	res, err := r.DB.NamedExec(query, collab)
 	if err != nil {
@@ -36,19 +36,29 @@ func (r *CollaboratorRepo) GetByID(id int64) (*models.CollaboratorModel, error) 
 	return &collab, nil
 }
 
-func (r *CollaboratorRepo) GetAll() ([]models.CollaboratorModel, error) {
+func (r *CollaboratorRepo) GetAll(req models.ListRequest) ([]models.CollaboratorModel, error) {
 	var collaborators []models.CollaboratorModel
-	err := r.DB.Select(&collaborators, fmt.Sprintf(`SELECT * FROM %s`, models.TableCollaborators))
+	query := fmt.Sprintf(`SELECT * FROM %s LIMIT ? OFFSET ?`, models.TableCollaborators)
+	err := r.DB.Select(&collaborators, query, req.Limit, (req.Page-1)*req.Limit)
 	if err != nil {
 		return nil, err
 	}
 	return collaborators, nil
 }
 
+func (r *CollaboratorRepo) GetTotal() int64 {
+	var count int64
+	err := r.DB.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TableCollaborators))
+	if err != nil {
+		return 0
+	}
+	return count
+}
+
 func (r *CollaboratorRepo) Update(collab *models.CollaboratorModel) error {
 	query := fmt.Sprintf(`
 	UPDATE %s
-	SET name_ar = :name_ar, name_en = :name_en, email = :email, signature_id = :signature_id
+	SET name_ar = :name_ar, name_en = :name_en, title_ar = :title_ar, title_en = :title_en, email = :email, signature_id = :signature_id
 	WHERE id = :id
 	`, models.TableCollaborators)
 	_, err := r.DB.NamedExec(query, collab)

@@ -136,6 +136,14 @@ func (s *FormService) SubmitForm(userID int64, req *models.SubmitFormRequest) (i
 		return 0, err
 	}
 
+	eventForm, err := s.eventService.GetByFormID(req.FormID)
+	if err == nil {
+		err = s.eventService.FormApply(userID, req.FormID, eventForm.EventID)
+		if err != nil {
+			return 0, err
+		}
+	}
+
 	response := &models.FormResponseModel{
 		FormID:      req.FormID,
 		UserID:      userID,
@@ -254,8 +262,10 @@ func (s *FormService) PublishForm(id int64) error {
 	if err != nil {
 		return errs.New(errs.NotFound, "form not found", nil)
 	}
+	fmt.Println(form)
 	if !form.IsPublished {
 		form.IsPublished = true
+		fmt.Println(form)
 		return s.formRepo.UpdateForm(form)
 	}
 	return nil
@@ -266,8 +276,10 @@ func (s *FormService) UnpublishForm(id int64) error {
 	if err != nil {
 		return errs.New(errs.NotFound, "form not found", nil)
 	}
+	fmt.Println(form)
 	if form.IsPublished {
 		form.IsPublished = false
+		fmt.Println(form)
 		return s.formRepo.UpdateForm(form)
 	}
 	return nil

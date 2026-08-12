@@ -12,6 +12,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services/storage"
+	"sea-api/internal/utils/valid"
 	"strings"
 )
 
@@ -30,14 +31,21 @@ func NewCollaboratorService(repo *repositories.CollaboratorRepo, S3 *storage.S3)
 	}
 }
 
-func (s *CollaboratorService) GetAll(ctx context.Context) ([]models.CollaboratorResponse, error) {
-	collaborators, err := s.repo.GetAll()
+func (s *CollaboratorService) GetAll(req models.ListRequest, ctx context.Context) (*models.CollaboratorListResponse, error) {
+	total := s.repo.GetTotal()
+	if total == 0 {
+		return &models.CollaboratorListResponse{}, nil
+	}
+
+	pages := valid.Limit(&req, total)
+
+	collaborators, err := s.repo.GetAll(req)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(collaborators) == 0 {
-		return []models.CollaboratorResponse{}, nil
+		return &models.CollaboratorListResponse{}, nil
 	}
 
 	var collaboratorResponses []models.CollaboratorResponse
@@ -58,7 +66,15 @@ func (s *CollaboratorService) GetAll(ctx context.Context) ([]models.Collaborator
 			SignatureUrl: url,
 		})
 	}
-	return collaboratorResponses, nil
+	return &models.CollaboratorListResponse{
+		Current:       req.Page,
+		Pages:         pages,
+		Collaborators: collaboratorResponses,
+	}, nil
+}
+
+func (s *CollaboratorService) GetModelByID(id int64) (*models.CollaboratorModel, error) {
+	return s.repo.GetByID(id)
 }
 
 func (s *CollaboratorService) GetByID(ctx context.Context, id int64) (*models.CollaboratorResponse, error) {
@@ -85,7 +101,13 @@ func (s *CollaboratorService) GetByID(ctx context.Context, id int64) (*models.Co
 	}, nil
 }
 
-func (s *CollaboratorService) Create(ctx context.Context, req *models.CollaboratorCreateRequest, file io.Reader) (int64, error) {
+func (s *CollaboratorService) Create(ctx context.Context, req *models.CollaboratorCreateRequest) (int64, error) {
+	file, err := req.SignatureFile.Open()
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		return 0, err
@@ -116,11 +138,17 @@ func (s *CollaboratorService) Create(ctx context.Context, req *models.Collaborat
 	})
 }
 
-func (s *CollaboratorService) Update(ctx context.Context, req *models.CollaboratorUpdateRequest, file io.Reader) error {
+func (s *CollaboratorService) Update(ctx context.Context, req *models.CollaboratorUpdateRequest) error {
 	collaborator, err := s.repo.GetByID(req.ID)
 	if err != nil {
 		return err
 	}
+
+	file, err := req.SignatureFile.Open()
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
 	if file != nil {
 		fileBytes, err := io.ReadAll(file)

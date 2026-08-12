@@ -6,8 +6,11 @@ import (
 	"sea-api/internal/config"
 	"sea-api/internal/handlers"
 	"sea-api/internal/repositories"
+	"sea-api/internal/repositories/eventrepo"
 	"sea-api/internal/services"
 	"sea-api/internal/services/bot"
+	"sea-api/internal/services/cert"
+	"sea-api/internal/services/event"
 	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
 	st "sea-api/internal/services/storage"
@@ -53,7 +56,7 @@ func Go() {
 	// Initialize repositories
 	userRepository := repositories.NewUserRepository(db)
 	suspensionsRepo := repositories.NewSuspensionsRepo(db)
-	eventRepository := repositories.NewEventRepository(db)
+	eventRepository := eventrepo.NewEventRepository(db)
 	certificateRepository := repositories.NewCertificateRepository(db)
 	verificationRepo := repositories.NewVerificationRepo(db)
 	fileRepo := repositories.NewFileRepository(db)
@@ -77,7 +80,7 @@ func Go() {
 	feedbackService := services.NewFeedbackService(feedbackRepository)
 
 	botService := bot.NewBotService(botRepository, feedbackService)
-	eventService := services.NewEventService(notificationService, eventRepository, collaboratorRepository, userRepository)
+	eventService := event.NewEventService(notificationService, S3, galleryService, eventRepository, collaboratorRepository, formRepository, userRepository)
 	accountService := services.NewAccountService(userRepository, S3, certificateRepository)
 
 	userService := user.NewUserService(userRepository, suspensionsRepo, S3)
@@ -85,9 +88,9 @@ func Go() {
 	authService := services.NewAuthService(userRepository, mailService, verificationRepo)
 
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
-	FormService := forms.NewFormService(formRepository, galleryService)
+	FormService := forms.NewFormService(formRepository, eventService, galleryService)
 
-	certificateService := services.NewCertificateService(
+	certificateService := cert.NewCertificateService(
 		userRepository,
 		eventService,
 		S3,

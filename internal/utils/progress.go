@@ -23,6 +23,18 @@ func ParseProgressStruct(total, current int, id int64, success bool, name string
 	}
 }
 
+func ParseProgressErrorStruct(e string, progressChan chan string) {
+	s, err := parseToJsonString(models.ProgressError{
+		Error:     e,
+		Timestamp: time.Now(),
+	})
+	if err != nil {
+		slog.Error("Error parsing progress to JSON string", "error", err)
+	} else {
+		progressChan <- s
+	}
+}
+
 func parseToJsonString(data any) (string, error) {
 	jsonBytes, err := json.Marshal(data)
 	if err != nil {

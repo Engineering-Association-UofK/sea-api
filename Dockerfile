@@ -19,45 +19,30 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 ################################################################################
 
-FROM alpine:latest AS final
+FROM python:3.11-slim AS final
 
-# install weasyprint dependancy
-RUN apk add --no-cache \
-    weasyprint \
-    cairo \
-    pango \
-    gdk-pixbuf \
-    ttf-dejavu \
-    fontconfig
+# Install the minimal system rendering libraries Weasyprint needs
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 \
+    libharfbuzz0b \
+    libpangoft2-1.0-0 \
+    libffi-dev \
+    libjpeg-dev \
+    libopenjp2-7-dev \
+    ca-certificates \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=cache,target=/var/cache/apk \
-    apk --update add \
-        ca-certificates \
-        tzdata \
-        && \
-        update-ca-certificates
+# Install WeasyPrint securely via pip
+RUN pip install --no-cache-dir weasyprint
 
 ARG UID=10001
-RUN mkdir -p /home/appuser
-
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/home/appuser" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "${UID}" \
-    appuser
-
-RUN chown -R appuser:appuser /home/appuser
-
+RUN useradd --uid ${UID} --create-home appuser
 USER appuser
 
 
 COPY --from=build /bin/server /bin/
-
 COPY ./db/migrations /app/db/migrations
-
 EXPOSE 8000
 
 
