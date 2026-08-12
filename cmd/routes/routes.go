@@ -114,7 +114,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 		{ // ==== EVENTS
 			event := account.Group("/event")
-			event.GET("/status", EventHandler.GetApplicationStatus)
+			event.GET("/all-status", EventHandler.GetApplicationStatus)
+			event.GET("/status/:id", EventHandler.GetOneApplicationStatus)
 			event.POST("/apply/:id", EventHandler.ApplyForEvent)
 			event.POST("/cancel/:id", EventHandler.CancelApplicationForEvent)
 		}

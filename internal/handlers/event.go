@@ -119,7 +119,7 @@ func (h *EventHandler) GetEventDetailsAdmin(ctx *gin.Context) {
 //	@Param			id		path		int	true	"Event ID"
 //	@Param			limit	query		int	true	"Content count limit"
 //	@Param			page	query		int	true	"Page number"
-//	@Success		200		{array}		models.EventParticipantsResponse
+//	@Success		200		{object}	models.EventParticipantsResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -278,7 +278,7 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 	response.NewTransactionResponse(200, "Event deleted successfully", int64(intId), ctx)
 }
 
-// / LinkForm godocs
+// LinkForm godocs
 //
 //	@Summary		Link Form to Event
 //	@Description	Links form to event for form based applications
@@ -286,7 +286,7 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		models.EventFormRequest	true	"Event Form data"
-//	@Success		200	{object}	models.TransactionResponse
+//	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/admin/event/link-form [post]
@@ -312,7 +312,7 @@ func (h *EventHandler) LinkForm(ctx *gin.Context) {
 ///   Application   ///
 ///////////////////////
 
-// / GetApplicationStatus godocs
+// GetApplicationStatus godocs
 //
 //	@Summary		Get application status
 //	@Description	Get the registration status and details for all events for the current user
@@ -325,7 +325,7 @@ func (h *EventHandler) LinkForm(ctx *gin.Context) {
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/account/event/status [get]
+//	@Router			/account/event/all-status [get]
 //
 //	@Security		ApiKeyAuth
 func (h *EventHandler) GetApplicationStatus(ctx *gin.Context) {
@@ -335,11 +335,41 @@ func (h *EventHandler) GetApplicationStatus(ctx *gin.Context) {
 		return
 	}
 
-	eventId := ctx.Query("eventID")
-	intId, err := strconv.ParseInt(eventId, 10, 64)
-	if eventId != "0" {
-		intId = 0
-	} else if err != nil {
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	resp, err := h.EventService.Status(claims.UserID, req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, resp)
+}
+
+// / GetOneApplicationStatus godocs
+//
+//	@Summary		Get one application status
+//	@Description	Get the registration status and details for one event for the current user
+//	@Tags			Applications
+//	@Produce		json
+//	@Param			id	path		int	true	"Event ID"
+//	@Success		200	{object}	models.ApplicationStatus
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/account/event/status/{id} [get]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) GetOneApplicationStatus(ctx *gin.Context) {
+	id := ctx.Param("id")
+	int64Id, err := strconv.ParseInt(id, 10, 64)
+
+	if err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
@@ -351,7 +381,8 @@ func (h *EventHandler) GetApplicationStatus(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.EventService.Status(claims.UserID, intId, req)
+	resp, err := h.EventService.ApplicationStatus(claims.UserID, int64Id)
+
 	if err != nil {
 		ctx.Error(err)
 		return
