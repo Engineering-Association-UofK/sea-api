@@ -264,7 +264,7 @@ type EventCreateRequest struct {
 	EventType       EventType      `json:"event_type" binding:"required"`
 	WallpaperID     int64          `json:"wallpaper_id"`
 	FormApplication bool           `json:"form_application"`
-	MaxParticipants int            `json:"max_participants" binding:"required"`
+	MaxParticipants int            `json:"max_participants"`
 	StartDate       time.Time      `json:"start_date" binding:"required"`
 	EndDate         time.Time      `json:"end_date" binding:"required"`
 	Outcomes        []string       `json:"outcomes" binding:"required"`
