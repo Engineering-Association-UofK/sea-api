@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"log/slog"
 	"math"
 	"os"
 	"sea-api/internal/config"
@@ -47,6 +48,7 @@ func GenerateGearQR(data string, width, height int) ([]byte, error) {
 	offsetY := (float64(height) - float64(gridSize)*moduleSize) / 2.0
 
 	// Loop through addresses and draw Gears
+	slog.Debug("Drawing gears to QR code")
 	for y := 0; y < gridSize; y++ {
 		for x := 0; x < gridSize; x++ {
 			if matrix[y][x] {
@@ -66,6 +68,7 @@ func GenerateGearQR(data string, width, height int) ([]byte, error) {
 	}
 
 	// Put logo in the middle
+	slog.Debug("Adding logo to QR code")
 	logoFile, err := os.Open(config.App.ResourcesDir + "/logo.png")
 	if err == nil {
 		defer logoFile.Close()

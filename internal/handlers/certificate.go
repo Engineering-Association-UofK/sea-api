@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
@@ -208,6 +209,101 @@ func (h *CertificateHandler) GetCertificates(ctx *gin.Context) {
 	}()
 
 	ctx.Header("Content-Disposition", "attachment; filename=certificates.zip")
+	ctx.Header("Content-Type", "application/zip")
+	ctx.DataFromReader(200, -1, "application/zip", pr, nil)
+}
+
+// GenerateAndDownloadDebugCert godocs
+//
+//	@Summary		Generate and Download Debug Certificate Pack
+//	@Description	Directly generates a certificate and streams back the zip containing both languages
+//	@Tags			Certificate
+//	@Produce		application/zip
+//	@Param			user_id		query		int		true	"User ID"
+//	@Param			event_id	query		int		true	"Event ID"
+//	@Success		200			{file}		binary
+//	@Failure		400			{object}	response.BaseError
+//	@Failure		500			{object}	response.BaseError
+//	@Router			/api/v1/cert/debug/generate [get]
+func (h *CertificateHandler) GenerateAndDownloadDebugCert(ctx *gin.Context) {
+	var query struct {
+		UserID  int64 `form:"user_id" binding:"required"`
+		EventID int64 `form:"event_id" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Missing or invalid user_id or event_id", nil))
+		return
+	}
+
+	// 1. Fetch dependencies via User and Event repositories/services
+	// Note: CertificateService already holds pointers to these internally
+	userModel, err := h.service.UserRepo.GetByUserID(query.UserID)
+	if err != nil {
+		ctx.Error(errs.New(errs.NotFound, fmt.Sprintf("User not found: %v", err), nil))
+		return
+	}
+
+	eventModel, err := h.service.EventService.GetEventByID(query.EventID)
+	if err != nil {
+		ctx.Error(errs.New(errs.NotFound, fmt.Sprintf("Event not found: %v", err), nil))
+		return
+	}
+
+	participants, err := h.service.EventService.EventRepo.GetParticipantByEventID(query.EventID)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	var targetParticipant *models.EventParticipantModel
+	for _, p := range participants {
+		if p.UserID == query.UserID {
+			targetParticipant = &p
+			break
+		}
+	}
+
+	// Fallback mock participant for testing if user isn't assigned to event
+	if targetParticipant == nil {
+		targetParticipant = &models.EventParticipantModel{
+			UserID:    query.UserID,
+			EventID:   query.EventID,
+			Grade:     100.0,
+			Completed: true,
+		}
+	}
+
+	// 2. Generate the Certificate pair (triggers PDF service via Docker/HTTP)
+	hashString, _, err := h.service.CreateWorkshopCertificate(
+		ctx.Request.Context(),
+		userModel,
+		targetParticipant,
+		eventModel,
+		models.V0_1,
+		models.CertParticipation,
+	)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	// 3. Stream the ZIP back using io.Pipe (matching your GetCertificates pattern)
+	pr, pw := io.Pipe()
+	go func() {
+		zipWriter := zip.NewWriter(pw)
+
+		err := h.service.GetCertificates(zipWriter, hashString)
+		if err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+		zipWriter.Close()
+		pw.Close()
+	}()
+
+	filename := fmt.Sprintf("debug-cert-event%d-user%d.zip", query.EventID, query.UserID)
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	ctx.Header("Content-Type", "application/zip")
 	ctx.DataFromReader(200, -1, "application/zip", pr, nil)
 }

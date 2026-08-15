@@ -70,6 +70,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
 		cert.GET("/download/:hash", midLimit, CertificateHandler.GetCertificates)
 		cert.GET("/verify-document/:hash", CertificateHandler.VerifyDocument)
+
+		cert.GET("/debug/generate", CertificateHandler.GenerateAndDownloadDebugCert)
 	}
 
 	{ // ==== AUTHENTICATION
