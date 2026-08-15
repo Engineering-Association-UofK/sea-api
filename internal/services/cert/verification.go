@@ -18,11 +18,11 @@ func (c *CertificateService) VerifyCertificate(hash string) (*models.Certificate
 		}
 		return nil, err
 	}
-	event, err := c.eventService.GetEventByID(cert.EventID)
+	event, err := c.EventService.GetEventByID(cert.EventID)
 	if err != nil {
 		return nil, err
 	}
-	user, err := c.userRepo.GetByUserID(cert.UserID)
+	user, err := c.UserRepo.GetByUserID(cert.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (c *CertificateService) VerifyDocument(hash string) (*models.DocumentVerify
 	for _, relation := range relations {
 		switch relation.ObjectType {
 		case models.ObjEvent:
-			event, err := c.eventService.GetEventByID(relation.ObjectID)
+			event, err := c.EventService.GetEventByID(relation.ObjectID)
 			if err != nil {
 				return nil, err
 			}

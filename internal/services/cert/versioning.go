@@ -91,7 +91,7 @@ func generateParticipationV0_1(
 		EventName:   event.Name,
 		Grade:       participant.Grade,
 		TaskColumns: make3x3Grid(strings.Split(event.Outcomes, ",")),
-		QRCode:      fmt.Sprintf("data:image/png;base64,%s", qrCode),
+		QRCode:      fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(qrCode)),
 
 		CoordinatorName:      coordinator.NameEn,
 		CoordinatorTitle:     coordinator.TitleEn,
@@ -112,7 +112,7 @@ func generateParticipationV0_1(
 		Name:      user.NameAr,
 		EventName: event.Name,
 		Grade:     participant.Grade, TaskColumns: make3x3Grid(strings.Split(event.Outcomes, ",")),
-		QRCode: fmt.Sprintf("data:image/png;base64,%s", qrCode),
+		QRCode: fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(qrCode)),
 
 		CoordinatorName:      coordinator.NameAr,
 		CoordinatorTitle:     coordinator.TitleAr,

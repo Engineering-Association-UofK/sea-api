@@ -20,7 +20,7 @@ import (
 )
 
 func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequest) ([]byte, error) {
-	event, err := c.eventService.GetEventByID(req.EventID)
+	event, err := c.EventService.GetEventByID(req.EventID)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, req *
 
 	slog.Debug("making certificates for event", "event_id", eventId)
 
-	event, err := c.eventService.GetEventByID(eventId)
+	event, err := c.EventService.GetEventByID(eventId)
 	if err != nil {
 		slog.Error("error getting event", "error", err, "event_id", eventId)
 		e := fmt.Errorf("error getting event: %w", err)
@@ -156,7 +156,7 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, req *
 		return err
 	}
 
-	participants, err := c.eventService.EventRepo.GetParticipantByEventID(eventId)
+	participants, err := c.EventService.EventRepo.GetParticipantByEventID(eventId)
 	if err != nil {
 		slog.Error("error getting participants", "error", err, "event_id", eventId)
 		e := fmt.Errorf("error getting participants: %w", err)
@@ -187,7 +187,7 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, req *
 		return nil
 	}
 
-	users, err := c.userRepo.GetAllByIndices(ids)
+	users, err := c.UserRepo.GetAllByIndices(ids)
 	if err != nil {
 		slog.Error("error getting users", "error", err, "event_id", eventId)
 		e := fmt.Errorf("error getting users: %w", err)

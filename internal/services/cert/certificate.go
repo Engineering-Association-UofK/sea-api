@@ -21,9 +21,9 @@ const CERT_VERIFICATION_PATH = `https://sea.uofk.edu/cert/verify/`
 const DOC_VERIFICATION_PATH = `https://sea.uofk.edu/doc/verify/`
 
 type CertificateService struct {
-	userRepo            *repositories.UserRepository
+	UserRepo            *repositories.UserRepository
 	pdfService          *services.PDFService
-	eventService        *event.EventService
+	EventService        *event.EventService
 	S3StoreService      *storage.S3
 	mailService         *services.MailService
 	NotificationService *services.NotificationService
@@ -47,9 +47,9 @@ func NewCertificateService(
 	DocumentRepository *repositories.DocumentRepository,
 ) *CertificateService {
 	return &CertificateService{
-		userRepo:              userRepo,
+		UserRepo:              userRepo,
 		pdfService:            pdfService,
-		eventService:          eventService,
+		EventService:          eventService,
 		S3StoreService:        S3StoreService,
 		mailService:           mailService,
 		NotificationService:   NotificationService,
@@ -66,13 +66,13 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 	defer close(progressChan)
 	progressChan <- "started"
 
-	participants, err := c.eventService.EventRepo.GetParticipantByEventID(eventId)
+	participants, err := c.EventService.EventRepo.GetParticipantByEventID(eventId)
 	if err != nil {
 		slog.Error("error getting participants", "error", err, "event_id", eventId)
 		return err
 	}
 
-	event, err := c.eventService.GetEventByID(eventId)
+	event, err := c.EventService.GetEventByID(eventId)
 	if err != nil {
 		slog.Error("error getting event", "error", err, "event_id", eventId)
 		return err
@@ -93,7 +93,7 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 		return err
 	}
 
-	users, err := c.userRepo.GetAllByIndices(ids)
+	users, err := c.UserRepo.GetAllByIndices(ids)
 	if err != nil {
 		slog.Error("error getting users", "error", err, "event_id", eventId)
 		return err
