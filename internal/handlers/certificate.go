@@ -182,37 +182,6 @@ func (h *CertificateHandler) SendCertificatesEmailsForEvent(ctx *gin.Context) {
 	})
 }
 
-// GetCertificates godocs
-//
-//	@Summary		Get Certificate
-//	@Description	Get certificate details by its hash
-//	@Tags			Certificate
-//	@Produce		application/zip
-//	@Param			hash	path	string	true	"Certificate hash"
-//	@Success		200		{file}		binary
-//	@Failure		400		{object}	response.BaseError
-//	@Failure		500		{object}	response.BaseError
-func (h *CertificateHandler) GetCertificates(ctx *gin.Context) {
-	hash := ctx.Param("hash")
-
-	pr, pw := io.Pipe()
-	go func() {
-		zipWriter := zip.NewWriter(pw)
-
-		err := h.service.GetCertificates(zipWriter, hash)
-		if err != nil {
-			pw.CloseWithError(err)
-			return
-		}
-		zipWriter.Close()
-		pw.Close()
-	}()
-
-	ctx.Header("Content-Disposition", "attachment; filename=certificates.zip")
-	ctx.Header("Content-Type", "application/zip")
-	ctx.DataFromReader(200, -1, "application/zip", pr, nil)
-}
-
 // GenerateAndDownloadDebugCert godocs
 //
 //	@Summary		Generate and Download Debug Certificate Pack
@@ -233,6 +202,13 @@ func (h *CertificateHandler) GenerateAndDownloadDebugCert(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindQuery(&query); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Missing or invalid user_id or event_id", nil))
+		return
+	}
+
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
 	}
 
@@ -293,7 +269,7 @@ func (h *CertificateHandler) GenerateAndDownloadDebugCert(ctx *gin.Context) {
 	go func() {
 		zipWriter := zip.NewWriter(pw)
 
-		err := h.service.GetCertificates(zipWriter, hashString)
+		err := h.service.GetCertificates(zipWriter, hashString, claims)
 		if err != nil {
 			pw.CloseWithError(err)
 			return

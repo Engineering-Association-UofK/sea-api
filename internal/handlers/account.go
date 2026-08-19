@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"archive/zip"
+	"io"
 	"net/http"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
@@ -117,6 +119,45 @@ func (a *AccountHandler) GetCertificates(c *gin.Context) {
 	}
 
 	c.PureJSON(http.StatusOK, certs)
+}
+
+// GetCertificate godocs
+//
+//	@Summary		Get Certificate
+//	@Description	Get certificate details by its hash
+//	@Tags			Certificate
+//	@Produce		application/zip
+//	@Param			hash	path	string	true	"Certificate hash"
+//	@Success		200		{file}		binary
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		403		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+func (h *CertificateHandler) GetCertificate(c *gin.Context) {
+	hash := c.Param("hash")
+
+	value, exists := c.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	pr, pw := io.Pipe()
+	go func() {
+		zipWriter := zip.NewWriter(pw)
+
+		err := h.service.GetCertificates(zipWriter, hash, claims)
+		if err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+		zipWriter.Close()
+		pw.Close()
+	}()
+
+	c.Header("Content-Disposition", "attachment; filename=certificates.zip")
+	c.Header("Content-Type", "application/zip")
+	c.DataFromReader(200, -1, "application/zip", pr, nil)
 }
 
 // UpdateProfile godocs
