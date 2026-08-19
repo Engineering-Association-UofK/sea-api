@@ -57,6 +57,7 @@ type CertificateVerify struct {
 	NameAr    string     `json:"name_ar"`
 	NameEn    string     `json:"name_en"`
 	EventName string     `json:"event"`
+	EventID   int64      `json:"event_id"`
 	Status    CertStatus `json:"status"`
 	Grade     string     `json:"grade"`
 	Outcomes  []string   `json:"outcomes"`

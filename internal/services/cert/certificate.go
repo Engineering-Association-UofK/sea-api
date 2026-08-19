@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
 	"sea-api/internal/services/event"
 	"sea-api/internal/services/storage"
 	"sea-api/internal/utils"
+	"slices"
 	"strings"
 	"time"
 )
@@ -139,10 +141,17 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 	return nil
 }
 
-func (c *CertificateService) GetCertificates(zw *zip.Writer, hash string) error {
+func (c *CertificateService) GetCertificates(zw *zip.Writer, hash string, claims *models.ManagedClaims) error {
 	cert, err := c.certificateRepository.GetByHash(hash)
 	if err != nil {
 		return err
+	}
+
+	// Check if the requester have the permissions needed to view this file
+	if cert.UserID != claims.UserID ||
+		!slices.Contains(claims.Roles, models.RoleCertMgr) ||
+		!slices.Contains(claims.Roles, models.RoleSystemSuperAdmin) {
+		return errs.New(errs.Forbidden, "Action not allowed", nil)
 	}
 
 	files, err := c.certificateRepository.GetFilesByCertificateID(cert.ID)
