@@ -106,6 +106,7 @@ func (s *CmsService) GetViewPostBySlug(slug string) (*models.PostViewResponse, e
 		ImageUrl:   url,
 		Title:      post.Title,
 		Slug:       post.Slug,
+		PostType:   post.PostType,
 		Summary:    post.Summary.String,
 		Content:    post.Content,
 		AuthorName: post.AuthorName,
@@ -114,7 +115,7 @@ func (s *CmsService) GetViewPostBySlug(slug string) (*models.PostViewResponse, e
 }
 
 func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.BatchPostListViewResponse, error) {
-	if !models.AllowedPostTypes[models.PostType(req.Type)] {
+	if !models.AllowedPostTypes[models.PostType(req.Type)] && models.PostType(req.Type) != "" {
 		return nil, errs.New(errs.BadRequest, "invalid post type", nil)
 	}
 	total, err := s.CmsRepo.GetTotalPosts(models.PostType(req.Type), true)
@@ -150,6 +151,7 @@ func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.BatchPost
 			ImageUrl:   url,
 			Title:      post.Title,
 			Slug:       post.Slug,
+			PostType:   post.PostType,
 			Summary:    summary,
 			AuthorName: post.AuthorName,
 			UpdatedAt:  post.UpdatedAt,

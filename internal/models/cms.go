@@ -86,6 +86,7 @@ type PostViewRow struct {
 	ImageFileKey string         `db:"image_file_key"`
 	Title        string         `db:"title"`
 	Slug         string         `db:"slug"`
+	PostType     PostType       `db:"post_type"`
 	Summary      sql.NullString `db:"summary"`
 	Content      string         `db:"content"`
 	AuthorName   string         `db:"author_name"`
@@ -97,6 +98,7 @@ type PostListViewRaw struct {
 	Title        string         `db:"title"`
 	Slug         string         `db:"slug"`
 	Summary      sql.NullString `db:"summary"`
+	PostType     PostType       `db:"post_type"`
 	AuthorName   string         `db:"author_name"`
 	UpdatedAt    time.Time      `db:"updated_at"`
 }
@@ -178,6 +180,7 @@ type PostViewResponse struct {
 	ImageUrl   string    `json:"image_url"`
 	Title      string    `json:"title"`
 	Slug       string    `json:"slug"`
+	PostType   PostType  `json:"post_type"`
 	Summary    string    `json:"summary"`
 	Content    string    `json:"content"`
 	AuthorName string    `json:"author_name"`
@@ -188,6 +191,7 @@ type PostViewListResponse struct {
 	ImageUrl   string    `json:"image_url"`
 	Title      string    `json:"title"`
 	Slug       string    `json:"slug"`
+	PostType   PostType  `json:"post_type"`
 	Summary    string    `json:"summary"`
 	AuthorName string    `json:"author_name"`
 	UpdatedAt  time.Time `json:"updated_at"`
