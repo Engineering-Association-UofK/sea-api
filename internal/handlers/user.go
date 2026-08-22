@@ -172,6 +172,38 @@ func (u *UserHandler) GetByUsername(c *gin.Context) {
 	c.PureJSON(200, user)
 }
 
+// CreateTempUser godocs
+//
+//	@Summary		Create temporary user placeholder
+//	@Description	Get the registration passcode for a temporary user by their ID
+//	@Tags			User
+//	@Produce		json
+//	@Param			id	path		int	true	"User ID"
+//	@Success		200	{object}	models.GetPasscodeResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		404	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/user/passcode/create/{id} [get]
+//
+//	@Security		ApiKeyAuth
+func (u *UserHandler) CreateTempUser(c *gin.Context) {
+	id := c.Param("id")
+	intId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	passcode, err := u.service.CreateTempUser(intId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, passcode)
+}
+
 // GetTempUserPasscode godocs
 //
 //	@Summary		Get temporary user passcode

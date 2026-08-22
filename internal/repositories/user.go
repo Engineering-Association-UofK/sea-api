@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"fmt"
 	"sea-api/internal/models"
 
@@ -236,6 +237,22 @@ func (r *UserRepository) GetByUniID(uniID int64) (*models.UserModel, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *UserRepository) CreateTempUser(id int64, tx *sqlx.Tx) error {
+	user := models.TempUserModel{ID: sql.NullInt64{Int64: id, Valid: true}}
+	query := fmt.Sprintf(`
+	INSERT INTO %s (
+		id
+	) VALUES (
+		:id
+	)`, models.TableTempUsers)
+	if tx != nil {
+		_, err := tx.NamedExec(query, user)
+		return err
+	}
+	_, err := r.DB.NamedExec(query, user)
+	return err
 }
 
 func (r *UserRepository) GetTempUser(id int64) (*models.TempUserModel, error) {

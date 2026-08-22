@@ -1,6 +1,7 @@
 package user
 
 import (
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/utils"
 	"sea-api/internal/utils/valid"
@@ -39,6 +40,26 @@ func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUser
 		Current: req.Page,
 		Pages:   pages,
 	}, nil
+}
+
+func (s *UserService) CreateTempUser(userID int64) (*models.GetPasscodeResponse, error) {
+	_, err := s.repo.GetTempUser(userID)
+	if err == nil {
+		return nil, errs.New(errs.Conflict, "User passcode already exists", nil)
+	}
+	err = s.repo.CreateTempUser(userID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	progressChan := make(chan string)
+	err = s.AssignPasscodes(progressChan)
+	if err != nil {
+		return nil, err
+	}
+	close(progressChan)
+
+	return s.GetTempUserPasscode(userID)
 }
 
 func (s *UserService) GetTempUserPasscode(userID int64) (*models.GetPasscodeResponse, error) {

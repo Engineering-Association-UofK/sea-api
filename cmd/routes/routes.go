@@ -149,6 +149,7 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			user.GET("/all", UserHandler.GetAll)
 			user.POST("/temp-users", UserHandler.GetAllTempUsers)
 			user.GET("/username/:username", UserHandler.GetByUsername)
+			user.POST("/passcode/create/:id", UserHandler.CreateTempUser)
 			user.GET("/passcode/:id", UserHandler.GetTempUserPasscode)
 			user.PUT("", UserHandler.Update)
 			user.POST("/suspend", UserHandler.Suspend)
