@@ -114,24 +114,31 @@ func (s *CmsService) GetViewPostBySlug(slug string) (*models.PostViewResponse, e
 	}, nil
 }
 
-func (s *CmsService) GetViewPostList(req *models.ListRequest) (*models.BatchPostListViewResponse, error) {
-	if !models.AllowedPostTypes[models.PostType(req.Type)] {
+func (s *CmsService) GetViewPostList(req *models.PostsFilteredRequest) (*models.BatchPostListViewResponse, error) {
+	if !models.AllowedPostTypes[models.PostType(req.Type)] && models.PostType(req.Type) != "" {
 		return nil, errs.New(errs.BadRequest, "invalid post type", nil)
 	}
 	total, err := s.CmsRepo.GetTotalPosts(models.PostType(req.Type), true)
 	if err != nil {
 		return nil, err
 	}
-	slog.Info("Post Details",
+	slog.Debug("Post Details",
 		"Limit", req.Limit,
 		"Page", req.Page,
 		"Total", total,
 		"Type", req.Type,
 	)
 
-	pages := valid.Limit(req, total)
+	// Force published for visitors portal
+	req.Published = nil
 
-	postsRows, err := s.CmsRepo.GetPostsViewListByType(req, models.PostType(req.Type))
+	// Create temp list request to do the limits checks and save them to the main request
+	var tempReq = models.ListRequest{Limit: req.Limit, Page: req.Page}
+	pages := valid.Limit(&tempReq, total)
+	req.Limit = tempReq.Limit
+	req.Page = tempReq.Page
+
+	postsRows, err := s.CmsRepo.GetFilteredPosts(req)
 	if err != nil {
 		return nil, err
 	}

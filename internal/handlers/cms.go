@@ -125,7 +125,7 @@ func (h *CmsHandler) GetViewPostBySlug(ctx *gin.Context) {
 //	@Failure		500		{object}	response.BaseError
 //	@Router			/cms/blogs [get]
 func (h *CmsHandler) GetViewPostsList(ctx *gin.Context) {
-	var req models.ListRequest
+	var req models.PostsFilteredRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
 		return

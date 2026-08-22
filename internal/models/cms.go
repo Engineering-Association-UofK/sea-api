@@ -48,6 +48,18 @@ type TeamMemberModel struct {
 	CreatedAt    time.Time      `db:"created_at" json:"created_at"`
 }
 
+type PostsFilteredRequest struct {
+	Limit     int64    `form:"limit"`
+	Page      int64    `form:"page"`
+	Type      PostType `form:"type"`
+	AuthorID  int64    `form:"author_id"`
+	Published *bool    `form:"published"`
+	Search    string   `form:"search"`
+
+	FromDate *time.Time `form:"from" time_format:"2006-01-02"`
+	ToDate   *time.Time `form:"to" time_format:"2006-01-02"`
+}
+
 //////////////
 //// ROWS ////
 //////////////
@@ -97,8 +109,8 @@ type PostListViewRaw struct {
 	ImageFileKey string         `db:"image_file_key"`
 	Title        string         `db:"title"`
 	Slug         string         `db:"slug"`
-	PostType     PostType       `db:"post_type"`
 	Summary      sql.NullString `db:"summary"`
+	PostType     PostType       `db:"post_type"`
 	AuthorName   string         `db:"author_name"`
 	UpdatedAt    time.Time      `db:"updated_at"`
 }

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"sea-api/internal/models"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -196,6 +197,61 @@ func (r *CmsRepository) GetPostsViewListByType(req *models.ListRequest, postType
 	}
 
 	return posts, nil
+}
+
+func (r *CmsRepository) GetFilteredPosts(req *models.PostsFilteredRequest) ([]models.PostAdminViewRow, error) {
+	var conditions []string
+	var args []interface{}
+
+	query := fmt.Sprintf(`
+    SELECT p.id, p.cover_image_id, f.file_key AS image_file_key, p.title, p.slug, 
+           p.summary, p.content, p.post_type, p.author_id, u.name_en AS author_name, 
+           p.is_published, p.created_at, p.updated_at
+    FROM %s p
+    LEFT JOIN %s g ON p.cover_image_id = g.id
+    LEFT JOIN %s f ON g.file_id = f.id
+    LEFT JOIN %s u ON p.author_id = u.id`,
+		models.TablePosts, models.TableGalleryAssets, models.TableFiles, models.TableUsers)
+
+	if req.Type != "" {
+		conditions = append(conditions, "p.post_type = ?")
+		args = append(args, req.Type)
+	}
+	if req.AuthorID > 0 {
+		conditions = append(conditions, "p.author_id = ?")
+		args = append(args, req.AuthorID)
+	}
+	if req.Published != nil {
+		conditions = append(conditions, "p.is_published = ?")
+		args = append(args, *req.Published)
+	}
+	if req.Search != "" {
+		conditions = append(conditions, "(p.title LIKE ? OR p.summary LIKE ?)")
+		args = append(args, "%"+req.Search+"%", "%"+req.Search+"%")
+	}
+
+	if req.FromDate != nil {
+		conditions = append(conditions, "p.created_at >= ?")
+		args = append(args, *req.FromDate)
+	}
+	if req.ToDate != nil {
+		// If query parameters pass dates like "2026-08-22", adjust to end-of-day:
+		*req.ToDate = req.ToDate.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		conditions = append(conditions, "p.created_at <= ?")
+		args = append(args, *req.ToDate)
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += " ORDER BY p.created_at DESC LIMIT ? OFFSET ?"
+	offset := (req.Page - 1) * req.Limit
+	args = append(args, req.Limit, offset)
+
+	var posts []models.PostAdminViewRow
+	err := r.db.Select(&posts, query, args...)
+	return posts, err
 }
 
 func (r *CmsRepository) GetTotalPosts(postType models.PostType, published bool) (int64, error) {
