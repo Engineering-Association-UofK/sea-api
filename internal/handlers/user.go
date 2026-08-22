@@ -184,7 +184,7 @@ func (u *UserHandler) GetByUsername(c *gin.Context) {
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/admin/user/passcode/create/{id} [get]
+//	@Router			/admin/user/passcode/create/{id} [post]
 //
 //	@Security		ApiKeyAuth
 func (u *UserHandler) CreateTempUser(c *gin.Context) {
