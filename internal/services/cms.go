@@ -338,6 +338,7 @@ func (s *CmsService) GetAllTeamMembers(activeOnly bool) ([]models.TeamMemberResp
 			NameEn:       m.NameEn,
 			Role:         m.Role,
 			Bio:          m.Bio,
+			IsActive:     m.IsActive,
 			Link:         link,
 			ProfilePic:   url,
 			DisplayOrder: m.DisplayOrder,

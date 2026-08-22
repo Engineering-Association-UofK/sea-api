@@ -356,7 +356,7 @@ func (r *CmsRepository) GetAllTeamMembers(activeOnly bool) ([]models.TeamMemberR
 	`, models.TableTeamMembers, models.TableUsers, models.TableFiles)
 
 	if activeOnly {
-		query += ` WHERE tm.is_active = TRUE`
+		query += ` WHERE tm.is_active = 1`
 	}
 	query += ` ORDER BY tm.display_order ASC`
 

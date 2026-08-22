@@ -225,7 +225,7 @@ type TeamMemberRequest struct {
 	Bio          string `json:"bio" binding:"required"`
 	Link         string `json:"link"`
 	DisplayOrder int    `json:"display_order" binding:"required"`
-	IsActive     bool   `json:"is_active" binding:"required"`
+	IsActive     bool   `json:"is_active"`
 }
 
 type TeamMemberUpdateRequest struct {
@@ -240,6 +240,7 @@ type TeamMemberResponse struct {
 	NameEn       string    `json:"name_en"`
 	Role         string    `json:"role"`
 	Bio          string    `json:"bio"`
+	IsActive     bool      `json:"is_active"`
 	Link         string    `json:"link"`
 	ProfilePic   string    `json:"profile_pic"`
 	DisplayOrder int       `json:"display_order"`
