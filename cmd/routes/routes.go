@@ -68,7 +68,6 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 	{ // ==== CERTIFICATES
 		cert := apiV1.Group("/cert")
 		cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
-		cert.GET("/download/:hash", midLimit, CertificateHandler.GetCertificates)
 		cert.GET("/verify-document/:hash", CertificateHandler.VerifyDocument)
 
 		cert.GET("/debug/generate", CertificateHandler.GenerateAndDownloadDebugCert)
@@ -108,6 +107,7 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			account.GET("", AccountHandler.GetProfile)
 			account.PUT("", AccountHandler.UpdateProfile)
 			account.GET("/certificates", AccountHandler.GetCertificates)
+			account.GET("/download/:hash", midLimit, CertificateHandler.GetCertificate)
 			account.PUT("/picture", AccountHandler.UpdatePicture)
 			account.PUT("/password", AccountHandler.UpdatePassword)
 			account.PUT("/email", middleware.StatefulRateLimiter(models.LimitUpdateEmail, rateLimitService), AccountHandler.UpdateEmail)

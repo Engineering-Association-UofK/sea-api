@@ -97,6 +97,7 @@ type PostListViewRaw struct {
 	ImageFileKey string         `db:"image_file_key"`
 	Title        string         `db:"title"`
 	Slug         string         `db:"slug"`
+	PostType     PostType       `db:"post_type"`
 	Summary      sql.NullString `db:"summary"`
 	PostType     PostType       `db:"post_type"`
 	AuthorName   string         `db:"author_name"`
