@@ -29,7 +29,7 @@ type ManagedClaims struct {
 
 type RegisterRequest struct {
 	UserID   int64         `json:"user_id" binding:"required"`
-	UniID    int64         `json:"uni_id" binding:"required"`
+	UniID    string        `json:"uni_id" binding:"required"`
 	Username TrimmedString `json:"username" binding:"required,min=3,max=20"`
 	Email    TrimmedString `json:"email" binding:"required,email"`
 

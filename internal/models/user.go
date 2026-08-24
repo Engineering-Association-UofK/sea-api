@@ -111,7 +111,7 @@ const (
 
 type UserModel struct {
 	ID       int64  `db:"id"`
-	UniID    int64  `db:"uni_id"`
+	UniID    string `db:"uni_id"`
 	Username string `db:"username"`
 
 	ProfileImageID sql.NullInt64 `db:"profile_image_id"`
@@ -162,7 +162,7 @@ type UserRole struct {
 
 type UserRow struct {
 	ID             int64          `db:"id"`
-	UniID          int64          `db:"uni_id"`
+	UniID          string         `db:"uni_id"`
 	Username       string         `db:"username"`
 	ProfileImageID sql.NullInt64  `db:"profile_image_id"`
 	ProfilePicKey  sql.NullString `db:"profile_pic_key"`
@@ -192,7 +192,7 @@ type AdminRow struct {
 
 type UserResponse struct {
 	ID       int64  `json:"id"`
-	UniID    int64  `json:"uni_id"`
+	UniID    string `json:"uni_id"`
 	Username string `json:"username"`
 
 	ProfilePic string `json:"profile_pic"`
@@ -212,7 +212,7 @@ type UserResponse struct {
 
 type UserListItemResponse struct {
 	ID       int64  `json:"id"`
-	UniID    int64  `json:"uni_id"`
+	UniID    string `json:"uni_id"`
 	Username string `json:"username"`
 
 	Email      string     `json:"email"`
@@ -273,7 +273,7 @@ type UserProfileSummaryResponse struct {
 
 type UserProfileResponse struct {
 	ID       int64  `json:"id"`
-	UniID    int64  `json:"uni_id"`
+	UniID    string `json:"uni_id"`
 	Username string `json:"username"`
 
 	NameAr string `json:"name_ar"`
@@ -288,7 +288,7 @@ type UserProfileResponse struct {
 
 type UpdateProfileRequest struct {
 	ID         int64         `json:"id" binding:"required"`
-	UniID      int64         `json:"uni_id" binding:"required"`
+	UniID      string        `json:"uni_id" binding:"required"`
 	NameAr     TrimmedString `json:"name_ar" binding:"required"`
 	NameEn     TrimmedString `json:"name_en" binding:"required"`
 	Phone      TrimmedString `json:"phone" binding:"required"`

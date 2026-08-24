@@ -136,6 +136,11 @@ func (s *AuthService) Register(req models.RegisterRequest) error {
 		return errs.New(errs.BadRequest, "There was an error with your password, please try again", nil)
 	}
 
+	_, err = strconv.Atoi(req.UniID)
+	if err != nil {
+		return errs.New(errs.BadRequest, "University ID should only include numbers", nil)
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
