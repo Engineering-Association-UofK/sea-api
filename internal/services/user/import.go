@@ -49,7 +49,7 @@ func (s *UserService) ImportUsers(eventID int64, file io.Reader) error {
 			pass, _ := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
 			err = s.repo.Create(&models.UserModel{
 				ID:         index,
-				UniID:      0,
+				UniID:      "0",
 				Username:   hex.EncodeToString(username[:]),
 				NameEn:     u.NameEn,
 				NameAr:     u.NameAr,

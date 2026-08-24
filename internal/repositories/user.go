@@ -230,7 +230,7 @@ func (r *UserRepository) GetByEmail(email string) (*models.UserModel, error) {
 	return &user, nil
 }
 
-func (r *UserRepository) GetByUniID(uniID int64) (*models.UserModel, error) {
+func (r *UserRepository) GetByUniID(uniID string) (*models.UserModel, error) {
 	var user models.UserModel
 	err := r.DB.Get(&user, fmt.Sprintf(`SELECT * FROM %s WHERE uni_id = ? AND is_anonymous = false`, models.TableUsers), uniID)
 	if err != nil {
