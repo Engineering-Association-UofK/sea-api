@@ -1,0 +1,1 @@
+ALTER TABLE users MODIFY uni_id INT UNIQUE;
