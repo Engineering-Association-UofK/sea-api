@@ -115,7 +115,7 @@ func (s *CollaboratorService) Create(ctx context.Context, req *models.Collaborat
 
 	contentType := http.DetectContentType(fileBytes)
 	if "image/png" != contentType {
-		return 0, errs.New(errs.BadRequest, "unsupported file type:"+contentType, nil)
+		return 0, errs.New(errs.BadRequest, "unsupported file type:"+contentType+". Only image/png is allowed", nil)
 	}
 
 	hash := fnv.New64()
