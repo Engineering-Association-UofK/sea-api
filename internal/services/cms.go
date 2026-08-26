@@ -130,7 +130,8 @@ func (s *CmsService) GetViewPostList(req *models.PostsFilteredRequest) (*models.
 	)
 
 	// Force published for visitors portal
-	req.Published = nil
+	temp := true
+	req.Published = &temp
 
 	// Create temp list request to do the limits checks and save them to the main request
 	var tempReq = models.ListRequest{Limit: req.Limit, Page: req.Page}
