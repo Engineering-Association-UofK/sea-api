@@ -11,6 +11,8 @@ const (
 	TableTempUsers TableName = "users_temp"
 	TableUserRoles TableName = "user_roles"
 
+	TableRegistrationStep TableName = "registration_step"
+
 	// Suspensions
 
 	TableSuspensions       TableName = "suspensions"

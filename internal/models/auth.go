@@ -6,6 +6,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type RegistrationStepModel struct {
+	UserID int64 `db:"user_id"`
+	Step   int64 `db:"step"`
+}
+
 type LoginRequest struct {
 	Username TrimmedString `json:"username" binding:"required"`
 	Password string        `json:"password" binding:"required"`
