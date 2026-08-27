@@ -78,7 +78,11 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		auth.POST("/send-verification-code", middleware.StatefulRateLimiter(models.LimitSendCode, rateLimitService), AuthHandler.SendVerificationCode)
 		auth.POST("/verify", AuthHandler.Verify)
 		auth.POST("/login", highLimit, AuthHandler.Login)
-		auth.POST("/register", highLimit, AuthHandler.Register)
+		auth.POST("/forgot-password", highLimit, AuthHandler.ForgotPassword)
+
+		auth.POST("/register/check", highLimit, AuthHandler.CheckState)
+		auth.POST("/register/step", highLimit, AuthHandler.DoRegistrationStep)
+
 		auth.POST("/check-username", AccountHandler.CheckUsernameAvailability)
 	}
 
