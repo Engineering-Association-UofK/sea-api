@@ -47,6 +47,7 @@ func (s *UserService) ImportUsers(eventID int64, file io.Reader) error {
 			username := sha512.Sum512([]byte(u.NameEn + "|" + config.App.SecretSalt))
 			p, _ := generatePasscode(8)
 			pass, _ := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
+			password := string(pass)
 			err = s.repo.Create(&models.UserModel{
 				ID:         index,
 				UniID:      "0",
@@ -57,7 +58,7 @@ func (s *UserService) ImportUsers(eventID int64, file io.Reader) error {
 				Phone:      "",
 				Department: "",
 				Verified:   false,
-				Password:   string(pass),
+				Password:   &password,
 				Status:     models.STATUS_INACTIVE,
 				Gender:     models.MALE,
 			}, tx)

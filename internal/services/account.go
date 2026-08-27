@@ -176,7 +176,7 @@ func (s *AccountService) UpdatePassword(claims *models.ManagedClaims, req models
 	if err != nil {
 		return err
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword))
+	err = bcrypt.CompareHashAndPassword([]byte(*user.Password), []byte(req.OldPassword))
 	if err != nil {
 		return errs.New(errs.Forbidden, "Invalid old password", nil)
 	}
@@ -191,8 +191,9 @@ func (s *AccountService) UpdatePassword(claims *models.ManagedClaims, req models
 	if err != nil {
 		return err
 	}
+	hp := string(hashedPassword)
 
-	user.Password = string(hashedPassword)
+	user.Password = &hp
 	return s.UserRepo.Update(user, nil)
 }
 
