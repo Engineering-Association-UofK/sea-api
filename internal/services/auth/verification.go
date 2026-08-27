@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Deprecated: No longer needed with new registration system as of v1.0.1
 func (s *AuthService) Verify(req models.VerifyRequest) error {
 	code, err := s.VerificationRepo.GetByUserID(req.UserID)
 	if err != nil {
@@ -41,6 +42,7 @@ func (s *AuthService) Verify(req models.VerifyRequest) error {
 	return nil
 }
 
+// Deprecated: No longer needed with new registration system as of v1.0.1
 func (s *AuthService) SendVerificationCode(userID int64) error {
 	user, err := s.UserRepo.GetByUserID(userID)
 	if err != nil {
@@ -92,6 +94,7 @@ func (s *AuthService) SendVerificationCode(userID int64) error {
 
 // ====== HELPERS ======
 
+// Deprecated: No longer needed with new registration system as of v1.0.1
 func generateVerifyCode() (string, error) {
 	max := big.NewInt(900000)
 	n, err := rand.Int(rand.Reader, max)

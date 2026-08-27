@@ -175,6 +175,8 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 //		@Success		200	{object}	response.TransactionResponse
 //		@Failure		400	{object}	response.BaseError
 //	 @Router 			/auth/verify [post]
+//
+// Deprecated: No longer needed with new registration system as of v1.0.1
 func (h *AuthHandler) Verify(c *gin.Context) {
 	var req models.VerifyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -202,6 +204,8 @@ func (h *AuthHandler) Verify(c *gin.Context) {
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
 //	@Router			/auth/send-verification-code [post]
+//
+// Deprecated: No longer needed with new registration system as of v1.0.1
 func (h *AuthHandler) SendVerificationCode(c *gin.Context) {
 	var req models.VerifyEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
