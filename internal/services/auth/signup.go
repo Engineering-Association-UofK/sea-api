@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log/slog"
+	"sea-api/internal/config"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"strconv"
@@ -94,7 +95,7 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 	slog.Debug("Registration process started")
 
 	// Send email
-	link := fmt.Sprintf("https://sea.uofk.edu/registration/%x", hash)
+	link := fmt.Sprintf("%s/%x", config.Links.Register, hash)
 	slog.Debug("Sending email")
 	return s.MailService.SendRegistrationMail(string(req.Email), link, req.Lang)
 }

@@ -39,7 +39,7 @@ func (c *CertificateService) SignPDF(ctx context.Context, req models.SignPdfRequ
 	stringToHash := req.File.Filename + "|" + fmt.Sprint(req.File.Size) + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
 	hash := sha256.Sum256([]byte(stringToHash))
 	hashString := hex.EncodeToString(hash[:])
-	url := DOC_VERIFICATION_PATH + hashString
+	url := config.Links.DocVerify + "/" + hashString
 
 	if _, err := c.documentRepository.GetByHash(hashString); err == nil {
 		return nil, errs.New(errs.BadRequest, "Document already exists", nil)
@@ -237,7 +237,7 @@ func (c *CertificateService) CreateWorkshopCertificate(
 	stringToHash := user.NameEn + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
 	hash := sha256.Sum256([]byte(stringToHash))
 	hashString := hex.EncodeToString(hash[:])
-	url := CERT_VERIFICATION_PATH + hashString
+	url := config.Links.CertVerify + "/" + hashString
 	slog.Debug("generating qr", "url", url)
 
 	qr, err := utils.GenerateGearQR(url, 512, 512)

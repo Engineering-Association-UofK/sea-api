@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"sea-api/internal/config"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/utils"
@@ -41,7 +42,7 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 			Token:       "",
 			UserID:      user.ID,
 			IsVerified:  false,
-			RedirectURL: fmt.Sprintf(`https://sea.uofk.edu/registration/%s`, State.RegCode),
+			RedirectURL: fmt.Sprintf(`%s/%s`, config.Links.Register, State.RegCode),
 		}, nil
 	}
 
@@ -115,7 +116,7 @@ func (s *AuthService) ForgotPassword(req *models.ForgotPasswordRequest) error {
 		err = s.AuthRepository.IncrementStep(state.RegCode)
 	}
 
-	stringToReturn = fmt.Sprintf("https://sea.uofk.edu/registration/%s", state.RegCode)
+	stringToReturn = fmt.Sprintf("%s/%s", config.Links.Register, state.RegCode)
 
 	return s.MailService.SendForgotPassMail(user.Email, stringToReturn, req.Lang)
 

@@ -19,9 +19,6 @@ import (
 	"time"
 )
 
-const CERT_VERIFICATION_PATH = `https://sea.uofk.edu/cert/verify/`
-const DOC_VERIFICATION_PATH = `https://sea.uofk.edu/doc/verify/`
-
 type CertificateService struct {
 	UserRepo            *repositories.UserRepository
 	pdfService          *services.PDFService

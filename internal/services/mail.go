@@ -90,7 +90,7 @@ func (m *MailService) SendEmail(e models.Email) error {
 		"Subject: " + e.Subject,
 		"Date: " + time.Now().Format(time.RFC1123Z),
 		"MIME-Version: 1.0",
-		"Message-ID: <" + fmt.Sprint(time.Now().UnixNano()) + "@sea.uofk.edu>",
+		"Message-ID: <" + fmt.Sprint(time.Now().UnixNano()) + "@" + config.Links.Domain + ">",
 		"Content-Type: multipart/alternative; boundary=\"" + boundary + "\"",
 	}
 
