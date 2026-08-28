@@ -30,5 +30,6 @@
 **/values.dev.yaml
 ~/**
 resources/**
+!resources/static-assets
 LICENSE
 README.md
