@@ -35,8 +35,8 @@ func (c *CertificateService) VerifyCertificate(hash string) (*models.Certificate
 	return &models.CertificateVerify{
 		Valid:     valid,
 		ID:        fmt.Sprint(cert.ID),
-		NameAr:    user.NameAr,
-		NameEn:    user.NameEn,
+		NameAr:    *user.NameAr,
+		NameEn:    *user.NameEn,
 		EventName: event.Name,
 		Status:    status,
 		Grade:     fmt.Sprintf("%.2f", cert.Grade),

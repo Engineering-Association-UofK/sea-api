@@ -87,7 +87,7 @@ func generateParticipationV0_1(
 	stampBase64 := fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(stampBytes))
 
 	dataEN := certs.V1_0{
-		Name:        user.NameEn,
+		Name:        *user.NameEn,
 		EventName:   event.Name,
 		Grade:       participant.Grade,
 		TaskColumns: make3x3Grid(strings.Split(event.Outcomes, ",")),
@@ -109,7 +109,7 @@ func generateParticipationV0_1(
 	}
 
 	dataAR := certs.V1_0{
-		Name:      user.NameAr,
+		Name:      *user.NameAr,
 		EventName: event.Name,
 		Grade:     participant.Grade, TaskColumns: make3x3Grid(strings.Split(event.Outcomes, ",")),
 		QRCode: fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(qrCode)),

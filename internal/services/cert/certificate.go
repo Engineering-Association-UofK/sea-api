@@ -104,10 +104,10 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 		user, err := usersMap.Value(certificate.UserID)
 		if err != nil {
 			slog.Error("error getting user", "error", err, "event_id", eventId)
-			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, user.NameAr, progressChan)
+			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, *user.NameAr, progressChan)
 			continue
 		}
-		name := strings.Split(user.NameAr, " ")
+		name := strings.Split(*user.NameAr, " ")
 		data := models.CertificateEmailData{
 			Name:      name[0] + " " + name[1],
 			EventName: event.Name,
@@ -117,11 +117,11 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 		temp, err := utils.GetEmailTemplate(models.EmailEventCertificate, models.Arabic, data)
 		if err != nil {
 			slog.Error("error reading template", "error", err, "event_id", eventId)
-			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, user.NameAr, progressChan)
+			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, *user.NameAr, progressChan)
 			continue
 		}
 		err = c.mailService.SendEmail(models.Email{
-			To:      []string{user.Email},
+			To:      []string{*user.Email},
 			Cc:      request.Cc,
 			Bcc:     request.Bcc,
 			Subject: "Certificate Completion",
@@ -129,10 +129,10 @@ func (c *CertificateService) SendCertificatesEmailsForEvent(request models.Certi
 		})
 		if err != nil {
 			slog.Error("error sending email", "error", err, "event_id", eventId)
-			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, user.NameAr, progressChan)
+			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, *user.NameAr, progressChan)
 			continue
 		}
-		utils.ParseProgressStruct(len(ids), i+1, user.ID, true, user.NameAr, progressChan)
+		utils.ParseProgressStruct(len(ids), i+1, user.ID, true, *user.NameAr, progressChan)
 	}
 	progressChan <- "done"
 	return nil

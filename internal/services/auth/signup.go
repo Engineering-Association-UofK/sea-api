@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/sha256"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"sea-api/internal/config"
@@ -50,11 +51,11 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 	// Get models and check them
 	tempUser, err := s.UserRepo.GetTempUser(req.UserID)
 	if err != nil {
-		return errs.New(errs.NotFound, "Student UserID was not found in out database, please contact administration", nil)
+		return errs.New(errs.NotFound, "Student Index was not found in out database, please contact administration", nil)
 	}
 	_, err = s.UserRepo.GetByUserID(req.UserID)
-	if err == nil {
-		return errs.New(errs.Conflict, "User with userID already exists", nil)
+	if err == nil || err != sql.ErrNoRows {
+		return errs.New(errs.Conflict, "User with Index already exists", nil)
 	}
 	slog.Debug("User found and not already registered")
 
@@ -77,12 +78,12 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 		return err
 	}
 
-	// Delete temp user model
-	err = s.UserRepo.DeleteTempUser(req.UserID, nil)
-	if err != nil {
-		slog.Error("error deleting temp user", "error", err, "user_id", req.UserID)
-	}
-	slog.Debug("User temp profile deleted")
+	// // Delete temp user model
+	// err = s.UserRepo.DeleteTempUser(req.UserID, nil)
+	// if err != nil {
+	// 	slog.Error("error deleting temp user", "error", err, "user_id", req.UserID)
+	// }
+	// slog.Debug("User temp profile deleted")
 
 	// Start registration counter
 	data := []byte(fmt.Sprintf("%s|%d|%s", req.Email, req.UserID, time.Now()))

@@ -201,10 +201,10 @@ func (c *CertificateService) MakeCertificatesForEvent(ctx context.Context, req *
 		hash, _, err := c.CreateWorkshopCertificate(ctx, &user, &p, event, req.CertificateVersion, req.CertificateType)
 		if err != nil {
 			slog.Error("error creating certificate", "error", err, "user_id", user.ID, "event_id", eventId)
-			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, user.NameAr, progressChan)
+			utils.ParseProgressStruct(len(ids), i+1, user.ID, false, *user.NameAr, progressChan)
 			continue
 		}
-		utils.ParseProgressStruct(len(ids), i+1, user.ID, true, user.NameAr, progressChan)
+		utils.ParseProgressStruct(len(ids), i+1, user.ID, true, *user.NameAr, progressChan)
 		c.NotificationService.CreateNotification(&models.NotificationRequest{
 			UserID:  user.ID,
 			Title:   "Your certificate is ready",
@@ -234,7 +234,7 @@ func (c *CertificateService) CreateWorkshopCertificate(
 		return cert.Hash, cert.ID, nil
 	}
 
-	stringToHash := user.NameEn + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
+	stringToHash := *user.NameEn + "|" + event.Name + "|" + event.StartDate.Format("02-01-2006") + "|" + event.EndDate.Format("02-01-2006") + "|" + config.App.SecretSalt
 	hash := sha256.Sum256([]byte(stringToHash))
 	hashString := hex.EncodeToString(hash[:])
 	url := config.Links.CertVerify + "/" + hashString
