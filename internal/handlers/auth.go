@@ -55,7 +55,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 //	@Produce		json
 //	@Param			body	body	models.CheckRegistrationRequest	true	"Request body"
 //
-//	@Success		201	{object}	response.CheckRegistrationResponse
+//	@Success		201	{object}	models.CheckRegistrationResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/auth/register/check [post]
