@@ -50,17 +50,17 @@ func (s *UserService) ImportUsers(eventID int64, file io.Reader) error {
 			password := string(pass)
 			err = s.repo.Create(&models.UserModel{
 				ID:         index,
-				UniID:      "0",
-				Username:   hex.EncodeToString(username[:]),
-				NameEn:     u.NameEn,
-				NameAr:     u.NameAr,
-				Email:      u.Email,
-				Phone:      "",
-				Department: "",
+				UniID:      nil,
+				Username:   &[]string{hex.EncodeToString(username[:])}[0],
+				NameEn:     &[]string{u.NameEn}[0],
+				NameAr:     &[]string{u.NameAr}[0],
+				Email:      &[]string{u.Email}[0],
+				Phone:      nil,
+				Department: nil,
 				Verified:   false,
 				Password:   &password,
 				Status:     models.STATUS_INACTIVE,
-				Gender:     models.MALE,
+				Gender:     &[]models.Gender{models.MALE}[0],
 			}, tx)
 			if err != nil {
 				return err
@@ -94,13 +94,13 @@ func (s *UserService) UpdateUsersImport(file io.Reader) error {
 	modsMap := utils.FromSlice(mods, func(u models.ImportUserUpdate) string { return u.Email })
 
 	for _, u := range users {
-		if user, ok := modsMap[u.Email]; ok {
+		if user, ok := modsMap[*u.Email]; ok {
 			index, err := strconv.ParseInt(user.Index, 10, 64)
 			if err != nil {
 				slog.Error("user "+user.Index+" failed to update", "error", err)
 			}
 			u.ID = index
-			u.Phone = user.Phone
+			u.Phone = &[]string{user.Phone}[0]
 			u.Status = models.STATUS_INACTIVE
 			s.repo.UpdateWithID(&u, nil)
 		}

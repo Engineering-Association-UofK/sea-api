@@ -64,8 +64,8 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 
 	claims := &models.ManagedClaims{
 		UserID:   user.ID,
-		Username: user.Username,
-		Email:    user.Email,
+		Username: *user.Username,
+		Email:    *user.Email,
 		Roles:    roles,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.ExpiryTime)),
@@ -118,6 +118,6 @@ func (s *AuthService) ForgotPassword(req *models.ForgotPasswordRequest) error {
 
 	stringToReturn = fmt.Sprintf("%s/%s", config.Links.Register, state.RegCode)
 
-	return s.MailService.SendForgotPassMail(user.Email, stringToReturn, req.Lang)
+	return s.MailService.SendForgotPassMail(*user.Email, stringToReturn, req.Lang)
 
 }

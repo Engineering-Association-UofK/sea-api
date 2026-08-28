@@ -82,7 +82,7 @@ func (s *AuthService) SendVerificationCode(userID int64) error {
 	if err != nil {
 		return err
 	}
-	err = s.MailService.SendVerificationCode(user.Email, models.VerifyEmail{
+	err = s.MailService.SendVerificationCode(*user.Email, models.VerifyEmail{
 		Input: code,
 		Year:  time.Now().Year(),
 	})
