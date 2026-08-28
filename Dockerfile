@@ -43,6 +43,7 @@ USER appuser
 
 COPY --from=build /bin/server /bin/
 COPY ./db/migrations /app/db/migrations
+COPY ./resources/static-assets /app/resources/static-assets
 EXPOSE 8000
 
 
