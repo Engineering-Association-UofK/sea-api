@@ -1,5 +1,5 @@
 ALTER TABLE event ADD COLUMN header_image_id INT;
-ALTER TABLE event ADD FOREIGN KEY (header_image_id) REFERENCES gallery_assets(id);
+ALTER TABLE event ADD CONSTRAINT fk_event_header_image FOREIGN KEY (header_image_id) REFERENCES gallery_assets(id);
 
 CREATE TABLE event_form (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -70,9 +70,10 @@ CREATE TABLE bot_edge_translations (
 CREATE TABLE bot_user_states (
     session_id VARCHAR(255) PRIMARY KEY,
     current_node_id VARCHAR(255) NOT NULL,
-    user_id BIGINT NULL,
+    user_id INT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (current_node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE
+    FOREIGN KEY (current_node_id) REFERENCES bot_nodes(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
 -- ------ NOTIFICATIONS SCHEMA

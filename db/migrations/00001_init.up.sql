@@ -31,7 +31,6 @@ CREATE TABLE users (
     is_editable TINYINT DEFAULT 1,
     is_anonymous TINYINT DEFAULT 0,
 
-    UNIQUE (profile_image_id),
     FOREIGN KEY (profile_image_id) REFERENCES files(id)
 );
 
