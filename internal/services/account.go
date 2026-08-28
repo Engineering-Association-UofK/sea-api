@@ -74,14 +74,14 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 
 	return &models.UserProfileResponse{
 		ID:         user.ID,
-		UniID:      user.UniID,
-		Username:   user.Username,
-		NameAr:     user.NameAr,
-		NameEn:     user.NameEn,
-		Email:      user.Email,
-		Phone:      user.Phone,
-		Gender:     user.Gender,
-		Department: user.Department,
+		UniID:      *user.UniID,
+		Username:   *user.Username,
+		NameAr:     *user.NameAr,
+		NameEn:     *user.NameEn,
+		Email:      *user.Email,
+		Phone:      *user.Phone,
+		Gender:     *user.Gender,
+		Department: *user.Department,
 		ProfilePic: url,
 	}, nil
 }
@@ -125,12 +125,12 @@ func (s *AccountService) UpdateProfile(claims *models.ManagedClaims, req models.
 		return errs.New(errs.MultiBadRequest, "Invalid fields", errsMap)
 	}
 
-	user.UniID = req.UniID
-	user.NameAr = string(req.NameAr)
-	user.NameEn = string(req.NameEn)
-	user.Gender = req.Gender
-	user.Department = req.Department
-	user.Phone = string(req.Phone)
+	user.UniID = &req.UniID
+	user.NameAr = &[]string{string(req.NameAr)}[0]
+	user.NameEn = &[]string{string(req.NameEn)}[0]
+	user.Gender = &[]models.Gender{req.Gender}[0]
+	user.Department = &[]models.Department{req.Department}[0]
+	user.Phone = &[]string{string(req.Phone)}[0]
 	return s.UserRepo.Update(user, nil)
 }
 
@@ -208,7 +208,7 @@ func (s *AccountService) UpdateEmail(claims *models.ManagedClaims, req models.Up
 	if _, err := s.UserRepo.GetByEmail(req.Email); err == nil {
 		return errs.New(errs.Conflict, "Email is already in use", nil)
 	}
-	user.Email = req.Email
+	user.Email = &[]string{req.Email}[0]
 	user.Verified = false
 	return s.UserRepo.Update(user, nil)
 }
@@ -227,7 +227,7 @@ func (s *AccountService) UpdateUsername(claims *models.ManagedClaims, req models
 	if err != nil {
 		return err
 	}
-	user.Username = string(req.Username)
+	user.Username = &[]string{string(req.Username)}[0]
 	return s.UserRepo.Update(user, nil)
 }
 

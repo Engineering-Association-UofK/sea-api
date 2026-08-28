@@ -110,19 +110,19 @@ const (
 //////////////////
 
 type UserModel struct {
-	ID       int64  `db:"id"`
-	UniID    string `db:"uni_id"`
-	Username string `db:"username"`
+	ID       int64   `db:"id"`
+	UniID    *string `db:"uni_id"`
+	Username *string `db:"username"`
 
 	ProfileImageID sql.NullInt64 `db:"profile_image_id"`
 
-	NameAr string `db:"name_ar"`
-	NameEn string `db:"name_en"`
-	Email  string `db:"email"`
-	Phone  string `db:"phone"`
+	NameAr *string `db:"name_ar"`
+	NameEn *string `db:"name_en"`
+	Email  *string `db:"email"`
+	Phone  *string `db:"phone"`
 
-	Department Department `db:"department"`
-	Gender     Gender     `db:"gender"`
+	Department *Department `db:"department"`
+	Gender     *Gender     `db:"gender"`
 
 	Password *string `db:"password"`
 	Verified bool    `db:"verified"`

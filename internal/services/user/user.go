@@ -81,14 +81,14 @@ func (s *UserService) GetAllUserDetailsByIndices(indices []int64) ([]models.User
 		userResponses = append(userResponses, models.UserDetails{
 			UserProfileResponse: models.UserProfileResponse{
 				ID:         user.ID,
-				UniID:      user.UniID,
-				Username:   user.Username,
-				NameAr:     user.NameAr,
-				NameEn:     user.NameEn,
-				Email:      user.Email,
-				Phone:      user.Phone,
-				Gender:     user.Gender,
-				Department: user.Department,
+				UniID:      *user.UniID,
+				Username:   *user.Username,
+				NameAr:     *user.NameAr,
+				NameEn:     *user.NameEn,
+				Email:      *user.Email,
+				Phone:      *user.Phone,
+				Gender:     *user.Gender,
+				Department: *user.Department,
 				ProfilePic: url,
 			},
 		})
@@ -142,14 +142,14 @@ func (s *UserService) GetUserDetails(id int64) (*models.UserDetails, error) {
 	return &models.UserDetails{
 		UserProfileResponse: models.UserProfileResponse{
 			ID:         user.ID,
-			UniID:      user.UniID,
-			Username:   user.Username,
-			NameAr:     user.NameAr,
-			NameEn:     user.NameEn,
-			Email:      user.Email,
-			Phone:      user.Phone,
-			Gender:     user.Gender,
-			Department: user.Department,
+			UniID:      *user.UniID,
+			Username:   *user.Username,
+			NameAr:     *user.NameAr,
+			NameEn:     *user.NameEn,
+			Email:      *user.Email,
+			Phone:      *user.Phone,
+			Gender:     *user.Gender,
+			Department: *user.Department,
 			ProfilePic: url,
 		},
 	}, nil
@@ -231,12 +231,12 @@ func (s *UserService) Update(req *models.UpdateProfileRequest) error {
 	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot update a Super Admin profile", nil)
 	}
-	user.UniID = req.UniID
-	user.NameAr = string(req.NameAr)
-	user.NameEn = string(req.NameEn)
-	user.Phone = string(req.Phone)
-	user.Department = req.Department
-	user.Gender = req.Gender
+	user.UniID = &[]string{req.UniID}[0]
+	user.NameAr = &[]string{string(req.NameAr)}[0]
+	user.NameEn = &[]string{string(req.NameEn)}[0]
+	user.Phone = &[]string{string(req.Phone)}[0]
+	user.Department = &[]models.Department{req.Department}[0]
+	user.Gender = &[]models.Gender{req.Gender}[0]
 	if err := s.repo.Update(user, nil); err != nil {
 		return err
 	}
@@ -304,13 +304,13 @@ func extractRoles(roles []models.UserRole) map[int64][]models.Role {
 func parseUserListResponse(user *models.UserModel, roles []models.Role) *models.UserListItemResponse {
 	return &models.UserListItemResponse{
 		ID:         user.ID,
-		UniID:      user.UniID,
-		Username:   user.Username,
-		Email:      user.Email,
+		UniID:      *user.UniID,
+		Username:   *user.Username,
+		Email:      *user.Email,
 		Verified:   user.Verified,
 		Status:     user.Status,
-		Gender:     user.Gender,
-		Department: user.Department,
+		Gender:     *user.Gender,
+		Department: *user.Department,
 		Roles:      roles,
 	}
 }
@@ -318,15 +318,15 @@ func parseUserListResponse(user *models.UserModel, roles []models.Role) *models.
 func parseUserResponse(user *models.UserModel, roles []models.Role, url string) *models.UserResponse {
 	return &models.UserResponse{
 		ID:         user.ID,
-		UniID:      user.UniID,
-		Username:   user.Username,
+		UniID:      *user.UniID,
+		Username:   *user.Username,
 		ProfilePic: url,
-		NameAr:     user.NameAr,
-		NameEn:     user.NameEn,
-		Email:      user.Email,
-		Phone:      user.Phone,
-		Department: user.Department,
-		Gender:     user.Gender,
+		NameAr:     *user.NameAr,
+		NameEn:     *user.NameEn,
+		Email:      *user.Email,
+		Phone:      *user.Phone,
+		Department: *user.Department,
+		Gender:     *user.Gender,
 		Verified:   user.Verified,
 		Status:     user.Status,
 		Roles:      roles,
