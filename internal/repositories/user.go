@@ -266,6 +266,14 @@ func (r *UserRepository) GetTempUser(id int64) (*models.TempUserModel, error) {
 
 // ======= CREATE ========
 
+func (r *UserRepository) StartUserRegistration(model *models.RegInitCreate) error {
+	query := fmt.Sprintf(`
+	INSERT INTO %s (id, email) VALUES (:id, :email)`, models.TableUsers)
+
+	_, err := r.DB.NamedExec(query, model)
+	return err
+}
+
 func (r *UserRepository) DetailedCreate(user *models.UserModel, tx *sqlx.Tx) error {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (
@@ -350,6 +358,40 @@ func (r *UserRepository) UpdateWithID(user *models.UserModel, tx *sqlx.Tx) error
 
 func (r *UserRepository) UpdateTempPasscode(id int64, passcode string) error {
 	_, err := r.DB.Exec(fmt.Sprintf(`UPDATE %s SET password = ? WHERE id = ?`, models.TableTempUsers), passcode, id)
+	return err
+}
+
+func (r *UserRepository) VerifyUser(userID int64) error {
+	query := fmt.Sprintf(`UPDATE %s SET verified = 1 WHERE id = ?`, models.TableUsers)
+	_, err := r.DB.Exec(query, userID)
+	return err
+}
+
+func (r *UserRepository) UnVerifyUser(userID int64) error {
+	query := fmt.Sprintf(`UPDATE %s SET verified = 0 WHERE id = ?`, models.TableUsers)
+	_, err := r.DB.Exec(query, userID)
+	return err
+}
+
+func (r *UserRepository) UpdatePassword(userID int64, passwordHash string) error {
+	query := fmt.Sprintf(`UPDATE %s SET password = ? WHERE id = ?`, models.TableUsers)
+	_, err := r.DB.Exec(query, passwordHash, userID)
+	return err
+}
+
+func (r *UserRepository) UpdateDetails(data *models.RegDetailsUpdate) error {
+	query := fmt.Sprintf(`
+	UPDATE %s SET uni_id = :uni_id, name_ar = :name_ar, name_en = :name_en,
+	phone = :phone, department = :department, gender = :gender
+	WHERE id = :user_id
+	`, models.TableUsers)
+	_, err := r.DB.NamedExec(query, data)
+	return err
+}
+
+func (r *UserRepository) UpdateUsername(userID int64, username string) error {
+	query := fmt.Sprintf(`UPDATE %s SET username = ? WHERE id = ?`, models.TableUsers)
+	_, err := r.DB.Exec(query, username, userID)
 	return err
 }
 

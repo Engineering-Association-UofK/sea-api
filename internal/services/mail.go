@@ -42,6 +42,36 @@ func (m *MailService) SendVerificationCode(to string, data models.VerifyEmail) e
 	})
 }
 
+func (m *MailService) SendRegistrationMail(to, link string, lang models.Language) error {
+	tem, err := utils.GetEmailTemplate(models.EmailAccLink, lang, struct {
+		Link string
+		Year int
+	}{Link: link, Year: time.Now().Year()})
+	if err != nil {
+		return err
+	}
+	return m.SendEmail(models.Email{
+		To:      []string{to},
+		Subject: "Registration process started",
+		HTML:    tem,
+	})
+}
+
+func (m *MailService) SendForgotPassMail(to, link string, lang models.Language) error {
+	tem, err := utils.GetEmailTemplate(models.EmailAccPassReset, lang, struct {
+		Link string
+		Year int
+	}{Link: link, Year: time.Now().Year()})
+	if err != nil {
+		return err
+	}
+	return m.SendEmail(models.Email{
+		To:      []string{to},
+		Subject: "Password Reset Request",
+		HTML:    tem,
+	})
+}
+
 func (m *MailService) SendEmail(e models.Email) error {
 
 	recipients := append([]string{}, e.To...)
@@ -60,7 +90,7 @@ func (m *MailService) SendEmail(e models.Email) error {
 		"Subject: " + e.Subject,
 		"Date: " + time.Now().Format(time.RFC1123Z),
 		"MIME-Version: 1.0",
-		"Message-ID: <" + fmt.Sprint(time.Now().UnixNano()) + "@sea.uofk.edu>",
+		"Message-ID: <" + fmt.Sprint(time.Now().UnixNano()) + "@" + config.Links.Domain + ">",
 		"Content-Type: multipart/alternative; boundary=\"" + boundary + "\"",
 	}
 

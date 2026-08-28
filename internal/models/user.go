@@ -124,9 +124,9 @@ type UserModel struct {
 	Department Department `db:"department"`
 	Gender     Gender     `db:"gender"`
 
-	Password string `db:"password"`
-	Verified bool   `db:"verified"`
-	Status   Status `db:"status"`
+	Password *string `db:"password"`
+	Verified bool    `db:"verified"`
+	Status   Status  `db:"status"`
 
 	IsEditable  bool `db:"is_editable"`
 	IsLoggable  bool `db:"is_loggable"`

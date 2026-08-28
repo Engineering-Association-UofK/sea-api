@@ -1,19 +1,21 @@
 package handlers
 
 import (
+	"encoding/json"
+	"log/slog"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
-	"sea-api/internal/services"
+	"sea-api/internal/services/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
-	AuthService *services.AuthService
+	AuthService *auth.AuthService
 }
 
-func NewAuthHandler(authService *services.AuthService) *AuthHandler {
+func NewAuthHandler(authService *auth.AuthService) *AuthHandler {
 	return &AuthHandler{AuthService: authService}
 }
 
@@ -45,32 +47,121 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.JSON(200, resp)
 }
 
-// Register godocs
+// CheckState godocs
 //
-//	@Summary		Register
-//	@Description	Register user
+//	@Summary		Check registration step
+//	@Description	Check which registration step the user is in right now.
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.RegisterRequest	true	"Request body"
+//	@Param			body	body	models.CheckRegistrationRequest	true	"Request body"
 //
-//	@Success		201	{object}	response.TransactionResponse
+//	@Success		201	{object}	response.CheckRegistrationResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/auth/register [post]
-func (h *AuthHandler) Register(c *gin.Context) {
-	var req models.RegisterRequest
+//	@Router			/auth/register/check [post]
+func (h *AuthHandler) CheckState(c *gin.Context) {
+	var req models.CheckRegistrationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
-	err := h.AuthService.Register(req)
+	res, _, err := h.AuthService.CheckRegistration(&req)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	response.NewTransactionResponse(201, "User registered successfully", req.UserID, c)
+	c.JSON(200, res)
+}
+
+// DoRegistrationStep godocs
+//
+//	@Summary		Register Step
+//	@Description	Do registration step with it's data and step number
+//	@Tags			Auth
+//	@Produce		json
+//	@Param			body	body	models.CheckRegistrationRequest	true	"Request body"
+//
+//	@Success		201	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/auth/register/step [post]
+func (h *AuthHandler) DoRegistrationStep(c *gin.Context) {
+	var req models.RegistrationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+	slog.Debug("Request started", "Step", req.Step)
+
+	var err error = nil
+
+	switch req.Step {
+	case 0:
+		var data models.InitialRegistrationRequest
+		if err = json.Unmarshal(req.Data, &data); err == nil {
+			err = h.AuthService.InitialRegistration(&data)
+		}
+	case 1:
+		var data models.PasswordRegistrationRequest
+		if err = json.Unmarshal(req.Data, &data); err == nil {
+			err = h.AuthService.CredentialsRegistration(&data)
+		}
+	case 2:
+		var data models.DetailsRegistrationRequest
+		if err = json.Unmarshal(req.Data, &data); err == nil {
+			err = h.AuthService.DetailsRegistration(&data)
+		}
+	case 3:
+		var data models.UsernameRegistrationRequest
+		if err = json.Unmarshal(req.Data, &data); err == nil {
+			err = h.AuthService.UsernameRegistration(&data)
+		}
+	case 5:
+		var data models.PasswordRegistrationRequest
+		if err = json.Unmarshal(req.Data, &data); err == nil {
+			err = h.AuthService.CredentialsRegistration(&data)
+		}
+	default:
+		c.Error(errs.New(errs.BadRequest, "Provided step number is out of range", nil))
+		return
+	}
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(201, "Step registered successfully", 0, c)
+}
+
+// ForgotPassword godocs
+//
+//	@Summary		Forgot Password
+//	@Description	Forgot password endpoint to send a password reset email
+//	@Tags			Auth
+//	@Produce		json
+//	@Param			body	body	models.ForgotPasswordRequest	true	"Request body"
+//
+//	@Success		201	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/auth/forgot-password [post]
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req models.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	err := h.AuthService.ForgotPassword(&req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(201, "Password reset email sent", 0, c)
 }
 
 // Verify godocs
@@ -84,6 +175,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 //		@Success		200	{object}	response.TransactionResponse
 //		@Failure		400	{object}	response.BaseError
 //	 @Router 			/auth/verify [post]
+//
+// Deprecated: No longer needed with new registration system as of v1.0.1
 func (h *AuthHandler) Verify(c *gin.Context) {
 	var req models.VerifyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -111,6 +204,8 @@ func (h *AuthHandler) Verify(c *gin.Context) {
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
 //	@Router			/auth/send-verification-code [post]
+//
+// Deprecated: No longer needed with new registration system as of v1.0.1
 func (h *AuthHandler) SendVerificationCode(c *gin.Context) {
 	var req models.VerifyEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
