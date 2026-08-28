@@ -1,11 +1,14 @@
-DROP TABLE logs;
-DROP TABLE notifications;
-DROP TABLE bot_command_options;
-DROP TABLE bot_command_triggers;
-DROP TABLE bot_command_translations;
-DROP TABLE bot_commands;
-DROP TABLE event_applications;
-DROP TABLE event_form;
+DROP TABLE IF EXISTS feedback;
+DROP TABLE IF EXISTS logs;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS bot_user_states;
+DROP TABLE IF EXISTS bot_edge_translations;
+DROP TABLE IF EXISTS bot_actions;
+DROP TABLE IF EXISTS bot_edges;
+DROP TABLE IF EXISTS bot_node_translations;
+DROP TABLE IF EXISTS bot_nodes;
+DROP TABLE IF EXISTS event_applications;
+DROP TABLE IF EXISTS event_form;
 
-ALTER TABLE event DROP FOREIGN KEY event_ibfk_1;
+ALTER TABLE event DROP FOREIGN KEY fk_event_header_image;
 ALTER TABLE event DROP COLUMN header_image_id;
