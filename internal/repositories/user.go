@@ -46,6 +46,7 @@ func (r *UserRepository) GetAll(limit int64, page int64) ([]models.UserModel, er
 	err := r.DB.Select(&users, fmt.Sprintf(`
 		SELECT * FROM %s 
 		WHERE is_anonymous = false
+		AND username IS NOT NULL
 		LIMIT ? OFFSET ? 
 	`, models.TableUsers), limit, offset)
 	if err != nil {
