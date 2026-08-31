@@ -39,6 +39,10 @@ const (
 	TableCertificates     TableName = "certificate"
 	TableCertificateFiles TableName = "certificate_file"
 
+	TableNewCertificates  TableName = "certificates"
+	TableCertCollaborator TableName = "certificate_collaborators"
+	TableCertTemplate     TableName = "certificate_templates"
+
 	// Forms
 
 	TableForms         TableName = "forms"
