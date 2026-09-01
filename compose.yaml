@@ -83,7 +83,7 @@ services:
       - 8333:8333
       - 9327:9327
     volumes:
-      - ./resources/config.json:/etc/seaweedfs/config.json:ro
+      - ./resources/secrets/config.json:/etc/seaweedfs/config.json:ro
     command: 's3 -filer="filer:8888" -ip.bind=0.0.0.0 -metricsPort=9327 -config=/etc/seaweedfs/config.json'
     depends_on:
       - master

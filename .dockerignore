@@ -29,7 +29,6 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 ~/**
-resources/**
-!resources/static-assets
+resources/secrets/**
 LICENSE
 README.md
