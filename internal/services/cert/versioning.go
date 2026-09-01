@@ -78,7 +78,7 @@ func generateParticipationV0_1(
 	slog.Debug("Signature IDs", "presenter", presenter.SignatureID.Int64, "coordinator", coordinator.SignatureID.Int64)
 
 	// Get stamp png from resources folder and then convert it to base64
-	stampPath := fmt.Sprintf("%s/stamp.png", config.App.ResourcesDir)
+	stampPath := fmt.Sprintf("%s/secrets/stamp.png", config.App.ResourcesDir)
 	stampBytes, err := os.ReadFile(stampPath)
 	if err != nil {
 		slog.Error("error reading stamp file", "error", err, "path", stampPath)
