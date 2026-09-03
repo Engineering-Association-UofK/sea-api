@@ -33,6 +33,7 @@ var (
 	CollaboratorHandler *handlers.CollaboratorHandler
 	NotificationHandler *handlers.NotificationHandler
 	BotHandler          *handlers.BotHandler
+	CertHandler         *handlers.CertificatesHandler
 )
 
 var (
@@ -279,6 +280,13 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			certificate := admin.Group("/certificate")
 			certificate.Use(middleware.RequireAnyRole(models.RoleCertifier, models.RoleSystemSuperAdmin))
 			certificate.POST("/sign", midLimit, CertificateHandler.SignPDF)
+
+			certificate.GET("/template/:id", midLimit, CertHandler.GetTemplate)
+			certificate.GET("/template", midLimit, CertHandler.GetTemplatesList)
+			certificate.POST("/template", midLimit, CertHandler.CreateTemplate)
+			certificate.PUT("/template", midLimit, CertHandler.UpdateTemplate)
+
+			certificate.POST("/test", midLimit, CertHandler.TestGeneration)
 		}
 
 		{ // ==== MAIL

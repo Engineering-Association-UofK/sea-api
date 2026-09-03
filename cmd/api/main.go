@@ -6,11 +6,13 @@ import (
 	"sea-api/internal/config"
 	"sea-api/internal/handlers"
 	"sea-api/internal/repositories"
+	"sea-api/internal/repositories/certrepo"
 	"sea-api/internal/repositories/eventrepo"
 	"sea-api/internal/services"
 	"sea-api/internal/services/auth"
 	"sea-api/internal/services/bot"
 	"sea-api/internal/services/cert"
+	"sea-api/internal/services/certservice"
 	"sea-api/internal/services/event"
 	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
@@ -71,6 +73,7 @@ func Go() {
 	botRepository := repositories.NewBotRepository(db)
 	feedbackRepository := repositories.NewFeedbackRepository(db)
 	authRepository := repositories.NewAuthRepository(db)
+	repo := certrepo.NewCertRepository(db)
 
 	// Initialize services
 	pdfService := services.NewPDFService(10)
@@ -91,6 +94,8 @@ func Go() {
 
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
 	FormService := forms.NewFormService(formRepository, eventService, galleryService)
+
+	certService := certservice.NewCertService(repo, S3)
 
 	certificateService := cert.NewCertificateService(
 		userRepository,
@@ -126,6 +131,7 @@ func Go() {
 	routes.CollaboratorHandler = handlers.NewCollaboratorHandler(collaboratorService)
 	routes.NotificationHandler = handlers.NewNotificationHandler(notificationService)
 	routes.BotHandler = handlers.NewBotHandler(botService)
+	routes.CertHandler = handlers.NewCertificatesHandler(certService)
 
 	// Initialize routes
 
