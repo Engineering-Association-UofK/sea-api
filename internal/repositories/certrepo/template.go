@@ -8,8 +8,8 @@ import (
 
 func (r *CertRepository) CreateTemplate(model *certmodels.CertificateTemplate) (int64, error) {
 	query := fmt.Sprintf(`
-	INSERT INTO %s (name, version, background_image_file_id, layout_config)
-	VALUES (:name, :version, :background_image_file_id, :layout_config)
+	INSERT INTO %s (name, language, version, layout_config, created_at)
+	VALUES (:name, :language, :version, :layout_config, :created_at)
 	`, models.TableCertTemplate)
 
 	res, err := r.db.NamedExec(query, model)
@@ -22,8 +22,7 @@ func (r *CertRepository) CreateTemplate(model *certmodels.CertificateTemplate) (
 func (r *CertRepository) GetTemplateByID(id int64) (*certmodels.CertificateTemplate, error) {
 	var model certmodels.CertificateTemplate
 	query := fmt.Sprintf(`
-	SELECT id, name, version, background_image_file_id, layout_config 
-	FROM %s WHERE id = ?
+	SELECT * FROM %s WHERE id = ?
 	`, models.TableCertTemplate)
 
 	err := r.db.Get(&model, query, id)
@@ -33,14 +32,25 @@ func (r *CertRepository) GetTemplateByID(id int64) (*certmodels.CertificateTempl
 	return &model, nil
 }
 
-func (r *CertRepository) ListTemplates() ([]certmodels.CertificateTemplate, error) {
+func (r *CertRepository) GetCount() int64 {
+	var count int64
+	err := r.db.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TableCertTemplate))
+	if err != nil {
+		return 0
+	}
+	return count
+}
+
+func (r *CertRepository) ListTemplates(req *models.ListRequest) ([]certmodels.CertificateTemplate, error) {
 	var templates = []certmodels.CertificateTemplate{}
 	query := fmt.Sprintf(`
-	SELECT id, name, version, background_image_file_id, layout_config 
-	FROM %s ORDER BY id DESC
+	SELECT * FROM %s
+	ORDER BY created_at DESC
+	LIMIT ? OFFSET ?
 	`, models.TableCertTemplate)
 
-	err := r.db.Select(&templates, query)
+	offset := (req.Page - 1) * req.Limit
+	err := r.db.Select(&templates, query, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +60,7 @@ func (r *CertRepository) ListTemplates() ([]certmodels.CertificateTemplate, erro
 func (r *CertRepository) UpdateTemplate(model *certmodels.CertificateTemplate) error {
 	query := fmt.Sprintf(`
 	UPDATE %s 
-	SET name = :name, version = :version, background_image_file_id = :background_image_file_id, layout_config = :layout_config
+	SET name = :name, language = :language, version = :version, layout_config = :layout_config
 	WHERE id = :id
 	`, models.TableCertTemplate)
 

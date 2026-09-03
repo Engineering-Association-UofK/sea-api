@@ -2,6 +2,8 @@ package certmodels
 
 import (
 	"database/sql"
+	"encoding/json"
+	"sea-api/internal/models"
 	"time"
 )
 
@@ -15,37 +17,19 @@ const (
 	ALIGN_BOTTOM Alignment = "bottom"
 )
 
-type LayoutPosition struct {
-	X        int       `json:"x"`
-	Y        int       `json:"y"`
-	FontSize int       `json:"font_size"`
-	Align    Alignment `json:"align"`
-}
-
 type Layout struct {
-	Title         *LayoutPosition `json:"title"`
-	Subtitle      *LayoutPosition `json:"subtitle"`
-	Statement     *LayoutPosition `json:"statement"`
-	RecipientName *LayoutPosition `json:"recipient_name"`
-	Date          *LayoutPosition `json:"date"`
-
-	CoordOneName *LayoutPosition `json:"coord_one_name"`
-	CoordOneRole *LayoutPosition `json:"coord_one_role"`
-	CoordOneSign *LayoutPosition `json:"coord_one_sign"`
-
-	CoordTwoName *LayoutPosition `json:"coord_two_name"`
-	CoordTwoRole *LayoutPosition `json:"coord_two_role"`
-	CoordTwoSign *LayoutPosition `json:"coord_two_sign"`
-
-	QR *LayoutPosition `json:"qr"`
+	Title     string `json:"title"`
+	Subtitle  string `json:"subtitle"`
+	Statement string `json:"statement"`
 }
 
 type CertificateTemplate struct {
-	ID                int64  `db:"id"`
-	Name              string `db:"name"`
-	Version           string `db:"version"`
-	BackgroundImageID int64  `db:"background_image_file_id"`
-	LayoutConfig      string `db:"layout_config"`
+	ID           int64           `db:"id"`
+	Name         string          `db:"name"`
+	Language     models.Language `db:"language"`
+	Version      string          `db:"version"`
+	LayoutConfig json.RawMessage `db:"layout_config"`
+	CreatedAt    time.Time       `db:"created_at"`
 }
 
 type Certificate struct {
@@ -62,13 +46,4 @@ type Certificate struct {
 	Subtitle      sql.NullString `db:"subtitle"`
 	Statement     sql.NullString `db:"statement"`
 	IssuedDate    time.Time      `db:"issued_date"`
-}
-
-type CertificateCollaborator struct {
-	ID            int64          `db:"id"`
-	CertID        int64          `db:"cert_id"`
-	Name          string         `db:"name"`
-	Role          string         `db:"role"`
-	SignatureID   sql.NullString `db:"signature_file_id"`
-	DisplayOnCert bool           `db:"display_on_cert"`
 }
