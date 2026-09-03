@@ -19,22 +19,19 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 ################################################################################
 
-FROM python:3.11-slim AS final
+FROM debian:bookworm-slim AS final
 
-# Install the minimal system rendering libraries Weasyprint needs
+# Install Inkscape, fontconfig, and core certificates/tzdata
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpango-1.0-0 \
-    libharfbuzz0b \
-    libpangoft2-1.0-0 \
-    libffi-dev \
-    libjpeg-dev \
-    libopenjp2-7-dev \
+    inkscape \
+    fontconfig \
     ca-certificates \
     tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Install WeasyPrint securely via pip
-RUN pip install --no-cache-dir weasyprint
+COPY ./resources/fonts /usr/local/share/fonts/custom-fonts
+
+RUN fc-cache -fv
 
 ARG UID=10001
 RUN useradd --uid ${UID} --create-home appuser
