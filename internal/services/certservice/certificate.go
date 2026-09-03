@@ -2,7 +2,6 @@ package certservice
 
 import (
 	"context"
-	"sea-api/internal/config"
 	"sea-api/internal/models/certmodels"
 	"sea-api/internal/repositories/certrepo"
 	"sea-api/internal/services/storage"
@@ -21,10 +20,6 @@ func NewCertService(repo *certrepo.CertRepository, s3 *storage.S3) *CertService 
 	return &CertService{
 		repo: repo,
 		s3:   s3,
-
-		arFontPath:   config.App.ResourcesDir + "/fonts/ar/EmbeddedMohanad.ttf",
-		enFontPath:   "", // TODO: add EN font
-		templatePath: "internal/template",
 	}
 }
 
