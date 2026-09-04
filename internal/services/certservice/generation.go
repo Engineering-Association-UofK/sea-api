@@ -65,10 +65,10 @@ func (s *CertService) GenerateTestImage(
 
 func (s *CertService) GeneratePdf(
 	req *certmodels.IssueRequest,
-) ([]byte, error) {
+) ([]byte, string, error) {
 	certTemplate, err := s.repo.GetTemplateByID(req.TemplateID)
 	if err != nil {
-		return nil, fmt.Errorf("failed getting template raw: %v", err)
+		return nil, "", fmt.Errorf("failed getting template raw: %v", err)
 	}
 
 	// Create unique hash cor the certificate
@@ -79,28 +79,28 @@ func (s *CertService) GeneratePdf(
 	url := config.Links.CertVerify + "/" + hashString
 	qr, err := utils.GenerateGearQR(url, 512, 512)
 	if err != nil {
-		return nil, fmt.Errorf("failed generating QR: %v", err)
+		return nil, "", fmt.Errorf("failed generating QR: %v", err)
 	}
 
 	// Create certificate data
 	tmplData, err := fillTemplate(req, certTemplate, qr)
 	if err != nil {
-		return nil, fmt.Errorf("failed filling template struct: %v", err)
+		return nil, "", fmt.Errorf("failed filling template struct: %v", err)
 	}
 
 	// Parse and Execute SVG Template
 	filledSVG, err := parseTemplate(tmplData, certTemplate.Language, certTemplate.Version)
 	if err != nil {
-		return nil, fmt.Errorf("failed parsing template: %v", err)
+		return nil, "", fmt.Errorf("failed parsing template: %v", err)
 	}
 
 	// Generate PDF file
 	PdfFileBytes, err := utils.SvgTo(filledSVG, "pdf")
 	if err != nil {
-		return nil, fmt.Errorf("failed reading Inkscape PNG output: %v", err)
+		return nil, "", fmt.Errorf("failed reading Inkscape PNG output: %v", err)
 	}
 
-	return PdfFileBytes, nil
+	return PdfFileBytes, stringToHash, nil
 }
 
 func parseTemplate(tmplData *certmodels.V0_1, lang models.Language, version string) (*bytes.Buffer, error) {
