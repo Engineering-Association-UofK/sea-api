@@ -38,12 +38,10 @@ type Certificate struct {
 	TemplateID int64  `db:"template_id"`
 	IssuerID   int64  `db:"issuer_id"`
 
-	EventID         sql.NullInt64 `db:"event_id"`
-	RecipientUserID sql.NullInt64 `db:"recipient_user_id"`
+	RecipientName  string    `db:"recipient_name"`
+	RecipientEmail string    `db:"recipient_email"`
+	IssuedDate     time.Time `db:"issued_date"`
 
-	RecipientName string         `db:"name"`
-	Title         sql.NullString `db:"title"`
-	Subtitle      sql.NullString `db:"subtitle"`
-	Statement     sql.NullString `db:"statement"`
-	IssuedDate    time.Time      `db:"issued_date"`
+	RecipientUserID sql.NullInt64 `db:"recipient_user_id"`
+	EventID         sql.NullInt64 `db:"event_id"`
 }

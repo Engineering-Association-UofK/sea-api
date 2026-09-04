@@ -11,15 +11,14 @@ CREATE TABLE certificates (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     cert_hash VARCHAR(255) UNIQUE NOT NULL,
     template_id BIGINT NOT NULL,
-    event_id BIGINT NULL,
     issuer_id BIGINT NOT NULL,
-    recipient_user_id BIGINT NULL,
     
     recipient_name VARCHAR(255) NOT NULL,
-    title VARCHAR(255) NULL,
-    subtitle VARCHAR(255) NULL,
-    statement TEXT NULL,
+    recipient_email VARCHAR(255) NOT NULL,
     issued_date DATE NOT NULL,
+
+    recipient_user_id BIGINT NULL,
+    event_id BIGINT NULL,
     
     FOREIGN KEY (template_id) REFERENCES certificate_templates(id),
     INDEX idx_event (event_id)

@@ -7,8 +7,9 @@ import (
 )
 
 type IssueRequest struct {
-	TemplateID    int64  `form:"template_id" binding:"required"`
-	RecipientName string `form:"recipient_name" binding:"required"`
+	TemplateID     int64  `form:"template_id" binding:"required"`
+	RecipientName  string `form:"recipient_name" binding:"required"`
+	RecipientEmail string `form:"recipient_name" binding:"required"`
 
 	SignerNameOne string `form:"signer_name_one" binding:"required"`
 	SignerRoleOne string `form:"signer_role_one" binding:"required"`
