@@ -100,7 +100,7 @@ func (s *CertService) GeneratePdf(
 		return nil, "", fmt.Errorf("failed reading Inkscape PNG output: %v", err)
 	}
 
-	return PdfFileBytes, stringToHash, nil
+	return PdfFileBytes, hashString, nil
 }
 
 func parseTemplate(tmplData *certmodels.V0_1, lang models.Language, version string) (*bytes.Buffer, error) {

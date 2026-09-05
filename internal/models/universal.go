@@ -99,6 +99,12 @@ type ListRequest struct {
 	Type  PostType `form:"type"`
 }
 
+type ListResponse struct {
+	TotalPages  int64 `json:"total_pages"`
+	CurrentPage int64 `json:"current_page"`
+	Count       int64 `json:"count"`
+}
+
 var AllowedListLimit = map[int64]bool{
 	10:  true,
 	25:  true,
