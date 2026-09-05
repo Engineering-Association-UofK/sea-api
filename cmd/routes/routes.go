@@ -68,7 +68,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 	{ // ==== CERTIFICATES
 		cert := apiV1.Group("/cert")
-		cert.GET("/verify/:hash", CertificateHandler.VerifyCertificate)
+		cert.GET("/verify/:hash", CertHandler.VerifyCertificate)
+
 		cert.GET("/verify-document/:hash", CertificateHandler.VerifyDocument)
 
 		cert.GET("/debug/generate", CertificateHandler.GenerateAndDownloadDebugCert)
@@ -280,6 +281,13 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			certificate := admin.Group("/certificate")
 			certificate.Use(middleware.RequireAnyRole(models.RoleCertifier, models.RoleSystemSuperAdmin))
 			certificate.POST("/sign", midLimit, CertificateHandler.SignPDF)
+
+			// New API
+
+			certificate.GET("", basicLimit, CertHandler.GetCertificateList)
+			certificate.POST("", midLimit, CertHandler.IssueCertificate)
+			certificate.PUT("", midLimit, CertHandler.UpdateCertificate)
+			certificate.GET("/:id", midLimit, CertHandler.DownloadCertificate)
 
 			certificate.GET("/template/:id", midLimit, CertHandler.GetTemplate)
 			certificate.GET("/template", midLimit, CertHandler.GetTemplatesList)
