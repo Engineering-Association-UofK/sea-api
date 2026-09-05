@@ -35,6 +35,7 @@ type CertificateTemplate struct {
 type Certificate struct {
 	ID         int64  `db:"id"`
 	Hash       string `db:"cert_hash"`
+	FileKey    string `db:"file_key"`
 	TemplateID int64  `db:"template_id"`
 	IssuerID   int64  `db:"issuer_id"`
 
