@@ -205,7 +205,7 @@ func (h *CertificatesHandler) IssueCertificate(ctx *gin.Context) {
 //	@Success		200		{object}	response.TransactionResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-//	@Router			/admin/certificate/download [post]
+//	@Router			/admin/certificate [put]
 func (h *CertificatesHandler) UpdateCertificate(ctx *gin.Context) {
 	var req certmodels.UpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
