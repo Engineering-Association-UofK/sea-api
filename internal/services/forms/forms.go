@@ -87,13 +87,13 @@ func (s *FormService) GetFormByID(id int64) (*models.FormModel, error) {
 
 // ======== GET MANY ========
 
-func (s *FormService) GetAllForms(req *models.ListRequest) (*models.FormSummaryListResponse, error) {
+func (s *FormService) GetAllForms(req *models.FormListRequest) (*models.FormSummaryListResponse, error) {
 	total, err := s.formRepo.GetTotalForms()
 	if err != nil {
 		return nil, err
 	}
 
-	pages := valid.Limit(req, total)
+	pages := valid.Limit(&req.ListRequest, total)
 
 	forms, err := s.formRepo.GetAllForms(req)
 	if err != nil {

@@ -175,7 +175,7 @@ func (s *CmsService) GetViewPostList(req *models.PostsFilteredRequest) (*models.
 	return &response, nil
 }
 
-func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.BatchPostAdminListViewResponse, error) {
+func (s *CmsService) GetAllPosts(req *models.PostListRequest) (*models.BatchPostAdminListViewResponse, error) {
 	if !models.AllowedPostTypes[models.PostType(req.Type)] {
 		return nil, errs.New(errs.BadRequest, "invalid post type", nil)
 	}
@@ -183,7 +183,7 @@ func (s *CmsService) GetAllPosts(req *models.ListRequest) (*models.BatchPostAdmi
 	if err != nil {
 		return nil, err
 	}
-	pages := valid.Limit(req, total)
+	pages := valid.Limit(&req.ListRequest, total)
 
 	posts, err := s.CmsRepo.GetPostsAdminListByType(req)
 	if err != nil {

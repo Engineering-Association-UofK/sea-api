@@ -140,6 +140,11 @@ type FormForUserDTO struct {
 
 // DTOs
 
+type FormListRequest struct {
+	Type string `form:"type"`
+	ListRequest
+}
+
 type FormDTO struct {
 	ID          int64  `json:"id"`
 	Title       string `json:"title"`

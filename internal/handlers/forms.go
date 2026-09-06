@@ -533,7 +533,7 @@ func (h *FormHandler) GetResponseByID(ctx *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (h *FormHandler) GetAllForms(ctx *gin.Context) {
-	req := &models.ListRequest{}
+	req := &models.FormListRequest{}
 	if err := ctx.ShouldBindQuery(req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
