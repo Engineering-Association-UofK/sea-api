@@ -39,6 +39,10 @@ const (
 	TableCertificates     TableName = "certificate"
 	TableCertificateFiles TableName = "certificate_file"
 
+	TableNewCertificates  TableName = "certificates"
+	TableCertCollaborator TableName = "certificate_collaborators"
+	TableCertTemplate     TableName = "certificate_templates"
+
 	// Forms
 
 	TableForms         TableName = "forms"
@@ -93,6 +97,12 @@ type ListRequest struct {
 	Limit int64    `form:"limit"`
 	Page  int64    `form:"page"`
 	Type  PostType `form:"type"`
+}
+
+type ListResponse struct {
+	TotalPages  int64 `json:"total_pages"`
+	CurrentPage int64 `json:"current_page"`
+	Count       int64 `json:"count"`
 }
 
 var AllowedListLimit = map[int64]bool{
