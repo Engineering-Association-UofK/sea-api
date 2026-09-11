@@ -139,8 +139,19 @@ func (h *CertificatesHandler) GetTemplatesList(ctx *gin.Context) {
 //	@Summary		Test Certificate Generation
 //	@Description	Creates and image of a certificate without saving it to the database and sends it in the response
 //	@Tags			cert
+//	@Accepts		mbfd
 //	@Produce		json
-//	@Param			body	body		certmodels.IssueRequest	true	"Template data"
+//	@Param			template_id		formData		int			true	"Template ID to use"
+//	@Param			recipient_name	formData		string		true	"Name written on the certificate"
+//	@Param			recipient_email	formData		string		true	"Email of the recipient for automated sending"
+//	@Param			signer_name_one	formData		string		true	"Signer #1 name"
+//	@Param			signer_role_one	formData		string		true	"Signer #1 role"
+//	@Param			signer_name_two	formData		string		true	"Signer #2 name"
+//	@Param			signer_role_two	formData		string		true	"Signer #2 role"
+//	@Param			signer_signature_one	formData	file	true	"Signature of Signer #1"
+//	@Param			signer_signature_two	formData	file	true	"Signature of signer #2"
+//	@Param			event_id				formData	int		false	"Event ID if exists"
+//	@Param			recipient_user_id		formData	int		false	"User ID if linked to a user"
 //	@Success		200		{object}	certmodels.TestImageResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -166,8 +177,19 @@ func (h *CertificatesHandler) TestGeneration(ctx *gin.Context) {
 //	@Summary		Certificate Generation
 //	@Description	Issue a certificate and save it to the database
 //	@Tags			cert
+//	@Accepts		mbfd
 //	@Produce		json
-//	@Param			body	body		certmodels.IssueRequest	true	"Template data"
+//	@Param			template_id		formData		int			true	"Template ID to use"
+//	@Param			recipient_name	formData		string		true	"Name written on the certificate"
+//	@Param			recipient_email	formData		string		true	"Email of the recipient for automated sending"
+//	@Param			signer_name_one	formData		string		true	"Signer #1 name"
+//	@Param			signer_role_one	formData		string		true	"Signer #1 role"
+//	@Param			signer_name_two	formData		string		true	"Signer #2 name"
+//	@Param			signer_role_two	formData		string		true	"Signer #2 role"
+//	@Param			signer_signature_one	formData	file	true	"Signature of Signer #1"
+//	@Param			signer_signature_two	formData	file	true	"Signature of signer #2"
+//	@Param			event_id				formData	int		false	"Event ID if exists"
+//	@Param			recipient_user_id		formData	int		false	"User ID if linked to a user"
 //	@Success		200		{object}	response.TransactionResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
