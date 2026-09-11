@@ -14,6 +14,10 @@ func (s *CertService) CreateTemplate(req *certmodels.CreateTemplateRequest) (int
 		return 0, err
 	}
 
+	if !certmodels.AllowedCertVersions[req.Version] {
+		req.Version = "v0.1"
+	}
+
 	return s.repo.CreateTemplate(&certmodels.CertificateTemplate{
 		Name:         req.Name,
 		Language:     req.Language,
@@ -27,6 +31,10 @@ func (s *CertService) UpdateTemplate(req *certmodels.UpdateTemplateRequest) erro
 	data, err := json.Marshal(req.Layout)
 	if err != nil {
 		return err
+	}
+
+	if !certmodels.AllowedCertVersions[req.Version] {
+		req.Version = "v0.1"
 	}
 
 	return s.repo.UpdateTemplate(&certmodels.CertificateTemplate{

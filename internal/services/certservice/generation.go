@@ -33,7 +33,7 @@ func (s *CertService) GenerateTestImage(
 ) (string, error) {
 	certTemplate, err := s.repo.GetTemplateByID(req.TemplateID)
 	if err != nil {
-		return "", fmt.Errorf("failed getting template raw: %v", err)
+		return "", err
 	}
 
 	// Create unique hash cor the certificate
@@ -68,7 +68,7 @@ func (s *CertService) GeneratePdf(
 ) ([]byte, string, error) {
 	certTemplate, err := s.repo.GetTemplateByID(req.TemplateID)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed getting template raw: %v", err)
+		return nil, "", err
 	}
 
 	// Create unique hash cor the certificate

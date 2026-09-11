@@ -65,7 +65,7 @@ type VerifyResponse struct {
 
 type CreateTemplateRequest struct {
 	Name     string          `json:"name" binding:"required"`
-	Language models.Language `json:"language"`
+	Language models.Language `json:"language" binding:"required"`
 	Version  string          `json:"version" binding:"required"`
 	Layout   Layout          `json:"layout" binding:"required"`
 }
@@ -76,11 +76,12 @@ type UpdateTemplateRequest struct {
 }
 
 type TemplateResponse struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Version   string    `json:"version"`
-	Layout    Layout    `json:"layout"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        int64           `json:"id"`
+	Name      string          `json:"name"`
+	Version   string          `json:"version"`
+	Language  models.Language `json:"language"`
+	Layout    Layout          `json:"layout"`
+	CreatedAt time.Time       `json:"created_at"`
 }
 
 type TemplateListResponse struct {
