@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/certmodels"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -88,9 +90,14 @@ func (a *AccountHandler) GetProfile(c *gin.Context) {
 //	@Description	Get all certificates associated with the requesting user
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			limit	query	int	true	"Content count limit"
-//	@Param			page	query	int	true	"Page number"
-//	@Success		200	{array}	models.CertificateListResponse
+//	@Param			limit	query	int	false	"Content count limit"
+//	@Param			page	query	int	false	"Page number"
+//	@Param			user-id	query	int	false	"Get list by user ID"
+//	@Param			event-id	query	int	false	"Get list by event ID"
+//	@Param			issue-date-after	query	string	false	"Get certificates issued after this date" format(date-time)
+//	@Param			issue-date-before	query	string	false	"Get certificates issued before this date" format(date-time)
+//	@Param			search-name	query	string	false	"Search using parts of/full name of the recipient"
+//	@Success		200	{array}	certmodels.CertListResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
@@ -98,7 +105,7 @@ func (a *AccountHandler) GetProfile(c *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) GetCertificates(c *gin.Context) {
-	var req models.ListRequest
+	var req certmodels.CertListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
 
@@ -127,13 +134,20 @@ func (a *AccountHandler) GetCertificates(c *gin.Context) {
 //	@Description	Get certificate details by its hash
 //	@Tags			Certificate
 //	@Produce		application/zip
-//	@Param			hash	path	string	true	"Certificate hash"
+//	@Param			id	path	int	true	"Certificate id"
 //	@Success		200		{file}		binary
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		403		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
-func (h *CertificateHandler) GetCertificate(c *gin.Context) {
-	hash := c.Param("hash")
+//	@Router			/account/cert/{id} [get]
+//
+//	@Security		ApiKeyAuth
+func (h *CertificatesHandler) GetCertificate(c *gin.Context) {
+	idStr := c.Param("id")
+	var id int64
+	if idStr != "" {
+		id, _ = strconv.ParseInt(idStr, 10, 64)
+	}
 
 	value, exists := c.Get("user")
 	claims, ok := value.(*models.ManagedClaims)
@@ -146,7 +160,7 @@ func (h *CertificateHandler) GetCertificate(c *gin.Context) {
 	go func() {
 		zipWriter := zip.NewWriter(pw)
 
-		err := h.service.GetCertificates(zipWriter, hash, claims)
+		err := h.service.Download(zipWriter, c.Request.Context(), id, claims)
 		if err != nil {
 			pw.CloseWithError(err)
 			return

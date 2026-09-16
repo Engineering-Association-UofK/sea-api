@@ -23,18 +23,6 @@ const (
 	EventCertificateEn Templates = "event-certificate-en"
 )
 
-func GetCertTemplate(certType models.CertType, certVersion string, lang models.Language, data any) (string, error) {
-	fileName := fmt.Sprintf("%s_%s", certType, certVersion)
-	path := fmt.Sprintf(
-		"%s/static-assets/certificates/%s/%s.html",
-		config.App.ResourcesDir,
-		lang,
-		fileName,
-	)
-
-	return getTemplate(path, fileName, data)
-}
-
 func GetEmailTemplate(emailType models.EmailType, lang models.Language, data any) (string, error) {
 	path := fmt.Sprintf(
 		"%s/static-assets/emails/%s/%s.html",
