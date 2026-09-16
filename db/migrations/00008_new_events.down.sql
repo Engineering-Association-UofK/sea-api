@@ -1,3 +1,6 @@
+ALTER TABLE certificates 
+DROP FOREIGN KEY certificates_event_FK;
+
 DROP TABLE event_form;
 DROP TABLE event_application;
 DROP TAble event_participants;
@@ -30,6 +33,11 @@ CREATE TABLE event (
     FOREIGN KEY (coordinator_id) REFERENCES collaborators(id) ON UPDATE CASCADE,
     FOREIGN KEY (presenter_id) REFERENCES collaborators(id) ON UPDATE CASCADE
 );
+
+ALTER TABLE certificates 
+ADD CONSTRAINT certificates_event_FK 
+FOREIGN KEY (event_id) REFERENCES event(id)
+ON DELETE CASCADE ON UPDATE CASCADE;
 
 CREATE TABLE event_component (
     id INT PRIMARY KEY AUTO_INCREMENT,

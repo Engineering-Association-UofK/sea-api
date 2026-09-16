@@ -1,3 +1,7 @@
+-- Delete foreign key on certificates table for event table 
+ALTER TABLE certificates 
+DROP FOREIGN KEY certificates_event_FK;
+
 DROP TABLE event_applications;
 DROP TABLE event_form;
 DROP TABLE certificate_file;
@@ -27,6 +31,12 @@ CREATE TABLE events (
     FOREIGN KEY (form_id) REFERENCES forms(id) ON DELETE CASCADE
 );
 
+-- Establish a new foreign key on certificates table for the new "events" table
+ALTER TABLE certificates 
+ADD CONSTRAINT certificates_event_FK 
+FOREIGN KEY (event_id) REFERENCES events(id)
+ON DELETE CASCADE ON UPDATE CASCADE;
+
 CREATE TABLE event_coords (
     id INT PRIMARY KEY AUTO_INCREMENT,
     event_id INT NOT NULL,
@@ -37,6 +47,7 @@ CREATE TABLE event_coords (
 );
 
 CREATE TABLE event_participation (
+    id INT PRIMARY KEY AUTO_INCREMENT,
     event_id INT NOT NULL,
     user_id INT NOT NULL,
     joined_at DATE NOT NULL,
@@ -48,6 +59,7 @@ CREATE TABLE event_participation (
 );
 
 CREATE TABLE event_application (
+    id INT PRIMARY KEY AUTO_INCREMENT,
     event_id INT NOT NULL,
     user_id INT NOT NULL,
     form_id INT NOT NULL,
