@@ -147,6 +147,7 @@ func (h *FormHandler) GetEntireForUserForm(ctx *gin.Context) {
 	ctx.JSON(200, form)
 }
 
+// FIXME
 // SubmitForm godocs
 //
 //	@Summary		Submit form
@@ -159,28 +160,28 @@ func (h *FormHandler) GetEntireForUserForm(ctx *gin.Context) {
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
 //	@Router			/admin/form/submit [post]			// <------- add event endpoint ----------
-func (h *FormHandler) SubmitForm(ctx *gin.Context) {
-	var req models.SubmitFormRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
+// func (h *FormHandler) SubmitForm(ctx *gin.Context) {
+// 	var req models.SubmitFormRequest
+// 	if err := ctx.ShouldBindJSON(&req); err != nil {
+// 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+// 		return
+// 	}
 
-	// value, exists := ctx.Get("user")
-	// claims, ok := value.(*models.ManagedClaims)
-	// if !exists || !ok {
-	// 	ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
-	// 	return
-	// }
+// 	// value, exists := ctx.Get("user")
+// 	// claims, ok := value.(*models.ManagedClaims)
+// 	// if !exists || !ok {
+// 	// 	ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+// 	// 	return
+// 	// }
 
-	id, err := h.service.SubmitForm(0, &req)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
+// 	id, err := h.service.SubmitForm(0, &req)
+// 	if err != nil {
+// 		ctx.Error(err)
+// 		return
+// 	}
 
-	response.NewTransactionResponse(201, "Form submitted successfully", id, ctx)
-}
+// 	response.NewTransactionResponse(201, "Form submitted successfully", id, ctx)
+// }
 
 // PublishForm godocs
 //

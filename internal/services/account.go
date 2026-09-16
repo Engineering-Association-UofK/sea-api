@@ -10,7 +10,9 @@ import (
 	"sea-api/internal/config"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/certmodels"
 	"sea-api/internal/repositories"
+	"sea-api/internal/repositories/certrepo"
 	"sea-api/internal/services/storage"
 	"sea-api/internal/utils"
 	"sea-api/internal/utils/valid"
@@ -23,12 +25,12 @@ import (
 type AccountService struct {
 	UserRepo              *repositories.UserRepository
 	store                 *storage.S3
-	certificateRepository *repositories.CertificateRepository
+	certificateRepository *certrepo.CertRepository
 
 	profilePath string
 }
 
-func NewAccountService(UserRepo *repositories.UserRepository, store *storage.S3, certificateRepository *repositories.CertificateRepository) *AccountService {
+func NewAccountService(UserRepo *repositories.UserRepository, store *storage.S3, certificateRepository *certrepo.CertRepository) *AccountService {
 	return &AccountService{
 		UserRepo:              UserRepo,
 		store:                 store,
@@ -86,22 +88,35 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 	}, nil
 }
 
-func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *models.ListRequest) (*models.CertificateListResponse, error) {
-	total, err := s.certificateRepository.GetTotalByUserID(claims.UserID)
+func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *certmodels.CertListRequest) (*certmodels.CertListResponse, error) {
+	total := s.certificateRepository.GetCountForUser(claims.UserID)
+	if total == 0 {
+		return &certmodels.CertListResponse{
+			ListResponse: models.ListResponse{
+				CurrentPage: req.Page,
+				TotalPages:  1,
+				Count:       total,
+			},
+			List: []certmodels.CertResponse{},
+		}, nil
+	}
+
+	pages := valid.Limit(&req.ListRequest, total)
+
+	req.UserID = claims.UserID
+
+	certs, err := s.certificateRepository.GetCertList(req)
 	if err != nil {
 		return nil, err
 	}
-	pages := valid.Limit(req, total)
 
-	certs, err := s.certificateRepository.GetByCertsDetails(claims.UserID, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.CertificateListResponse{
-		Current:      req.Page,
-		Pages:        pages,
-		Certificates: certs,
+	return &certmodels.CertListResponse{
+		ListResponse: models.ListResponse{
+			CurrentPage: req.Page,
+			TotalPages:  pages,
+			Count:       total,
+		},
+		List: certs,
 	}, nil
 }
 

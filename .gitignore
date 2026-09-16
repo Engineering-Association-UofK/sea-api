@@ -33,6 +33,5 @@ go.work.sum
 /resources/secrets
 
 # Files
-*.html
 *.pdf
 *.json

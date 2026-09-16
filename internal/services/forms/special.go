@@ -130,48 +130,48 @@ func (s *FormService) GetFormForUser(formID int64) (*models.FormForUserDTO, erro
 	return dto, nil
 }
 
-func (s *FormService) SubmitForm(userID int64, req *models.SubmitFormRequest) (int64, error) {
-	answers, err := s.isValidSubmitFormRequest(userID, req)
-	if err != nil {
-		return 0, err
-	}
+// func (s *FormService) SubmitForm(userID int64, req *models.SubmitFormRequest) (int64, error) {
+// 	answers, err := s.isValidSubmitFormRequest(userID, req)
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-	eventForm, err := s.eventService.GetByFormID(req.FormID)
-	if err == nil {
-		err = s.eventService.FormApply(userID, req.FormID, eventForm.EventID)
-		if err != nil {
-			return 0, err
-		}
-	}
+// 	eventForm, err := s.eventService.GetByFormID(req.FormID)
+// 	if err == nil {
+// 		err = s.eventService.FormApply(userID, req.FormID, eventForm.EventID)
+// 		if err != nil {
+// 			return 0, err
+// 		}
+// 	}
 
-	response := &models.FormResponseModel{
-		FormID:      req.FormID,
-		UserID:      userID,
-		Status:      models.FORM_SUBMITTED,
-		SubmittedAt: time.Now(),
-	}
+// 	response := &models.FormResponseModel{
+// 		FormID:      req.FormID,
+// 		UserID:      userID,
+// 		Status:      models.FORM_SUBMITTED,
+// 		SubmittedAt: time.Now(),
+// 	}
 
-	responseID, err := s.formRepo.CreateResponse(response)
-	if err != nil {
-		return 0, err
-	}
+// 	responseID, err := s.formRepo.CreateResponse(response)
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-	var answerModels = []models.FormAnswerModel{}
-	for _, a := range answers {
-		answerModels = append(answerModels, models.FormAnswerModel{
-			ResponseID:  responseID,
-			QuestionID:  a.QuestionID,
-			AnswerValue: a.AnswerValue,
-		})
-	}
+// 	var answerModels = []models.FormAnswerModel{}
+// 	for _, a := range answers {
+// 		answerModels = append(answerModels, models.FormAnswerModel{
+// 			ResponseID:  responseID,
+// 			QuestionID:  a.QuestionID,
+// 			AnswerValue: a.AnswerValue,
+// 		})
+// 	}
 
-	err = s.formRepo.CreateAnswersBatch(answerModels)
-	if err != nil {
-		return 0, err
-	}
+// 	err = s.formRepo.CreateAnswersBatch(answerModels)
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-	return responseID, nil
-}
+// 	return responseID, nil
+// }
 
 func (s *FormService) isValidSubmitFormRequest(userID int64, req *models.SubmitFormRequest) ([]models.AnswerRequest, error) {
 	// Form should exist

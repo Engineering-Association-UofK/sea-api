@@ -17,7 +17,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      master:
+      s3:
         condition: service_started
 
   master:

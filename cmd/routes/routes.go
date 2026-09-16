@@ -1,8 +1,10 @@
 package routes
 
 import (
+	"net/http"
 	"time"
 
+	"sea-api/internal/config"
 	"sea-api/internal/handlers"
 	"sea-api/internal/handlers/middleware"
 	"sea-api/internal/models"
@@ -15,8 +17,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/time/rate"
 )
 
@@ -24,7 +24,6 @@ var (
 	UserHandler         *handlers.UserHandler
 	EventHandler        *handlers.EventHandler
 	MailHandler         *handlers.MailHandler
-	CertificateHandler  *handlers.CertificateHandler
 	AuthHandler         *handlers.AuthHandler
 	AccountHandler      *handlers.AccountHandler
 	GalleryHandler      *handlers.GalleryHandler
@@ -61,7 +60,11 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		r.Use(middleware.ErrorHandlerMiddleware())
 		r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 		r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"status": 200}) })
-		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+		r.StaticFS("/docs", http.Dir("./docs"))
+		r.GET("/docs-ui", func(c *gin.Context) { c.File("./scalar.html") })
+
+		r.GET("/favicon.ico", func(c *gin.Context) { c.File(config.App.ResourcesDir + "/favicon.ico") })
 	}
 	apiV1 := r.Group("/api/v1")
 	apiV1.Use(basicLimit)
@@ -69,10 +72,6 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 	{ // ==== CERTIFICATES
 		cert := apiV1.Group("/cert")
 		cert.GET("/verify/:hash", CertHandler.VerifyCertificate)
-
-		cert.GET("/verify-document/:hash", CertificateHandler.VerifyDocument)
-
-		cert.GET("/debug/generate", CertificateHandler.GenerateAndDownloadDebugCert)
 	}
 
 	{ // ==== AUTHENTICATION
@@ -90,8 +89,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 	{ // ==== EVENTS
 		event := apiV1.Group("/event")
-		event.GET("", EventHandler.GetEventsList)
-		event.GET("/:id", EventHandler.GetEventByID)
+		event.GET("", EventHandler.GetEventViewList)
+		event.GET("/:id", EventHandler.GetEventView)
 	}
 
 	{ // ==== OPEN
@@ -113,7 +112,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			account.GET("", AccountHandler.GetProfile)
 			account.PUT("", AccountHandler.UpdateProfile)
 			account.GET("/certificates", AccountHandler.GetCertificates)
-			account.GET("/download/:hash", midLimit, CertificateHandler.GetCertificate)
+			// FIXME
+			// account.GET("/download/:hash", midLimit, CertificateHandler.GetCertificate)
 			account.PUT("/picture", AccountHandler.UpdatePicture)
 			account.PUT("/password", AccountHandler.UpdatePassword)
 			account.PUT("/email", middleware.StatefulRateLimiter(models.LimitUpdateEmail, rateLimitService), AccountHandler.UpdateEmail)
@@ -122,10 +122,15 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 		{ // ==== EVENTS
 			event := account.Group("/event")
-			event.GET("/all-status", EventHandler.GetApplicationStatus)
-			event.GET("/status/:id", EventHandler.GetOneApplicationStatus)
-			event.POST("/apply/:id", EventHandler.ApplyForEvent)
-			event.POST("/cancel/:id", EventHandler.CancelApplicationForEvent)
+
+			// FIXME
+			// event.GET("/all-status", EventHandler.GetApplicationStatus)
+			// event.GET("/status/:id", EventHandler.GetOneApplicationStatus)
+
+			event.POST("/:id", EventHandler.ApplyForEvent)
+
+			// FIXME
+			// event.POST("/cancel/:id", EventHandler.CancelApplicationForEvent)
 		}
 
 		{ // ==== FORMS
@@ -201,8 +206,6 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 			gallery.DELETE("", GalleryHandler.CleanGallery)
 		}
 
-		// TODO: Add bot commands
-
 		{ // ==== FORMS
 			form := admin.Group("/form")
 			form.Use(middleware.RequireAnyRole(models.RoleContentFormMgr, models.RoleSystemSuperAdmin))
@@ -222,7 +225,8 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 			form.GET("/:id", FormHandler.GetEntireForEditForm)
 
-			form.POST("/submit", FormHandler.SubmitForm)
+			// FIXME
+			// form.POST("/submit", FormHandler.SubmitForm)
 
 			form.GET("/analysis/:id", FormHandler.GetFormAnalysis)
 			form.GET("/detailed-responses/:id", FormHandler.GetFormDetailedResponses)
@@ -252,18 +256,26 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		{ // ==== EVENTS
 			event := admin.Group("/event")
 			event.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
-			event.GET("/:id", EventHandler.GetEventDetailsAdmin)
+			event.GET("/:id", EventHandler.GetEvent)
+			event.GET("", EventHandler.GetEventList)
 			event.POST("", EventHandler.CreateEvent)
 			event.PUT("", EventHandler.UpdateEvent)
 			event.DELETE("/:id", EventHandler.DeleteEvent)
-			event.POST("/link-form", EventHandler.LinkForm)
 
-			// Participants
-			event.GET("/:id/participants", EventHandler.GetEventParticipants)
-			event.PUT("/:id/participants", EventHandler.UpdateEventParticipants)
-			event.POST("/send-finish-emails", strictLimit, CertificateHandler.SendCertificatesEmailsForEvent)
+			// Coordinators
+			event.GET("/:id/coord", EventHandler.GetCoordList)
+			event.POST("/:id/coord", EventHandler.CreateCoords)
+			event.PUT("/:id/coord/:coord_id", EventHandler.UpdateCoord)
+			event.DELETE("/:id/coord/:coord_id", EventHandler.DeleteCoord)
+			event.DELETE("/:id/coord", EventHandler.DeleteCoords)
 
-			event.POST("/generate-certs", strictLimit, CertificateHandler.MakeCertificatesForEvent)
+			// Participation
+			event.GET("/:id/application", EventHandler.GetApplicationList)
+			event.POST("/:id/application/:application_id", EventHandler.AcceptApplication)
+			event.DELETE("/:id/application/:application_id", EventHandler.RejectApplication)
+
+			event.GET("/:id/participant", EventHandler.GetParticipantList)
+			event.DELETE("/:id/participant/:participation_id", EventHandler.RemoveParticipant)
 		}
 
 		{ // ==== Collaborators
@@ -280,7 +292,6 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		{ // ==== CERTIFICATES
 			certificate := admin.Group("/certificate")
 			certificate.Use(middleware.RequireAnyRole(models.RoleCertifier, models.RoleSystemSuperAdmin))
-			certificate.POST("/sign", midLimit, CertificateHandler.SignPDF)
 
 			// New API
 
