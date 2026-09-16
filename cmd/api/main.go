@@ -11,9 +11,8 @@ import (
 	"sea-api/internal/services"
 	"sea-api/internal/services/auth"
 	"sea-api/internal/services/bot"
-	"sea-api/internal/services/cert"
 	"sea-api/internal/services/certservice"
-	"sea-api/internal/services/event"
+	"sea-api/internal/services/eventservice"
 	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
 	st "sea-api/internal/services/storage"
@@ -59,8 +58,12 @@ func Go() {
 	// Initialize repositories
 	userRepository := repositories.NewUserRepository(db)
 	suspensionsRepo := repositories.NewSuspensionsRepo(db)
-	eventRepository := eventrepo.NewEventRepository(db)
-	certificateRepository := repositories.NewCertificateRepository(db)
+
+	// FIXME: Remove implementation
+	// eventRepository := eventrepo.NewEventRepository(db)
+
+	// FIXME: Remove implementation
+	// certificateRepository := repositories.NewCertificateRepository(db)
 	verificationRepo := repositories.NewVerificationRepo(db)
 	fileRepo := repositories.NewFileRepository(db)
 	galleryRepository := repositories.NewGalleryRepository(db)
@@ -68,15 +71,20 @@ func Go() {
 	formRepository := repositories.NewFormRepository(db)
 	collaboratorRepository := repositories.NewCollaboratorRepo(db)
 	rateLimitRepository := repositories.NewRateLimitRepository(db)
-	documentRepository := repositories.NewDocumentRepository(db)
+
+	// FIXME: Remove implementation
+	// documentRepository := repositories.NewDocumentRepository(db)
 	notificationRepository := repositories.NewNotificationRepository(db)
 	botRepository := repositories.NewBotRepository(db)
 	feedbackRepository := repositories.NewFeedbackRepository(db)
 	authRepository := repositories.NewAuthRepository(db)
-	repo := certrepo.NewCertRepository(db)
+	certRepo := certrepo.NewCertRepository(db)
+	eventRepo := eventrepo.NewEventRepository(db)
 
 	// Initialize services
-	pdfService := services.NewPDFService(10)
+
+	// FIXME: Remove implementation
+	// pdfService := services.NewPDFService(10)
 	S3 := st.NewS3Service(fileRepo)
 	galleryService := services.NewGalleryService(galleryRepository, S3)
 	rateLimitService := services.NewRateLimitService(rateLimitRepository)
@@ -85,8 +93,8 @@ func Go() {
 	feedbackService := services.NewFeedbackService(feedbackRepository)
 
 	botService := bot.NewBotService(botRepository, feedbackService)
-	eventService := event.NewEventService(notificationService, S3, galleryService, eventRepository, collaboratorRepository, formRepository, userRepository)
-	accountService := services.NewAccountService(userRepository, S3, certificateRepository)
+	eventService := eventservice.NewEventService(eventRepo, formRepository, S3, galleryService)
+	accountService := services.NewAccountService(userRepository, S3, certRepo)
 
 	userService := user.NewUserService(userRepository, suspensionsRepo, S3)
 	mailService := services.NewMailService(userService)
@@ -95,19 +103,20 @@ func Go() {
 	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
 	FormService := forms.NewFormService(formRepository, eventService, galleryService)
 
-	certService := certservice.NewCertService(repo, S3, eventService, userService)
+	certService := certservice.NewCertService(certRepo, S3, eventService, userService)
 
-	certificateService := cert.NewCertificateService(
-		userRepository,
-		eventService,
-		S3,
-		pdfService,
-		mailService,
-		collaboratorService,
-		notificationService,
-		certificateRepository,
-		documentRepository,
-	)
+	// FIXME: Remove implementation
+	// certificateService := cert.NewCertificateService(
+	// 	userRepository,
+	// 	eventService,
+	// 	S3,
+	// 	pdfService,
+	// 	mailService,
+	// 	collaboratorService,
+	// 	notificationService,
+	// 	certificateRepository,
+	// 	documentRepository,
+	// )
 	schedularService := schedular.NewSchedularService(
 		userRepository,
 		verificationRepo,
@@ -122,7 +131,8 @@ func Go() {
 	routes.UserHandler = handlers.NewUserHandler(userService)
 	routes.EventHandler = handlers.NewEventHandler(eventService)
 	routes.MailHandler = handlers.NewMailHandler(mailService)
-	routes.CertificateHandler = handlers.NewCertificateHandler(certificateService)
+	// FIXME: Remove implementation
+	// routes.CertificateHandler = handlers.NewCertificateHandler(certificateService)
 	routes.AuthHandler = handlers.NewAuthHandler(authService)
 	routes.AccountHandler = handlers.NewAccountHandler(accountService)
 	routes.GalleryHandler = handlers.NewGalleryHandler(galleryService)
