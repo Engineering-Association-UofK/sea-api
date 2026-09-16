@@ -1,8 +1,10 @@
 package routes
 
 import (
+	"net/http"
 	"time"
 
+	"sea-api/internal/config"
 	"sea-api/internal/handlers"
 	"sea-api/internal/handlers/middleware"
 	"sea-api/internal/models"
@@ -15,8 +17,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/time/rate"
 )
 
@@ -61,7 +61,11 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 		r.Use(middleware.ErrorHandlerMiddleware())
 		r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 		r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"status": 200}) })
-		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+		r.StaticFS("/docs", http.Dir("./docs"))
+		r.GET("/docs-ui", func(c *gin.Context) { c.File("./scalar.html") })
+
+		r.GET("/favicon.ico", func(c *gin.Context) { c.File(config.App.ResourcesDir + "/favicon.ico") })
 	}
 	apiV1 := r.Group("/api/v1")
 	apiV1.Use(basicLimit)

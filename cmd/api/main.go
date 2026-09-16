@@ -24,21 +24,21 @@ import (
 )
 
 // @title						SEA Backend API
-// @version					1.0
-// @description				This is the backend API for the Steering Engineering Association.
+// @version						1.0
+// @description					This is the backend API for the Steering Engineering Association.
 // @contact.name				Technical Office - SEA - UofK
 // @contact.email				tech.sea.uofk@gmail.com
 // @license.name				MIT
-// @license.url				http://opensource.org/licenses/MIT
+// @license.url					http://opensource.org/licenses/MIT
 //
-// @host						api-sea-uofk.duckdns.org
+// @host						api-sea-uofk-dev.duckdns.org
 // @BasePath					/api/v1
-// @schemes					https
+// @schemes						https
 //
 // @securityDefinitions.apikey	ApiKeyAuth
 // @in							header
 // @name						Authorization
-// @description				Type 'Bearer <token>' to authenticate
+// @description					Type 'Bearer <token>' to authenticate
 func main() {
 	err := config.Load()
 	if err != nil {
