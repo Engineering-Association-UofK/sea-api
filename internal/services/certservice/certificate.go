@@ -11,7 +11,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/models/certmodels"
 	"sea-api/internal/repositories/certrepo"
-	"sea-api/internal/services/event"
+	"sea-api/internal/services/eventservice"
 	"sea-api/internal/services/storage"
 	"sea-api/internal/services/user"
 	"sea-api/internal/utils/valid"
@@ -23,13 +23,13 @@ type CertService struct {
 	repo *certrepo.CertRepository
 	s3   *storage.S3
 
-	eventService *event.EventService
+	eventService *eventservice.EventService
 	userService  *user.UserService
 
 	storePath string
 }
 
-func NewCertService(repo *certrepo.CertRepository, s3 *storage.S3, eventService *event.EventService, userService *user.UserService) *CertService {
+func NewCertService(repo *certrepo.CertRepository, s3 *storage.S3, eventService *eventservice.EventService, userService *user.UserService) *CertService {
 	return &CertService{
 		repo: repo,
 		s3:   s3,
@@ -86,7 +86,7 @@ func (s *CertService) Update(req *certmodels.UpdateRequest) error {
 		(!cert.EventID.Valid) {
 		slog.Debug("Updating Event ID", "Event ID", req.EventID)
 		if req.EventID != 0 {
-			_, err = s.eventService.GetEventByID(req.EventID)
+			_, err = s.eventService.Get(req.EventID)
 			if err != nil {
 				return errs.New(errs.NotFound, "Event with ID not found", nil)
 			}

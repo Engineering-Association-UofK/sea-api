@@ -7,22 +7,33 @@ import (
 )
 
 type CertResponse struct {
-	ID           int64  `json:"id" db:"id"`
-	TemplateName string `json:"template_name" db:"template_name"`
-	TemplateID   int64  `json:"template_id" db:"template_id"`
-	IssuerID     int64  `json:"issuer_id" db:"issuer_id"`
+	ID           int64  `json:"id"`
+	TemplateName string `json:"template_name"`
+	TemplateID   int64  `json:"template_id"`
+	IssuerID     int64  `json:"issuer_id"`
 
-	RecipientName  string    `json:"recipient_name" db:"recipient_name"`
-	RecipientEmail string    `json:"recipient_email" db:"recipient_email"`
-	IssuedDate     time.Time `json:"issued_date" db:"issued_date"`
+	RecipientName  string    `json:"recipient_name"`
+	RecipientEmail string    `json:"recipient_email"`
+	IssuedDate     time.Time `json:"issued_date"`
 
-	RecipientUserID *int64 `json:"recipient_user_id" db:"recipient_user_id"`
-	EventID         *int64 `json:"event_id" db:"event_id"`
+	RecipientUserID *int64 `json:"recipient_user_id"`
+	EventID         *int64 `json:"event_id"`
 }
 
 type CertListResponse struct {
 	models.ListResponse
 	List []CertResponse `json:"list"`
+}
+
+type CertViewResponse struct {
+	ID         int64     `json:"id"`
+	IssuedDate time.Time `json:"issued_date"`
+	EventID    *int64    `json:"event_id"`
+}
+
+type CertViewListResponse struct {
+	models.ListResponse
+	List []CertViewResponse `json:"list"`
 }
 
 type UpdateRequest struct {
@@ -31,6 +42,15 @@ type UpdateRequest struct {
 	RecipientEmail  string `json:"recipient_email"`
 	RecipientUserID int64  `json:"recipient_user_id"`
 	EventID         int64  `json:"event_id"`
+}
+
+type CertListRequest struct {
+	models.ListRequest
+	UserID          int64     `form:"user-id"`
+	EventID         int64     `form:"event-id"`
+	IssueDateAfter  time.Time `form:"issue-date-after"`
+	IssueDateBefore time.Time `form:"issue-date-before"`
+	SearchName      string    `form:"search-name"`
 }
 
 // Operations
