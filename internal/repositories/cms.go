@@ -125,7 +125,7 @@ func (r *CmsRepository) GetAllPostModels(req *models.ListRequest, publishedOnly 
 	return posts, nil
 }
 
-func (r *CmsRepository) GetPostsAdminListByType(req *models.ListRequest) ([]models.PostAdminViewRow, error) {
+func (r *CmsRepository) GetPostsAdminListByType(req *models.PostListRequest) ([]models.PostAdminViewRow, error) {
 	offset := (req.Page - 1) * req.Limit
 	query := fmt.Sprintf(`
 	SELECT 

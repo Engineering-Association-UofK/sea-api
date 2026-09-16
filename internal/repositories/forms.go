@@ -248,7 +248,7 @@ func (r *FormRepository) GetResponseByID(id int64) (*models.FormResponseModel, e
 
 // ======== GET MANY ========
 
-func (r *FormRepository) GetAllForms(req *models.ListRequest) ([]models.FormModel, error) {
+func (r *FormRepository) GetAllForms(req *models.FormListRequest) ([]models.FormModel, error) {
 	var forms []models.FormModel
 	offset := (req.Page - 1) * req.Limit
 

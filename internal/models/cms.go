@@ -135,6 +135,11 @@ type TeamMemberRow struct {
 ///  DTOs  ///
 //////////////
 
+type PostListRequest struct {
+	Type PostType `form:"type"`
+	ListRequest
+}
+
 // For Admin
 
 type PostRequest struct {

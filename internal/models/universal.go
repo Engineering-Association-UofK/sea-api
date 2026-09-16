@@ -94,9 +94,8 @@ const (
 )
 
 type ListRequest struct {
-	Limit int64    `form:"limit"`
-	Page  int64    `form:"page"`
-	Type  PostType `form:"type"`
+	Limit int64 `form:"limit"`
+	Page  int64 `form:"page"`
 }
 
 type ListResponse struct {

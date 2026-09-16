@@ -1,5 +1,9 @@
 package certmodels
 
+var AllowedCertVersions = map[string]bool{
+	"v0.1": true,
+}
+
 type V0_1 struct {
 	Title     string
 	Subtitle  string

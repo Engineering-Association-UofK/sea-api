@@ -157,7 +157,7 @@ func (h *CmsHandler) GetViewPostsList(ctx *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (h *CmsHandler) GetAllPosts(ctx *gin.Context) {
-	var req models.ListRequest
+	var req models.PostListRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request, need limit number", nil))
 		return

@@ -2,6 +2,7 @@ package certservice
 
 import (
 	"encoding/json"
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/models/certmodels"
 	"sea-api/internal/utils/valid"
@@ -9,9 +10,17 @@ import (
 )
 
 func (s *CertService) CreateTemplate(req *certmodels.CreateTemplateRequest) (int64, error) {
+	if !models.AllowedLanguages[req.Language] {
+		return 0, errs.New(errs.BadRequest, "Wrong Language code", nil)
+	}
+
 	data, err := json.Marshal(req.Layout)
 	if err != nil {
 		return 0, err
+	}
+
+	if !certmodels.AllowedCertVersions[req.Version] {
+		req.Version = "v0.1"
 	}
 
 	return s.repo.CreateTemplate(&certmodels.CertificateTemplate{
@@ -24,9 +33,17 @@ func (s *CertService) CreateTemplate(req *certmodels.CreateTemplateRequest) (int
 }
 
 func (s *CertService) UpdateTemplate(req *certmodels.UpdateTemplateRequest) error {
+	if !models.AllowedLanguages[req.Language] {
+		return errs.New(errs.BadRequest, "Wrong Language code", nil)
+	}
+
 	data, err := json.Marshal(req.Layout)
 	if err != nil {
 		return err
+	}
+
+	if !certmodels.AllowedCertVersions[req.Version] {
+		req.Version = "v0.1"
 	}
 
 	return s.repo.UpdateTemplate(&certmodels.CertificateTemplate{
