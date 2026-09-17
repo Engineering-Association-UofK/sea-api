@@ -32,6 +32,7 @@ var (
 	NotificationHandler *handlers.NotificationHandler
 	BotHandler          *handlers.BotHandler
 	CertHandler         *handlers.CertificatesHandler
+	AnalyticsHandler    *handlers.AnalyticsHandler
 )
 
 var (
@@ -151,6 +152,11 @@ func SetupRouter(u *userservice.UserService, rateLimitService *services.RateLimi
 	{ // ###### Administration Endpoints ######
 		admin := apiV1.Group("/admin")
 		admin.Use(middleware.AuthMiddleware(u), middleware.RequireRole(models.RoleSystemAdmin))
+
+		{ // ==== Analysis
+			analysis := admin.Group("/analysis")
+			analysis.GET("", midLimit, AnalyticsHandler.GetGeneralAnalytics)
+		}
 
 		{ // ==== USERS
 			user := admin.Group("/user")
