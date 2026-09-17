@@ -10,7 +10,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
-	"sea-api/internal/services/user"
+	"sea-api/internal/services/userservice"
 
 	_ "sea-api/docs"
 
@@ -29,10 +29,10 @@ var (
 	GalleryHandler      *handlers.GalleryHandler
 	CmsHandler          *handlers.CmsHandler
 	FormHandler         *handlers.FormHandler
-	CollaboratorHandler *handlers.CollaboratorHandler
 	NotificationHandler *handlers.NotificationHandler
 	BotHandler          *handlers.BotHandler
 	CertHandler         *handlers.CertificatesHandler
+	AnalyticsHandler    *handlers.AnalyticsHandler
 )
 
 var (
@@ -42,7 +42,7 @@ var (
 	strictLimit = middleware.RateLimiter(rate.Every(time.Minute), 1)
 )
 
-func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitService) *gin.Engine {
+func SetupRouter(u *userservice.UserService, rateLimitService *services.RateLimitService) *gin.Engine {
 	r := gin.New()
 	{ // ==== Config ====
 		r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
@@ -152,6 +152,11 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 	{ // ###### Administration Endpoints ######
 		admin := apiV1.Group("/admin")
 		admin.Use(middleware.AuthMiddleware(u), middleware.RequireRole(models.RoleSystemAdmin))
+
+		{ // ==== Analysis
+			analysis := admin.Group("/analysis")
+			analysis.GET("", midLimit, AnalyticsHandler.GetGeneralAnalytics)
+		}
 
 		{ // ==== USERS
 			user := admin.Group("/user")
@@ -276,17 +281,6 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 			event.GET("/:id/participant", EventHandler.GetParticipantList)
 			event.DELETE("/:id/participant/:participation_id", EventHandler.RemoveParticipant)
-		}
-
-		{ // ==== Collaborators
-			collabs := admin.Group("/collabs")
-			collabs.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
-			collabs.GET("", CollaboratorHandler.GetAll)
-			collabs.GET("/:id", CollaboratorHandler.GetByID)
-			collabs.POST("", CollaboratorHandler.Create)
-			collabs.PUT("", CollaboratorHandler.Update)
-
-			// collabs.DELETE("/:id", CollaboratorHandler.Delete)
 		}
 
 		{ // ==== CERTIFICATES

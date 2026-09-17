@@ -36,11 +36,6 @@ const (
 
 	// certificates
 
-	TableCertificates     TableName = "certificate"
-	TableCertificateFiles TableName = "certificate_file"
-
-	// -- New Certificates
-
 	TableNewCertificates  TableName = "certificates"
 	TableCertCollaborator TableName = "certificate_collaborators"
 	TableCertTemplate     TableName = "certificate_templates"
@@ -54,16 +49,6 @@ const (
 	TableFormAnswers   TableName = "form_answers"
 
 	// Events
-
-	TableEvents            TableName = "event"
-	TableEventComponents   TableName = "event_component"
-	TableEventParticipants TableName = "event_participant"
-	TableComponentScores   TableName = "component_score"
-	TableCollaborators     TableName = "collaborators"
-	TableEventForms        TableName = "event_form"
-	TableEventApplications TableName = "event_applications"
-
-	// -- New Events
 
 	TableNewEvents          TableName = "events"
 	TableEventCoords        TableName = "event_coords"

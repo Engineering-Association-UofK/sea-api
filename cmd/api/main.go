@@ -16,7 +16,7 @@ import (
 	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
 	st "sea-api/internal/services/storage"
-	"sea-api/internal/services/user"
+	"sea-api/internal/services/userservice"
 	"sea-api/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -69,7 +69,6 @@ func Go() {
 	galleryRepository := repositories.NewGalleryRepository(db)
 	CmsRepository := repositories.NewCmsRepository(db)
 	formRepository := repositories.NewFormRepository(db)
-	collaboratorRepository := repositories.NewCollaboratorRepo(db)
 	rateLimitRepository := repositories.NewRateLimitRepository(db)
 
 	// FIXME: Remove implementation
@@ -88,7 +87,6 @@ func Go() {
 	S3 := st.NewS3Service(fileRepo)
 	galleryService := services.NewGalleryService(galleryRepository, S3)
 	rateLimitService := services.NewRateLimitService(rateLimitRepository)
-	collaboratorService := services.NewCollaboratorService(collaboratorRepository, S3)
 	notificationService := services.NewNotificationService(notificationRepository)
 	feedbackService := services.NewFeedbackService(feedbackRepository)
 
@@ -96,7 +94,7 @@ func Go() {
 	eventService := eventservice.NewEventService(eventRepo, formRepository, S3, galleryService)
 	accountService := services.NewAccountService(userRepository, S3, certRepo)
 
-	userService := user.NewUserService(userRepository, suspensionsRepo, S3)
+	userService := userservice.NewUserService(userRepository, suspensionsRepo, S3)
 	mailService := services.NewMailService(userService)
 	authService := auth.NewAuthService(userRepository, mailService, verificationRepo, authRepository)
 
@@ -138,7 +136,6 @@ func Go() {
 	routes.GalleryHandler = handlers.NewGalleryHandler(galleryService)
 	routes.CmsHandler = handlers.NewCmsHandler(CmsService)
 	routes.FormHandler = handlers.NewFormHandler(FormService)
-	routes.CollaboratorHandler = handlers.NewCollaboratorHandler(collaboratorService)
 	routes.NotificationHandler = handlers.NewNotificationHandler(notificationService)
 	routes.BotHandler = handlers.NewBotHandler(botService)
 	routes.CertHandler = handlers.NewCertificatesHandler(certService)

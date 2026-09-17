@@ -1,4 +1,4 @@
-package user
+package userservice
 
 import (
 	"context"
@@ -28,7 +28,7 @@ func NewUserService(repo *repositories.UserRepository, suspensionsRepo *reposito
 // ======== GET ALL ========
 
 func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse, error) {
-	total, err := s.repo.GetTotal(req.Limit, false)
+	total, err := s.repo.GetTotal(false)
 	if err != nil {
 		return nil, err
 	}

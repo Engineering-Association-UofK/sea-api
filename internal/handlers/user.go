@@ -5,17 +5,17 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
-	"sea-api/internal/services/user"
+	"sea-api/internal/services/userservice"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type UserHandler struct {
-	service *user.UserService
+	service *userservice.UserService
 }
 
-func NewUserHandler(service *user.UserService) *UserHandler {
+func NewUserHandler(service *userservice.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
 

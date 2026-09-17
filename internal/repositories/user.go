@@ -74,7 +74,7 @@ func (r *UserRepository) GetTempUsersWithNullPasswords() ([]models.TempUserModel
 	return users, nil
 }
 
-func (r *UserRepository) GetTotal(limit int64, isTempUser bool) (int64, error) {
+func (r *UserRepository) GetTotal(isTempUser bool) (int64, error) {
 	table := models.TableUsers
 	if isTempUser {
 		table = models.TableTempUsers

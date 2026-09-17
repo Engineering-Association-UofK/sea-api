@@ -13,7 +13,7 @@ import (
 	"sea-api/internal/repositories/certrepo"
 	"sea-api/internal/services/eventservice"
 	"sea-api/internal/services/storage"
-	"sea-api/internal/services/user"
+	"sea-api/internal/services/userservice"
 	"sea-api/internal/utils/valid"
 	"slices"
 	"time"
@@ -24,12 +24,12 @@ type CertService struct {
 	s3   *storage.S3
 
 	eventService *eventservice.EventService
-	userService  *user.UserService
+	userService  *userservice.UserService
 
 	storePath string
 }
 
-func NewCertService(repo *certrepo.CertRepository, s3 *storage.S3, eventService *eventservice.EventService, userService *user.UserService) *CertService {
+func NewCertService(repo *certrepo.CertRepository, s3 *storage.S3, eventService *eventservice.EventService, userService *userservice.UserService) *CertService {
 	return &CertService{
 		repo: repo,
 		s3:   s3,
