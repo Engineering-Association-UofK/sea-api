@@ -69,7 +69,6 @@ func Go() {
 	galleryRepository := repositories.NewGalleryRepository(db)
 	CmsRepository := repositories.NewCmsRepository(db)
 	formRepository := repositories.NewFormRepository(db)
-	collaboratorRepository := repositories.NewCollaboratorRepo(db)
 	rateLimitRepository := repositories.NewRateLimitRepository(db)
 
 	// FIXME: Remove implementation
@@ -88,7 +87,6 @@ func Go() {
 	S3 := st.NewS3Service(fileRepo)
 	galleryService := services.NewGalleryService(galleryRepository, S3)
 	rateLimitService := services.NewRateLimitService(rateLimitRepository)
-	collaboratorService := services.NewCollaboratorService(collaboratorRepository, S3)
 	notificationService := services.NewNotificationService(notificationRepository)
 	feedbackService := services.NewFeedbackService(feedbackRepository)
 
@@ -138,7 +136,6 @@ func Go() {
 	routes.GalleryHandler = handlers.NewGalleryHandler(galleryService)
 	routes.CmsHandler = handlers.NewCmsHandler(CmsService)
 	routes.FormHandler = handlers.NewFormHandler(FormService)
-	routes.CollaboratorHandler = handlers.NewCollaboratorHandler(collaboratorService)
 	routes.NotificationHandler = handlers.NewNotificationHandler(notificationService)
 	routes.BotHandler = handlers.NewBotHandler(botService)
 	routes.CertHandler = handlers.NewCertificatesHandler(certService)

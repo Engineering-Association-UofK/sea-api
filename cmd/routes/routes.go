@@ -29,7 +29,6 @@ var (
 	GalleryHandler      *handlers.GalleryHandler
 	CmsHandler          *handlers.CmsHandler
 	FormHandler         *handlers.FormHandler
-	CollaboratorHandler *handlers.CollaboratorHandler
 	NotificationHandler *handlers.NotificationHandler
 	BotHandler          *handlers.BotHandler
 	CertHandler         *handlers.CertificatesHandler
@@ -276,17 +275,6 @@ func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitServic
 
 			event.GET("/:id/participant", EventHandler.GetParticipantList)
 			event.DELETE("/:id/participant/:participation_id", EventHandler.RemoveParticipant)
-		}
-
-		{ // ==== Collaborators
-			collabs := admin.Group("/collabs")
-			collabs.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
-			collabs.GET("", CollaboratorHandler.GetAll)
-			collabs.GET("/:id", CollaboratorHandler.GetByID)
-			collabs.POST("", CollaboratorHandler.Create)
-			collabs.PUT("", CollaboratorHandler.Update)
-
-			// collabs.DELETE("/:id", CollaboratorHandler.Delete)
 		}
 
 		{ // ==== CERTIFICATES
