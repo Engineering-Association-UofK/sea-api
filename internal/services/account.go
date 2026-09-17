@@ -89,7 +89,11 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 }
 
 func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *certmodels.CertListRequest) (*certmodels.CertListResponse, error) {
-	total := s.certificateRepository.GetCountForUser(claims.UserID)
+	total, err := s.certificateRepository.GetCertsCount(req)
+	if err != nil {
+		return nil, err
+	}
+
 	if total == 0 {
 		return &certmodels.CertListResponse{
 			ListResponse: models.ListResponse{
@@ -105,7 +109,7 @@ func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *cert
 
 	req.UserID = claims.UserID
 
-	certs, err := s.certificateRepository.GetCertList(req)
+	certs, err := s.certificateRepository.GetCertsList(req)
 	if err != nil {
 		return nil, err
 	}
