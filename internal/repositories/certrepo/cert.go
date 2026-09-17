@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/certmodels"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -74,26 +75,133 @@ func (r *CertRepository) GetCertWithID(id int64) (*certmodels.Certificate, error
 	return &model, nil
 }
 
-func (r *CertRepository) GetCertsList(req models.ListRequest) ([]certmodels.CertResponse, error) {
-	var certs = []certmodels.CertResponse{}
+func (r *CertRepository) GetCertsList(req *certmodels.CertListRequest) ([]certmodels.CertResponse, error) {
+	certs := []certmodels.CertResponse{}
+	conditions := []string{"1=1"}
+	params := map[string]interface{}{}
+
+	if req.UserID > 0 {
+		conditions = append(conditions, "c.recipient_user_id = :user_id")
+		params["user_id"] = req.UserID
+	}
+
+	if req.EventID > 0 {
+		conditions = append(conditions, "c.event_id = :event_id")
+		params["event_id"] = req.EventID
+	}
+
+	if !req.IssueDateAfter.IsZero() {
+		conditions = append(conditions, "c.issued_date >= :issue_date_after")
+		params["issue_date_after"] = req.IssueDateAfter
+	}
+
+	if !req.IssueDateBefore.IsZero() {
+		conditions = append(conditions, "c.issued_date <= :issue_date_before")
+		params["issue_date_before"] = req.IssueDateBefore
+	}
+
+	if strings.TrimSpace(req.SearchName) != "" {
+		conditions = append(conditions, "c.recipient_name LIKE :search_name")
+		params["search_name"] = "%" + strings.TrimSpace(req.SearchName) + "%"
+	}
+
+	whereClause := strings.Join(conditions, " AND ")
+
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+
+	page := req.Page
+	if page <= 0 {
+		page = 1
+	}
+	offset := (page - 1) * limit
+
+	params["limit"] = limit
+	params["offset"] = offset
+
 	query := fmt.Sprintf(`
 		SELECT 
-		c.id,
-		c.template_id,
-		c.issuer_id,
-		c.recipient_name,
-		c.recipient_email,
-		c.issued_date,
-		c.recipient_user_id,
-		c.event_id,
-		t.name AS template_name
-	FROM %s c
-	JOIN %s t ON c.template_id = t.id
-	`, models.TableNewCertificates, models.TableCertTemplate)
+			c.id,
+			c.template_id,
+			c.issuer_id,
+			c.recipient_name,
+			c.recipient_email,
+			c.issued_date,
+			c.recipient_user_id,
+			c.event_id,
+			t.name AS template_name
+		FROM %s c
+		JOIN %s t ON c.template_id = t.id
+		WHERE %s
+		ORDER BY c.issued_date DESC
+		LIMIT :limit OFFSET :offset
+	`, models.TableNewCertificates, models.TableCertTemplate, whereClause)
 
-	err := r.db.Select(&certs, query)
+	nstmt, err := r.db.PrepareNamed(query)
 	if err != nil {
 		return nil, err
 	}
+	defer nstmt.Close()
+
+	err = nstmt.Select(&certs, params)
+	if err != nil {
+		return nil, err
+	}
+
 	return certs, nil
+}
+
+func (r *CertRepository) GetCertsCount(req *certmodels.CertListRequest) (int64, error) {
+	var count int64
+	conditions := []string{"1=1"}
+	params := map[string]interface{}{}
+
+	if req.UserID > 0 {
+		conditions = append(conditions, "c.recipient_user_id = :user_id")
+		params["user_id"] = req.UserID
+	}
+
+	if req.EventID > 0 {
+		conditions = append(conditions, "c.event_id = :event_id")
+		params["event_id"] = req.EventID
+	}
+
+	if !req.IssueDateAfter.IsZero() {
+		conditions = append(conditions, "c.issued_date >= :issue_date_after")
+		params["issue_date_after"] = req.IssueDateAfter
+	}
+
+	if !req.IssueDateBefore.IsZero() {
+		conditions = append(conditions, "c.issued_date <= :issue_date_before")
+		params["issue_date_before"] = req.IssueDateBefore
+	}
+
+	if strings.TrimSpace(req.SearchName) != "" {
+		conditions = append(conditions, "c.recipient_name LIKE :search_name")
+		params["search_name"] = "%" + strings.TrimSpace(req.SearchName) + "%"
+	}
+
+	whereClause := strings.Join(conditions, " AND ")
+
+	query := fmt.Sprintf(`
+		SELECT COUNT(c.id)
+		FROM %s c
+		JOIN %s t ON c.template_id = t.id
+		WHERE %s
+	`, models.TableNewCertificates, models.TableCertTemplate, whereClause)
+
+	nstmt, err := r.db.PrepareNamed(query)
+	if err != nil {
+		return 0, err
+	}
+	defer nstmt.Close()
+
+	err = nstmt.Get(&count, params)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

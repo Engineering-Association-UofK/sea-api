@@ -41,7 +41,7 @@ func NewCertService(repo *certrepo.CertRepository, s3 *storage.S3, eventService 
 	}
 }
 
-func (s *CertService) GetCertificateList(req *models.ListRequest) (*certmodels.CertListResponse, error) {
+func (s *CertService) GetCertificateList(req *certmodels.CertListRequest) (*certmodels.CertListResponse, error) {
 	count := s.repo.GetCount()
 	if count == 0 {
 		return &certmodels.CertListResponse{
@@ -54,9 +54,9 @@ func (s *CertService) GetCertificateList(req *models.ListRequest) (*certmodels.C
 		}, nil
 	}
 
-	totalPages := valid.Limit(req, count)
+	totalPages := valid.Limit(&req.ListRequest, count)
 
-	certs, err := s.repo.GetCertsList(*req)
+	certs, err := s.repo.GetCertsList(req)
 	if err != nil {
 		return nil, err
 	}
