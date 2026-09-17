@@ -16,7 +16,7 @@ import (
 	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
 	st "sea-api/internal/services/storage"
-	"sea-api/internal/services/user"
+	"sea-api/internal/services/userservice"
 	"sea-api/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -94,7 +94,7 @@ func Go() {
 	eventService := eventservice.NewEventService(eventRepo, formRepository, S3, galleryService)
 	accountService := services.NewAccountService(userRepository, S3, certRepo)
 
-	userService := user.NewUserService(userRepository, suspensionsRepo, S3)
+	userService := userservice.NewUserService(userRepository, suspensionsRepo, S3)
 	mailService := services.NewMailService(userService)
 	authService := auth.NewAuthService(userRepository, mailService, verificationRepo, authRepository)
 

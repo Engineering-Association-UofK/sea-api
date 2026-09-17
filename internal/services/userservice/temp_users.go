@@ -1,4 +1,4 @@
-package user
+package userservice
 
 import (
 	"sea-api/internal/errs"
@@ -8,7 +8,7 @@ import (
 )
 
 func (s *UserService) GetAllTempUsers(req *models.ListRequest) (*models.TempUserListResponse, error) {
-	total, err := s.repo.GetTotal(req.Limit, true)
+	total, err := s.repo.GetTotal(true)
 	if err != nil {
 		return nil, err
 	}

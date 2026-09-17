@@ -5,14 +5,14 @@ import (
 	"net/smtp"
 	"sea-api/internal/config"
 	"sea-api/internal/models"
-	"sea-api/internal/services/user"
+	"sea-api/internal/services/userservice"
 	"sea-api/internal/utils"
 	"strings"
 	"time"
 )
 
 type MailService struct {
-	UserService *user.UserService
+	UserService *userservice.UserService
 
 	email    string
 	password string
@@ -20,7 +20,7 @@ type MailService struct {
 	port     string
 }
 
-func NewMailService(userService *user.UserService) *MailService {
+func NewMailService(userService *userservice.UserService) *MailService {
 	return &MailService{
 		UserService: userService,
 		email:       config.App.MailUser,

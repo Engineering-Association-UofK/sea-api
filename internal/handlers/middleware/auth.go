@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"sea-api/internal/config"
 	"sea-api/internal/models"
-	"sea-api/internal/services/user"
+	"sea-api/internal/services/userservice"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func AuthMiddleware(s *user.UserService) gin.HandlerFunc {
+func AuthMiddleware(s *userservice.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.Request.Header.Get("Authorization")
 		if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer ") {

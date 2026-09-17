@@ -6,7 +6,7 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/repositories"
-	"sea-api/internal/services/user"
+	"sea-api/internal/services/userservice"
 	"sea-api/internal/utils/valid"
 	"strings"
 	"time"
@@ -14,11 +14,11 @@ import (
 
 type CmsService struct {
 	CmsRepo        *repositories.CmsRepository
-	UserService    *user.UserService
+	UserService    *userservice.UserService
 	GalleryService *GalleryService
 }
 
-func NewCmsService(CmsRepo *repositories.CmsRepository, userService *user.UserService, galleryService *GalleryService) *CmsService {
+func NewCmsService(CmsRepo *repositories.CmsRepository, userService *userservice.UserService, galleryService *GalleryService) *CmsService {
 	return &CmsService{
 		CmsRepo:        CmsRepo,
 		UserService:    userService,

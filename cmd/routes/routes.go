@@ -10,7 +10,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
-	"sea-api/internal/services/user"
+	"sea-api/internal/services/userservice"
 
 	_ "sea-api/docs"
 
@@ -41,7 +41,7 @@ var (
 	strictLimit = middleware.RateLimiter(rate.Every(time.Minute), 1)
 )
 
-func SetupRouter(u *user.UserService, rateLimitService *services.RateLimitService) *gin.Engine {
+func SetupRouter(u *userservice.UserService, rateLimitService *services.RateLimitService) *gin.Engine {
 	r := gin.New()
 	{ // ==== Config ====
 		r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
