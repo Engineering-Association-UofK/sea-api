@@ -27,7 +27,7 @@ func NewCertificatesHandler(service *certservice.CertService) *CertificatesHandl
 //
 //	@Summary		Create a certificate template
 //	@Description	Create a template for the specific certificate version
-//	@Tags			cert
+//	@Tags			certificate
 //	@Produce		json
 //	@Param			body	body		certmodels.CreateTemplateRequest	true	"Template data"
 //	@Success		201		{object}	response.TransactionResponse
@@ -54,7 +54,7 @@ func (h *CertificatesHandler) CreateTemplate(ctx *gin.Context) {
 //
 //	@Summary		Update a certificate template
 //	@Description	Update a template for the specific certificate version
-//	@Tags			cert
+//	@Tags			certificate
 //	@Produce		json
 //	@Param			body	body		certmodels.UpdateTemplateRequest	true	"Template data"
 //	@Success		200		{object}	response.TransactionResponse
@@ -81,7 +81,7 @@ func (h *CertificatesHandler) UpdateTemplate(ctx *gin.Context) {
 //
 //	@Summary		Get a certificate template
 //	@Description	Get a template for Viewing
-//	@Tags			cert
+//	@Tags			certificate
 //	@Produce		json
 //	@Param			id	path		int	true	"Template ID"
 //	@Success		200		{object}	certmodels.TemplateResponse
@@ -108,7 +108,7 @@ func (h *CertificatesHandler) GetTemplate(ctx *gin.Context) {
 //
 //	@Summary		Get a list of template
 //	@Description	Get a list of all available templates
-//	@Tags			cert
+//	@Tags			certificate
 //	@Produce		json
 //	@Param			limit	query		int				false	"Content count limit"
 //	@Param			page	query		int				false	"Page number"
@@ -138,7 +138,7 @@ func (h *CertificatesHandler) GetTemplatesList(ctx *gin.Context) {
 //
 //	@Summary		Test Certificate Generation
 //	@Description	Creates and image of a certificate without saving it to the database and sends it in the response
-//	@Tags			cert
+//	@Tags			certificate
 //	@Accepts		mbfd
 //	@Produce		json
 //	@Param			template_id		formData		int			true	"Template ID to use"
@@ -176,7 +176,7 @@ func (h *CertificatesHandler) TestGeneration(ctx *gin.Context) {
 //
 //	@Summary		Certificate Generation
 //	@Description	Issue a certificate and save it to the database
-//	@Tags			cert
+//	@Tags			certificate
 //	@Accepts		mbfd
 //	@Produce		json
 //	@Param			template_id		formData		int			true	"Template ID to use"
@@ -221,7 +221,7 @@ func (h *CertificatesHandler) IssueCertificate(ctx *gin.Context) {
 //
 //	@Summary		Update Certificate
 //	@Description	Update specific fields in a certificate
-//	@Tags			cert
+//	@Tags			certificate
 //	@Produce		json
 //	@Param			body	body		certmodels.UpdateRequest	true	"Update data"
 //	@Success		200		{object}	response.TransactionResponse
@@ -248,15 +248,21 @@ func (h *CertificatesHandler) UpdateCertificate(ctx *gin.Context) {
 //
 //	@Summary		Get Certificate List
 //	@Description	Get a filtered list of all certificates
-//	@Tags			cert
+//	@Tags			certificate
 //	@Produce		json
-//	@Param			body	body		models.ListRequest	true	"Limit data"
+//	@Param			limit				query	int		false	"Content count limit"
+//	@Param			page				query	int		false	"Page number"
+//	@Param			user-id				query	int		false	"Get list by user ID"
+//	@Param			event-id			query	int		false	"Get list by event ID"
+//	@Param			issue-date-after	query	string	false	"Get certificates issued after this date" format(date-time)
+//	@Param			issue-date-before	query	string	false	"Get certificates issued before this date" format(date-time)
+//	@Param			search-name			query	string	false	"Search using parts of/full name of the recipient"
 //	@Success		200		{object}	certmodels.CertListResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
 //	@Router			/admin/certificate [get]
 func (h *CertificatesHandler) GetCertificateList(ctx *gin.Context) {
-	var req models.ListRequest
+	var req certmodels.CertListRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -275,7 +281,7 @@ func (h *CertificatesHandler) GetCertificateList(ctx *gin.Context) {
 //
 //	@Summary		Verify Certificate
 //	@Description	Verify if certificate is valid
-//	@Tags			cert
+//	@Tags			certificate
 //	@Produce		json
 //	@Param			hash	path		string	true	"Certificate Hash"
 //	@Success		200		{object}	certmodels.CertListResponse
@@ -298,7 +304,7 @@ func (h *CertificatesHandler) VerifyCertificate(ctx *gin.Context) {
 //
 //	@Summary		Download Certificate
 //	@Description	Download certificate as a ZIP using it's ID
-//	@Tags			cert
+//	@Tags			certificate
 //	@Produce		json
 //	@Param			id	path		int	true	"Certificate Hash"
 //	@Success		200		{object}	certmodels.CertListResponse
