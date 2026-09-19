@@ -1,16 +1,15 @@
 package electionsmodels
 
-type CandidateRequest struct {
-	UserID int64 `json:"user_id"`
+type TicketResponse struct {
+	Ticket string `json:"ticket"`
 }
-
-type Voterequest struct {
+type VoteRequest struct {
 	Ticket string  `json:"ticket"`
 	Votes  []int64 `json:"votes"`
 }
 
 type CandidateResponse struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-	Url  string `json:"url"`
+	Placing int64  `json:"placing"`
+	Name    string `json:"name"`
+	Url     string `json:"url"`
 }
