@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+// election_config
+type ElectionConfig struct {
+	ActiveCycle     int64     `db:"active_cycle"`
+	TicketStartDate time.Time `db:"ticket_start_date"`
+	StartDate       time.Time `db:"start_date"`
+	EndDate         time.Time `db:"end_date"`
+}
+
 // candidates
 type Candidate struct {
 	ID        int64             `db:"id" json:"id"`
