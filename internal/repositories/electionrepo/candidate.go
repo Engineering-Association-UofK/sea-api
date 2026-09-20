@@ -18,10 +18,14 @@ func (r *ElectionRepo) UpdateCandidate(req electionsmodels.Candidate) error {
 	return nil
 }
 
-func (r *ElectionRepo) GetCandidateList(req electionsmodels.Candidate) ([]electionsmodels.CandidateRaw, error) {
+func (r *ElectionRepo) GetCandidateList(cycle int64) ([]electionsmodels.CandidateRaw, error) {
 	return []electionsmodels.CandidateRaw{}, nil
 }
 
-func (r *ElectionRepo) RemoveCandidate(req electionsmodels.Candidate) error {
+func (r *ElectionRepo) GetCandidateListForActiveCycle() ([]electionsmodels.CandidateRaw, error) {
+	return []electionsmodels.CandidateRaw{}, nil
+}
+
+func (r *ElectionRepo) RemoveCandidate(id int64) error {
 	return nil
 }

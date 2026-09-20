@@ -12,6 +12,8 @@ func (r *ElectionRepo) Vote(ts sqlx.Tx, candidateIDs []int64) error {
 	return nil
 }
 
+func (r *ElectionRepo) GetVotesStatistics()
+
 func (r *ElectionRepo) Transaction(ctx context.Context) (*sqlx.Tx, error) {
 	return r.db.BeginTxx(ctx, nil)
 }

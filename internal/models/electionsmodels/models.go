@@ -7,7 +7,9 @@ import (
 
 // election_config
 type ElectionConfig struct {
-	ActiveCycle     int64     `db:"active_cycle"`
+	ActiveCycle int64 `db:"active_cycle"`
+	MaxVotes    int64 `db:"max_votes"`
+
 	TicketStartDate time.Time `db:"ticket_start_date"`
 	StartDate       time.Time `db:"start_date"`
 	EndDate         time.Time `db:"end_date"`
@@ -21,21 +23,14 @@ type Candidate struct {
 	Belonging models.Department `db:"belonging" json:"belonging"`
 }
 
-type CandidateRaw struct {
-	ID     int64  `db:"id"`
-	Name   string `db:"name"`
-	PicKey string `db:"pic_key"`
-
-	Cycle int64 `db:"cycle"`
-
-	Belonging models.Department `db:"belonging"`
-}
-
 // results
 type Result struct {
 	Name  string `db:"name"`
 	Cycle int64  `db:"cycle"`
 	Place int64  `db:"place"`
+
+	StudentBase   int64 `db:"student_base"`
+	NumberOfVotes int64 `db:"number_of_votes"`
 
 	Belonging models.Department `db:"belonging"`
 }
@@ -47,8 +42,9 @@ type TicketRecord struct {
 
 // vote_tickets
 type VoteTicket struct {
-	Code string `db:"code"`
-	Used bool   `db:"used"`
+	Code   string    `db:"code"`
+	Used   bool      `db:"used"`
+	UsedAt time.Time `db:"used_at"`
 }
 
 // votes
