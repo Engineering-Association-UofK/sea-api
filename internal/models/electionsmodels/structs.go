@@ -2,7 +2,18 @@ package electionsmodels
 
 import (
 	"sea-api/internal/models"
+	"time"
 )
+
+type ElectionConfig struct {
+	ActiveCycle int64 `db:"active_cycle"`
+	MaxVotes    int64 `db:"max_votes"`
+	StudentBase int64 `db:"student_base"`
+
+	TicketStartDate time.Time `db:"ticket_start_date"`
+	StartDate       time.Time `db:"start_date"`
+	EndDate         time.Time `db:"end_date"`
+}
 
 type CandidateRaw struct {
 	ID     int64  `db:"id"`

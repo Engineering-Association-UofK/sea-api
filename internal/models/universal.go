@@ -64,27 +64,24 @@ const (
 	TableBotUserStates       TableName = "bot_user_states"
 	TableBotActions          TableName = "bot_actions"
 
-	// Notifications
+	// Elections
 
+	TableCandidates      TableName = "candidates"
+	TableTicketRecords   TableName = "ticket_records"
+	TableVoteTickets     TableName = "vote_tickets"
+	TableVotes           TableName = "votes"
+	TableElectionResults TableName = "election_results"
+
+	// Utils
+
+	TableConfig        TableName = "config"
+	TableFiles         TableName = "files"
+	TableRateLimits    TableName = "rate_limits"
+	TableLogs          TableName = "logs"
+	TableFeedback      TableName = "feedback"
 	TableNotifications TableName = "notifications"
-
-	// Logs
-
-	TableLogs TableName = "logs"
-
-	// Verification Code
-
+	// TODO: Remove table
 	TableVerificationCode TableName = "verification_code"
-
-	// Files
-
-	TableFiles TableName = "files"
-
-	// Rate Limit
-
-	TableRateLimits TableName = "rate_limits"
-
-	TableFeedback TableName = "feedback"
 )
 
 type ListRequest struct {
