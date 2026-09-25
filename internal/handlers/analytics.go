@@ -7,15 +7,14 @@ import (
 	_ "sea-api/internal/response"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 )
 
 type AnalyticsHandler struct {
-	service analytics.Analytics
+	service *analytics.Analytics
 }
 
-func NewAnalyticsHandler(db sqlx.DB) *AnalyticsHandler {
-	return &AnalyticsHandler{analytics.NewAnalytics(db)}
+func NewAnalyticsHandler(service *analytics.Analytics) *AnalyticsHandler {
+	return &AnalyticsHandler{service: service}
 }
 
 // GetGeneralAnalytics godocs

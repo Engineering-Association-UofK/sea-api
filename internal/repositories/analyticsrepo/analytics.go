@@ -9,11 +9,11 @@ import (
 )
 
 type AnalyticsRepo struct {
-	db sqlx.DB
+	db *sqlx.DB
 }
 
-func NewAnalyticsRepo(db sqlx.DB) AnalyticsRepo {
-	return AnalyticsRepo{db: db}
+func NewAnalyticsRepo(db *sqlx.DB) *AnalyticsRepo {
+	return &AnalyticsRepo{db: db}
 }
 
 func (r *AnalyticsRepo) General() (*analyticsmodel.General, error) {

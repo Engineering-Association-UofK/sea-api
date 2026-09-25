@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"sea-api/cmd/app"
 	"sea-api/internal/config"
-	"sea-api/internal/handlers"
 	"sea-api/internal/handlers/middleware"
 	"sea-api/internal/models"
 	"sea-api/internal/response"
@@ -21,28 +21,17 @@ import (
 )
 
 var (
-	UserHandler         *handlers.UserHandler
-	EventHandler        *handlers.EventHandler
-	MailHandler         *handlers.MailHandler
-	AuthHandler         *handlers.AuthHandler
-	AccountHandler      *handlers.AccountHandler
-	GalleryHandler      *handlers.GalleryHandler
-	CmsHandler          *handlers.CmsHandler
-	FormHandler         *handlers.FormHandler
-	NotificationHandler *handlers.NotificationHandler
-	BotHandler          *handlers.BotHandler
-	CertHandler         *handlers.CertificatesHandler
-	AnalyticsHandler    *handlers.AnalyticsHandler
-)
-
-var (
 	basicLimit  = middleware.RateLimiter(rate.Every(time.Second), 5)
 	midLimit    = middleware.RateLimiter(rate.Every(30*time.Second), 3)
 	highLimit   = middleware.RateLimiter(rate.Every(time.Minute), 3)
 	strictLimit = middleware.RateLimiter(rate.Every(time.Minute), 1)
 )
 
-func SetupRouter(u *userservice.UserService, rateLimitService *services.RateLimitService) *gin.Engine {
+func SetupRouter(
+	u *userservice.UserService,
+	rateLimitService *services.RateLimitService,
+	h app.Handlers,
+) *gin.Engine {
 	r := gin.New()
 	{ // ==== Config ====
 		r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
@@ -71,36 +60,36 @@ func SetupRouter(u *userservice.UserService, rateLimitService *services.RateLimi
 
 	{ // ==== CERTIFICATES
 		cert := apiV1.Group("/cert")
-		cert.GET("/verify/:hash", CertHandler.VerifyCertificate)
+		cert.GET("/verify/:hash", h.Cert.VerifyCertificate)
 	}
 
 	{ // ==== AUTHENTICATION
 		auth := apiV1.Group("/auth")
-		auth.POST("/send-verification-code", middleware.StatefulRateLimiter(models.LimitSendCode, rateLimitService), AuthHandler.SendVerificationCode)
-		auth.POST("/verify", AuthHandler.Verify)
-		auth.POST("/login", highLimit, AuthHandler.Login)
-		auth.POST("/forgot-password", highLimit, AuthHandler.ForgotPassword)
+		auth.POST("/send-verification-code", middleware.StatefulRateLimiter(models.LimitSendCode, rateLimitService), h.Auth.SendVerificationCode)
+		auth.POST("/verify", h.Auth.Verify)
+		auth.POST("/login", highLimit, h.Auth.Login)
+		auth.POST("/forgot-password", highLimit, h.Auth.ForgotPassword)
 
-		auth.POST("/register/check", highLimit, AuthHandler.CheckState)
-		auth.POST("/register/step", highLimit, AuthHandler.DoRegistrationStep)
+		auth.POST("/register/check", highLimit, h.Auth.CheckState)
+		auth.POST("/register/step", highLimit, h.Auth.DoRegistrationStep)
 
-		auth.POST("/check-username", AccountHandler.CheckUsernameAvailability)
+		auth.POST("/check-username", h.Account.CheckUsernameAvailability)
 	}
 
 	{ // ==== EVENTS
 		event := apiV1.Group("/event")
-		event.GET("", EventHandler.GetEventViewList)
-		event.GET("/:id", EventHandler.GetEventView)
+		event.GET("", h.Event.GetEventViewList)
+		event.GET("/:id", h.Event.GetEventView)
 	}
 
 	{ // ==== OPEN
 		cms := apiV1.Group("/cms")
-		cms.GET("/blogs/:slug", CmsHandler.GetViewPostBySlug)
-		cms.GET("/blogs", CmsHandler.GetViewPostsList)
-		cms.GET("/team", CmsHandler.GetViewTeamMembers)
+		cms.GET("/blogs/:slug", h.Cms.GetViewPostBySlug)
+		cms.GET("/blogs", h.Cms.GetViewPostsList)
+		cms.GET("/team", h.Cms.GetViewTeamMembers)
 
 		open := apiV1.Group("/open")
-		open.POST("/bot", BotHandler.GetNodeView)
+		open.POST("/bot", h.Bot.GetNodeView)
 	}
 
 	{ // ==== ACCOUNT
@@ -108,44 +97,44 @@ func SetupRouter(u *userservice.UserService, rateLimitService *services.RateLimi
 		account.Use(middleware.AuthMiddleware(u))
 
 		{ // ==== PROFILE
-			account.GET("/summary", AccountHandler.GetProfileSummary)
-			account.GET("", AccountHandler.GetProfile)
-			account.PUT("", AccountHandler.UpdateProfile)
-			account.GET("/certificates", AccountHandler.GetCertificates)
+			account.GET("/summary", h.Account.GetProfileSummary)
+			account.GET("", h.Account.GetProfile)
+			account.PUT("", h.Account.UpdateProfile)
+			account.GET("/certificates", h.Account.GetCertificates)
 			// FIXME
 			// account.GET("/download/:hash", midLimit, CertificateHandler.GetCertificate)
-			account.PUT("/picture", AccountHandler.UpdatePicture)
-			account.PUT("/password", AccountHandler.UpdatePassword)
-			account.PUT("/email", middleware.StatefulRateLimiter(models.LimitUpdateEmail, rateLimitService), AccountHandler.UpdateEmail)
-			account.PUT("/username", middleware.StatefulRateLimiter(models.LimitUpdateUsername, rateLimitService), AccountHandler.UpdateUsername)
+			account.PUT("/picture", h.Account.UpdatePicture)
+			account.PUT("/password", h.Account.UpdatePassword)
+			account.PUT("/email", middleware.StatefulRateLimiter(models.LimitUpdateEmail, rateLimitService), h.Account.UpdateEmail)
+			account.PUT("/username", middleware.StatefulRateLimiter(models.LimitUpdateUsername, rateLimitService), h.Account.UpdateUsername)
 		}
 
 		{ // ==== EVENTS
 			event := account.Group("/event")
 
 			// FIXME
-			// event.GET("/all-status", EventHandler.GetApplicationStatus)
-			// event.GET("/status/:id", EventHandler.GetOneApplicationStatus)
+			// event.GET("/all-status", h.Event.GetApplicationStatus)
+			// event.GET("/status/:id", h.Event.GetOneApplicationStatus)
 
-			event.POST("/:id", EventHandler.ApplyForEvent)
+			event.POST("/:id", h.Event.ApplyForEvent)
 
 			// FIXME
-			// event.POST("/cancel/:id", EventHandler.CancelApplicationForEvent)
+			// event.POST("/cancel/:id", h.Event.CancelApplicationForEvent)
 		}
 
 		{ // ==== FORMS
 			form := account.Group("/form")
-			form.GET("", FormHandler.GetAllForms)
-			form.GET("/:id", FormHandler.GetEntireForUserForm)
+			form.GET("", h.Form.GetAllForms)
+			form.GET("/:id", h.Form.GetEntireForUserForm)
 		}
 
 		{ // ==== Notifications
 			notification := account.Group("/notifications")
-			notification.POST("/demo", NotificationHandler.CreateDemoNotifications)
-			notification.GET("", NotificationHandler.GetNotifications)
-			notification.POST("/:id", NotificationHandler.MarkAsRead)
-			notification.POST("", NotificationHandler.MarkAllAsRead)
-			notification.DELETE("/:id", NotificationHandler.DeleteNotification)
+			notification.POST("/demo", h.Notification.CreateDemoNotifications)
+			notification.GET("", h.Notification.GetNotifications)
+			notification.POST("/:id", h.Notification.MarkAsRead)
+			notification.POST("", h.Notification.MarkAllAsRead)
+			notification.DELETE("/:id", h.Notification.DeleteNotification)
 		}
 	}
 
@@ -155,132 +144,132 @@ func SetupRouter(u *userservice.UserService, rateLimitService *services.RateLimi
 
 		{ // ==== Analysis
 			analysis := admin.Group("/analysis")
-			analysis.GET("", midLimit, AnalyticsHandler.GetGeneralAnalytics)
+			analysis.GET("", midLimit, h.Analytics.GetGeneralAnalytics)
 		}
 
 		{ // ==== USERS
 			user := admin.Group("/user")
 			user.Use(middleware.RequireAnyRole(models.RoleSystemUserMgr, models.RoleSystemSuperAdmin))
-			user.GET("/:id", UserHandler.GetByID)
-			user.GET("/all", UserHandler.GetAll)
-			user.POST("/temp-users", UserHandler.GetAllTempUsers)
-			user.GET("/username/:username", UserHandler.GetByUsername)
-			user.POST("/passcode/create/:id", UserHandler.CreateTempUser)
-			user.GET("/passcode/:id", UserHandler.GetTempUserPasscode)
-			user.PUT("", UserHandler.Update)
-			user.POST("/suspend", UserHandler.Suspend)
-			user.POST("/assign-passcodes", UserHandler.AssignPasscodes)
-			user.POST("/import-users-with-emails", UserHandler.UpdateUsersImport)
-			user.POST("/import-users/:id", UserHandler.ImportUsers)
+			user.GET("/:id", h.User.GetByID)
+			user.GET("/all", h.User.GetAll)
+			user.POST("/temp-users", h.User.GetAllTempUsers)
+			user.GET("/username/:username", h.User.GetByUsername)
+			user.POST("/passcode/create/:id", h.User.CreateTempUser)
+			user.GET("/passcode/:id", h.User.GetTempUserPasscode)
+			user.PUT("", h.User.Update)
+			user.POST("/suspend", h.User.Suspend)
+			user.POST("/assign-passcodes", h.User.AssignPasscodes)
+			user.POST("/import-users-with-emails", h.User.UpdateUsersImport)
+			user.POST("/import-users/:id", h.User.ImportUsers)
 		}
 
 		{ // ==== ADMIN
 			admin.Use(middleware.RequireAnyRole(models.RoleSystemAdminManager, models.RoleSystemSuperAdmin))
-			admin.GET("", UserHandler.GetAdmins)
-			admin.POST("/:id", UserHandler.MakeAdmin)
-			admin.PUT("", UserHandler.UpdateAdmin)
-			admin.DELETE("/:id", UserHandler.DeleteAdmin)
-			admin.POST("/add-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), UserHandler.MakeAdminManager)
-			admin.DELETE("/remove-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), UserHandler.RemoveAdminManager)
+			admin.GET("", h.User.GetAdmins)
+			admin.POST("/:id", h.User.MakeAdmin)
+			admin.PUT("", h.User.UpdateAdmin)
+			admin.DELETE("/:id", h.User.DeleteAdmin)
+			admin.POST("/add-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), h.User.MakeAdminManager)
+			admin.DELETE("/remove-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), h.User.RemoveAdminManager)
 		}
 
 		{ // ==== BLOG POSTS
 			posts := admin.Group("/blog")
 			posts.Use(middleware.RequireAnyRole(models.RoleContentBlogMgr, models.RoleSystemSuperAdmin))
-			posts.GET("", CmsHandler.GetAllPosts)
-			posts.GET("/:id", CmsHandler.GetPostById)
-			posts.POST("", CmsHandler.CreatePost)
-			posts.PUT("", CmsHandler.UpdatePost)
-			posts.DELETE("/:id", CmsHandler.DeletePost)
+			posts.GET("", h.Cms.GetAllPosts)
+			posts.GET("/:id", h.Cms.GetPostById)
+			posts.POST("", h.Cms.CreatePost)
+			posts.PUT("", h.Cms.UpdatePost)
+			posts.DELETE("/:id", h.Cms.DeletePost)
 		}
 
 		{ // ==== BOT
 			bot := admin.Group("/bot")
 			bot.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
-			bot.GET("/graph", BotHandler.GetBotGraph)
-			bot.PUT("/graph", BotHandler.UpdateBotGraph)
-			bot.POST("/reset", BotHandler.ResetDefault)
+			bot.GET("/graph", h.Bot.GetBotGraph)
+			bot.PUT("/graph", h.Bot.UpdateBotGraph)
+			bot.POST("/reset", h.Bot.ResetDefault)
 		}
 
 		{ // ==== GALLERY
 			gallery := admin.Group("/gallery")
 			gallery.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
-			gallery.POST("", GalleryHandler.Upload)
-			gallery.GET("", GalleryHandler.GetAll)
-			gallery.GET("/:id", GalleryHandler.GetByID)
-			gallery.DELETE("", GalleryHandler.CleanGallery)
+			gallery.POST("", h.Gallery.Upload)
+			gallery.GET("", h.Gallery.GetAll)
+			gallery.GET("/:id", h.Gallery.GetByID)
+			gallery.DELETE("", h.Gallery.CleanGallery)
 		}
 
 		{ // ==== FORMS
 			form := admin.Group("/form")
 			form.Use(middleware.RequireAnyRole(models.RoleContentFormMgr, models.RoleSystemSuperAdmin))
 
-			form.GET("", FormHandler.GetAllForms)
-			form.POST("", FormHandler.CreateForm)
-			form.PUT("", FormHandler.UpdateForm)
-			form.DELETE("/:id", FormHandler.DeleteForm)
+			form.GET("", h.Form.GetAllForms)
+			form.POST("", h.Form.CreateForm)
+			form.PUT("", h.Form.UpdateForm)
+			form.DELETE("/:id", h.Form.DeleteForm)
 
-			form.POST("/page", FormHandler.CreatePage)
-			form.PUT("/page", FormHandler.UpdatePage)
-			form.DELETE("/page/:id", FormHandler.DeletePage)
+			form.POST("/page", h.Form.CreatePage)
+			form.PUT("/page", h.Form.UpdatePage)
+			form.DELETE("/page/:id", h.Form.DeletePage)
 
-			form.POST("/question", FormHandler.CreateQuestion)
-			form.PUT("/question", FormHandler.UpdateQuestion)
-			form.DELETE("/question/:id", FormHandler.DeleteQuestion)
+			form.POST("/question", h.Form.CreateQuestion)
+			form.PUT("/question", h.Form.UpdateQuestion)
+			form.DELETE("/question/:id", h.Form.DeleteQuestion)
 
-			form.GET("/:id", FormHandler.GetEntireForEditForm)
+			form.GET("/:id", h.Form.GetEntireForEditForm)
 
 			// FIXME
-			// form.POST("/submit", FormHandler.SubmitForm)
+			// form.POST("/submit", h.Form.SubmitForm)
 
-			form.GET("/analysis/:id", FormHandler.GetFormAnalysis)
-			form.GET("/detailed-responses/:id", FormHandler.GetFormDetailedResponses)
+			form.GET("/analysis/:id", h.Form.GetFormAnalysis)
+			form.GET("/detailed-responses/:id", h.Form.GetFormDetailedResponses)
 
-			form.POST("/publish/:id", FormHandler.PublishForm)
-			form.POST("/unpublish/:id", FormHandler.UnpublishForm)
+			form.POST("/publish/:id", h.Form.PublishForm)
+			form.POST("/unpublish/:id", h.Form.UnpublishForm)
 
-			// form.GET("/user-response/:id", FormHandler.GetResponseByID)
-			// form.GET("/user-responses/:id", FormHandler.GetUserResponsesForForm)
+			// form.GET("/user-response/:id", h.Form.GetResponseByID)
+			// form.GET("/user-responses/:id", h.Form.GetUserResponsesForForm)
 
-			// form.GET("/responses/:id", FormHandler.GetResponsesByFormID)
-			// form.PUT("/response-status", FormHandler.UpdateResponseStatus)
-			// form.DELETE("/response/:id", FormHandler.DeleteResponse)
+			// form.GET("/responses/:id", h.Form.GetResponsesByFormID)
+			// form.PUT("/response-status", h.Form.UpdateResponseStatus)
+			// form.DELETE("/response/:id", h.Form.DeleteResponse)
 
 		}
 
 		{ // ==== TEAM MEMBERS
 			team := admin.Group("/team")
 			team.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
-			team.POST("", CmsHandler.CreateTeamMember)
-			team.GET("", CmsHandler.GetAllTeamMembers)
-			team.GET("/:id", CmsHandler.GetTeamMemberByID)
-			team.PUT("", CmsHandler.UpdateTeamMember)
-			team.DELETE("/:id", CmsHandler.DeleteTeamMember)
+			team.POST("", h.Cms.CreateTeamMember)
+			team.GET("", h.Cms.GetAllTeamMembers)
+			team.GET("/:id", h.Cms.GetTeamMemberByID)
+			team.PUT("", h.Cms.UpdateTeamMember)
+			team.DELETE("/:id", h.Cms.DeleteTeamMember)
 		}
 
 		{ // ==== EVENTS
 			event := admin.Group("/event")
 			event.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
-			event.GET("/:id", EventHandler.GetEvent)
-			event.GET("", EventHandler.GetEventList)
-			event.POST("", EventHandler.CreateEvent)
-			event.PUT("", EventHandler.UpdateEvent)
-			event.DELETE("/:id", EventHandler.DeleteEvent)
+			event.GET("/:id", h.Event.GetEvent)
+			event.GET("", h.Event.GetEventList)
+			event.POST("", h.Event.CreateEvent)
+			event.PUT("", h.Event.UpdateEvent)
+			event.DELETE("/:id", h.Event.DeleteEvent)
 
 			// Coordinators
-			event.GET("/:id/coord", EventHandler.GetCoordList)
-			event.POST("/:id/coord", EventHandler.CreateCoords)
-			event.PUT("/:id/coord/:coord_id", EventHandler.UpdateCoord)
-			event.DELETE("/:id/coord/:coord_id", EventHandler.DeleteCoord)
-			event.DELETE("/:id/coord", EventHandler.DeleteCoords)
+			event.GET("/:id/coord", h.Event.GetCoordList)
+			event.POST("/:id/coord", h.Event.CreateCoords)
+			event.PUT("/:id/coord/:coord_id", h.Event.UpdateCoord)
+			event.DELETE("/:id/coord/:coord_id", h.Event.DeleteCoord)
+			event.DELETE("/:id/coord", h.Event.DeleteCoords)
 
 			// Participation
-			event.GET("/:id/application", EventHandler.GetApplicationList)
-			event.POST("/:id/application/:application_id", EventHandler.AcceptApplication)
-			event.DELETE("/:id/application/:application_id", EventHandler.RejectApplication)
+			event.GET("/:id/application", h.Event.GetApplicationList)
+			event.POST("/:id/application/:application_id", h.Event.AcceptApplication)
+			event.DELETE("/:id/application/:application_id", h.Event.RejectApplication)
 
-			event.GET("/:id/participant", EventHandler.GetParticipantList)
-			event.DELETE("/:id/participant/:participation_id", EventHandler.RemoveParticipant)
+			event.GET("/:id/participant", h.Event.GetParticipantList)
+			event.DELETE("/:id/participant/:participation_id", h.Event.RemoveParticipant)
 		}
 
 		{ // ==== CERTIFICATES
@@ -289,17 +278,17 @@ func SetupRouter(u *userservice.UserService, rateLimitService *services.RateLimi
 
 			// New API
 
-			certificate.GET("", basicLimit, CertHandler.GetCertificateList)
-			certificate.POST("", midLimit, CertHandler.IssueCertificate)
-			certificate.PUT("", midLimit, CertHandler.UpdateCertificate)
-			certificate.GET("/:id", midLimit, CertHandler.DownloadCertificate)
+			certificate.GET("", basicLimit, h.Cert.GetCertificateList)
+			certificate.POST("", midLimit, h.Cert.IssueCertificate)
+			certificate.PUT("", midLimit, h.Cert.UpdateCertificate)
+			certificate.GET("/:id", midLimit, h.Cert.DownloadCertificate)
 
-			certificate.GET("/template/:id", midLimit, CertHandler.GetTemplate)
-			certificate.GET("/template", midLimit, CertHandler.GetTemplatesList)
-			certificate.POST("/template", midLimit, CertHandler.CreateTemplate)
-			certificate.PUT("/template", midLimit, CertHandler.UpdateTemplate)
+			certificate.GET("/template/:id", midLimit, h.Cert.GetTemplate)
+			certificate.GET("/template", midLimit, h.Cert.GetTemplatesList)
+			certificate.POST("/template", midLimit, h.Cert.CreateTemplate)
+			certificate.PUT("/template", midLimit, h.Cert.UpdateTemplate)
 
-			certificate.POST("/test", midLimit, CertHandler.TestGeneration)
+			certificate.POST("/test", midLimit, h.Cert.TestGeneration)
 		}
 
 		{ // ==== MAIL
