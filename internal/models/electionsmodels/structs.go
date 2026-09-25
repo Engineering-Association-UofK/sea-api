@@ -26,8 +26,11 @@ type CandidateRaw struct {
 }
 
 type VoteStatistics struct {
-	NumberOfVoters   int64   `db:"number_of_voters" json:"number_of_voters"`
-	VotesInLastDay   int64   `db:"votes_in_last_day" json:"votes_in_last_day"`
-	VotePercentage   float32 `db:"vote_percentage" json:"vote_percentage"`
-	SecondsRemaining int64   `db:"time_remaining" json:"time_remaining"`
+	NumberOfVoters int64   `db:"number_of_voters" json:"number_of_voters"`
+	VotesInLastDay int64   `db:"votes_in_last_day" json:"votes_in_last_day"`
+	VotePercentage float32 `db:"vote_percentage" json:"vote_percentage"`
+
+	TicketsStartTime time.Time `db:"tickets_start_time" json:"tickets_start_time"`
+	StartTime        time.Time `db:"start_time" json:"start_time"`
+	EndTime          time.Time `db:"end_time" json:"end_time"`
 }

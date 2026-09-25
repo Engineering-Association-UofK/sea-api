@@ -16,10 +16,11 @@ type Candidate struct {
 
 // election_results
 type Result struct {
-	ID    int64  `db:"id" json:"id"`
-	Name  string `db:"name"`
-	Cycle int64  `db:"cycle"`
-	Place int64  `db:"place"`
+	ID     int64  `db:"id" json:"id"`
+	UserID int64  `db:"user_id" json:"user_id"`
+	Name   string `db:"name"`
+	Cycle  int64  `db:"cycle"`
+	Place  int64  `db:"place"`
 
 	NumberOfVotes int64 `db:"number_of_votes"`
 

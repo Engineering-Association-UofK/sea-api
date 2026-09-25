@@ -52,6 +52,7 @@ CREATE TABLE votes (
 
 CREATE TABLE election_results (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     cycle INT NOT NULL,
     place INT NOT NULL,
@@ -60,5 +61,8 @@ CREATE TABLE election_results (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     INDEX idx_results_cycle (cycle),
-    INDEX idx_results_place (cycle, place)
+    INDEX idx_results_place (cycle, place),
+
+    CONSTRAINT fk_election_results_user FOREIGN KEY (user_id) 
+        REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
