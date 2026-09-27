@@ -19,7 +19,8 @@ type ElectionConfig struct {
 
 type CandidateRaw struct {
 	ID     int64  `db:"id"`
-	Name   string `db:"name"`
+	NameAr string `db:"name_ar"`
+	NameEn string `db:"name_en"`
 	PicKey string `db:"pic_key"`
 
 	Cycle int64 `db:"cycle"`
@@ -38,6 +39,9 @@ type PublicStats struct {
 	TicketsStartTime time.Time `json:"tickets_start_time"`
 	StartTime        time.Time `json:"start_time"`
 	EndTime          time.Time `json:"end_time"`
+
+	CurrentCycle int64 `json:"current_cycle"`
+	VoteLimit    int64 `json:"vote_limit"`
 }
 
 type PrivateStats struct {

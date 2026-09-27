@@ -41,7 +41,7 @@ func (h *ElectionHandler) GetPublicElectionStatistics(c *gin.Context) {
 
 // GetPrivateElectionStatistics godocs
 //
-//	@Summary		Get Public election statistics
+//	@Summary		Get Private election statistics
 //	@Description	Retrieve real-time voter metrics and election cycle timelines
 //	@Tags			Election:Admin
 //	@Produce		json
@@ -287,7 +287,7 @@ func (h *ElectionHandler) GetResults(c *gin.Context) {
 		return
 	}
 
-	results, err := h.service.GetResults(cycle)
+	results, err := h.service.GetResults(c.Request.Context(), cycle)
 	if err != nil {
 		c.Error(err)
 		return

@@ -59,7 +59,8 @@ func (r *ElectionRepo) GetCandidateListForActiveCycle() ([]electionsmodels.Candi
 	query := fmt.Sprintf(`
 		SELECT 
 			c.id,
-			u.name_en AS name,
+			u.name_ar,
+			u.name_en,
 			COALESCE(f.file_key, '') AS pic_key,
 			c.cycle,
 			c.belonging

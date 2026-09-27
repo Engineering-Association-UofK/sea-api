@@ -24,6 +24,9 @@ func (s *ElectionService) PublicElectionStatistics() (*electionsmodels.PublicSta
 		TicketsStartTime: cfg.TicketStartDate,
 		StartTime:        cfg.StartDate,
 		EndTime:          cfg.EndDate,
+
+		CurrentCycle: cfg.ActiveCycle,
+		VoteLimit:    cfg.MaxVotes,
 	}, nil
 }
 

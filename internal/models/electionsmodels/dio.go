@@ -22,6 +22,7 @@ type VoteRequest struct {
 type CandidateResponse struct {
 	Placing int64  `json:"placing"`
 	ID      int64  `json:"id"`
-	Name    string `json:"name"`
+	NameAr  string `json:"name_ar"`
+	NameEn  string `json:"name_en"`
 	Url     string `json:"url"`
 }
