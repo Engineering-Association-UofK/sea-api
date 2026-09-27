@@ -71,7 +71,7 @@ func SetupRouter(
 		r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"status": 200}) })
 
 		r.StaticFS("/docs", http.FS(subFS))
-		r.GET("/docs-ui", func(c *gin.Context) { c.File("./scalar.html") })
+		r.GET("/docs-ui", func(c *gin.Context) { c.File(config.App.ResourcesDir + "/scalar.html") })
 
 		r.GET("/favicon.ico", func(c *gin.Context) { c.File(config.App.ResourcesDir + "/favicon.ico") })
 	}
