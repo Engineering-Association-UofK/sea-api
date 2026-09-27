@@ -3,8 +3,9 @@ package electionservice
 import (
 	"context"
 	"crypto/rand"
-	"errors"
+	"fmt"
 	"math/big"
+	"sea-api/internal/errs"
 	"sea-api/internal/models/electionsmodels"
 	"time"
 
@@ -18,7 +19,7 @@ func (s *ElectionService) GetTicket(ctx context.Context, userId int64) (*electio
 	}
 
 	if time.Now().Before(cfg.TicketStartDate) {
-		return nil, errors.New("ticket issuance has not started yet")
+		return nil, errs.New(errs.Forbidden, "ticket issuance has not started yet", nil)
 	}
 
 	hasRecord, err := s.repo.HasRecord(userId, cfg.ActiveCycle)
@@ -26,7 +27,7 @@ func (s *ElectionService) GetTicket(ctx context.Context, userId int64) (*electio
 		return nil, err
 	}
 	if hasRecord {
-		return nil, errors.New("user has already received a ticket for this cycle")
+		return nil, errs.New(errs.Forbidden, "user has already received a ticket for this cycle", nil)
 	}
 
 	tx, err := s.repo.Transaction(ctx)
@@ -51,35 +52,36 @@ func (s *ElectionService) GetTicket(ctx context.Context, userId int64) (*electio
 	return &electionsmodels.TicketResponse{Ticket: ticket}, nil
 }
 
-const ticketAlphabet = "23456789ABCDEFGHJKMNPQRSTVWXYZ" // 32 unambiguous characters
+const ticketAlphabet = "23456789ABCDEFGHJKMNPQRSTVWXYZ" // 30 unambiguous characters
 
-// GenerateShortTicket generates an 8-character string
+// GenerateShortTicket generates an 8-character string formatted as XXXX-XXXX
 func (s *ElectionService) GenerateShortTicket(tx *sqlx.Tx) (string, error) {
 	bytes := make([]byte, 8)
 	alphabetLen := big.NewInt(int64(len(ticketAlphabet)))
 
-	// Format as 4-4 for readability (e.g., "A8K9-M2P4")
-	var ticket = string(bytes[:4]) + "-" + string(bytes[4:])
+	var ticket string
 	var err error
 
 	for attempts := 0; attempts < 3; attempts++ {
+		// Populate random bytes
 		for i := 0; i < 8; i++ {
-			num, err := rand.Int(rand.Reader, alphabetLen)
-			if err != nil {
-				return "", err
+			num, randErr := rand.Int(rand.Reader, alphabetLen)
+			if randErr != nil {
+				return "", randErr
 			}
 			bytes[i] = ticketAlphabet[num.Int64()]
 		}
 
+		ticket = string(bytes[:4]) + "-" + string(bytes[4:])
+
+		// Attempt insertion
 		err = s.repo.SaveTicket(tx, ticket)
 		if err == nil {
-			break // Successfully inserted unique ticket
+			fmt.Println(ticket)
+			return ticket, nil
 		}
-		// If err is unique constraint violation, loop retries with a new code
-	}
-	if err != nil {
-		return "", err // Failed after retries
+		// If duplicate key collision occurs, the loop retries with fresh random bytes
 	}
 
-	return ticket, nil
+	return "", fmt.Errorf("failed to generate unique ticket after retries: %w", err)
 }
