@@ -66,10 +66,10 @@ const (
 
 	// Elections
 
-	TableCandidates      TableName = "candidates"
-	TableTicketRecords   TableName = "ticket_records"
-	TableVoteTickets     TableName = "vote_tickets"
-	TableVotes           TableName = "votes"
+	TableCandidates      TableName = "election_candidates"
+	TableTicketRecords   TableName = "election_ticket_records"
+	TableVoteTickets     TableName = "election_vote_tickets"
+	TableVotes           TableName = "election_votes"
 	TableElectionResults TableName = "election_results"
 
 	// Utils

@@ -7,10 +7,10 @@ import (
 
 // candidates
 type Candidate struct {
-	ID        int64             `db:"id" json:"id"`
-	UserID    int64             `db:"user_id" json:"user_id"`
-	Cycle     int64             `db:"cycle" json:"cycle"`
-	Belonging models.Department `db:"belonging" json:"belonging"`
+	ID        int64             `db:"id"`
+	UserID    int64             `db:"user_id"`
+	Cycle     int64             `db:"cycle"`
+	Belonging models.Department `db:"belonging"`
 	CreatedAt time.Time         `db:"created_at"`
 }
 

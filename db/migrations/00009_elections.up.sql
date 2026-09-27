@@ -3,7 +3,7 @@ CREATE TABLE config (
     `value` JSON NOT NULL
 );
 
-CREATE TABLE candidates (
+CREATE TABLE election_candidates (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     cycle INT NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE candidates (
         REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE ticket_records (
+CREATE TABLE election_ticket_records (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     cycle INT NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE ticket_records (
         REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE vote_tickets (
+CREATE TABLE election_vote_tickets (
     code VARCHAR(255) PRIMARY KEY,
     used BOOLEAN DEFAULT FALSE NOT NULL,
     used_at TIMESTAMP NULL DEFAULT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE vote_tickets (
     INDEX idx_ticket_used (used)
 );
 
-CREATE TABLE votes (
+CREATE TABLE election_votes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     candidate_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -62,6 +62,8 @@ CREATE TABLE election_results (
 
     INDEX idx_results_cycle (cycle),
     INDEX idx_results_place (cycle, place),
+
+    CONSTRAINT uq_user_id_cycle UNIQUE (user_id, cycle),
 
     CONSTRAINT fk_election_results_user FOREIGN KEY (user_id) 
         REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE

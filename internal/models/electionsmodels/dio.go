@@ -1,5 +1,16 @@
 package electionsmodels
 
+import "sea-api/internal/models"
+
+type CandidateCreateRequest struct {
+	UserID    int64             `json:"user_id"`
+	Belonging models.Department `json:"belonging"`
+}
+
+type CandidateUpdateRequest struct {
+	Belonging models.Department `json:"belonging"`
+}
+
 type TicketResponse struct {
 	Ticket string `json:"ticket"`
 }
@@ -10,6 +21,7 @@ type VoteRequest struct {
 
 type CandidateResponse struct {
 	Placing int64  `json:"placing"`
+	ID      int64  `json:"id"`
 	Name    string `json:"name"`
 	Url     string `json:"url"`
 }
