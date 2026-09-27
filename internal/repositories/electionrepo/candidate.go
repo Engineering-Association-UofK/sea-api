@@ -4,13 +4,7 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/electionsmodels"
-
-	"github.com/jmoiron/sqlx"
 )
-
-type ElectionRepo struct {
-	db sqlx.DB
-}
 
 // CreateCandidate inserts a new candidate for a given cycle
 func (r *ElectionRepo) CreateCandidate(req electionsmodels.Candidate) (int64, error) {
@@ -27,14 +21,9 @@ func (r *ElectionRepo) CreateCandidate(req electionsmodels.Candidate) (int64, er
 }
 
 // UpdateCandidate updates belonging or assigned cycle of a candidate
-func (r *ElectionRepo) UpdateCandidate(req electionsmodels.Candidate) error {
-	query := fmt.Sprintf(`
-		UPDATE %s
-		SET user_id = :user_id, cycle = :cycle, belonging = :belonging
-		WHERE id = :id
-	`, models.TableCandidates)
-
-	_, err := r.db.NamedExec(query, req)
+func (r *ElectionRepo) UpdateCandidateBelonging(id int64, b models.Department) error {
+	query := fmt.Sprintf(`UPDATE %s SET belonging = ? WHERE id = ?`, models.TableCandidates)
+	_, err := r.db.Exec(query, b, id)
 	return err
 }
 
@@ -87,6 +76,26 @@ func (r *ElectionRepo) GetCandidateListForActiveCycle() ([]electionsmodels.Candi
 		return nil, err
 	}
 	return candidates, nil
+}
+
+// GetCandidateIDsForActiveCycle retrieves candidate IDs for the active cycle set in global config
+func (r *ElectionRepo) GetCandidateIDsForActiveCycle() ([]int64, error) {
+	var candidateIDs []int64
+
+	query := fmt.Sprintf(`
+		SELECT 
+			c.id
+		FROM %s c
+		JOIN %s cfg ON cfg.key = 'election_config'
+		WHERE c.cycle = CAST(JSON_EXTRACT(cfg.value, '$.active_cycle') AS UNSIGNED)
+		ORDER BY c.created_at ASC
+	`, models.TableCandidates, models.TableConfig)
+
+	err := r.db.Select(&candidateIDs, query)
+	if err != nil {
+		return nil, err
+	}
+	return candidateIDs, nil
 }
 
 // RemoveCandidate deletes a candidate by ID

@@ -31,19 +31,20 @@ func (r *ElectionRepo) Vote(tx *sqlx.Tx, candidateIDs []int64) error {
 	return err
 }
 
-// GetVotesStatistics calculates real-time voting metrics across active vote tickets and records
+// GetVotesStatistics returns the total number of voters and the number of votes cast in the last 24 hours
 func (r *ElectionRepo) GetVotesStatistics() (*electionsmodels.VoteStatistics, error) {
-	var stats electionsmodels.VoteStatistics
-
 	query := fmt.Sprintf(`
 		SELECT 
-			(SELECT COUNT(*) FROM %s) AS number_of_voters,
+			(SELECT COUNT(*) FROM %s) AS tickets_distributed,
+			(SELECT COUNT(*) FROM %s WHERE used = 1) AS number_of_voters,
 			(SELECT COUNT(*) FROM %s WHERE created_at >= NOW() - INTERVAL 1 DAY) AS votes_in_last_day
-	`, models.TableTicketRecords, models.TableVotes)
+	`, models.TableTicketRecords, models.TableVoteTickets, models.TableVotes)
+
+	var stats = electionsmodels.VoteStatistics{}
 
 	err := r.db.Get(&stats, query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch vote counts: %w", err)
 	}
 
 	return &stats, nil

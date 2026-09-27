@@ -9,13 +9,13 @@ import (
 )
 
 // GetRawVoteResults aggregates the votes for all candidates
-func (r *ElectionRepo) GetRawVoteResults(tx *sqlx.Tx, cycle int64, studentBase int64) ([]electionsmodels.Result, error) {
+func (r *ElectionRepo) GetRawVoteResults(tx *sqlx.Tx, cycle int64) ([]electionsmodels.Result, error) {
 	var results []electionsmodels.Result
 	query := fmt.Sprintf(`
 		SELECT 
 			u.name_en AS name,
 			c.cycle,
-			? AS student_base,
+			c.user_id,
 			COUNT(v.id) AS number_of_votes,
 			c.belonging
 		FROM %s c
@@ -26,7 +26,7 @@ func (r *ElectionRepo) GetRawVoteResults(tx *sqlx.Tx, cycle int64, studentBase i
 		ORDER BY number_of_votes DESC, c.id ASC
 	`, models.TableCandidates, models.TableUsers, models.TableVotes)
 
-	err := tx.Select(&results, query, studentBase, cycle)
+	err := tx.Select(&results, query, cycle)
 	return results, err
 }
 
@@ -37,10 +37,27 @@ func (r *ElectionRepo) SaveFinalResults(tx *sqlx.Tx, results []electionsmodels.R
 	}
 
 	query := fmt.Sprintf(`
-		INSERT INTO %s (name, cycle, place, student_base, number_of_votes, belonging)
-		VALUES (:name, :cycle, :place, :student_base, :number_of_votes, :belonging)
+		INSERT INTO %s (name, cycle, user_id, place, number_of_votes, belonging)
+		VALUES (:name, :cycle, :user_id, :place, :number_of_votes, :belonging)
 	`, models.TableElectionResults)
 
 	_, err := tx.NamedExec(query, results)
 	return err
+}
+
+// GetTop30ResultsByCycle retrieves election results for a specific cycle ordered by place
+func (r *ElectionRepo) GetResultsByCycle(cycle int) ([]electionsmodels.Result, error) {
+	query := fmt.Sprintf(`
+		SELECT * FROM %s
+		WHERE cycle = ?
+		ORDER BY place ASC
+	`, models.TableElectionResults)
+
+	var results = []electionsmodels.Result{}
+	err := r.db.Select(&results, query, cycle)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }

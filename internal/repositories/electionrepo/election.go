@@ -3,6 +3,7 @@ package electionrepo
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"sea-api/internal/models"
 	"sea-api/internal/models/electionsmodels"
 	"sea-api/internal/utils"
@@ -10,21 +11,40 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type ElectionRepo struct {
+	db *sqlx.DB
+}
+
+func NewElectionRepo(db *sqlx.DB) *ElectionRepo {
+	return &ElectionRepo{db: db}
+}
+
 // GetElectionConfig extracts the JSON global config state
 func (r *ElectionRepo) GetElectionConfig() (*electionsmodels.ElectionConfig, error) {
-	raw, err := utils.GetConfig("election_config", &r.db)
+	raw, err := utils.GetConfig("election_config", r.db)
 	if err != nil {
+		slog.Debug("Could not get config", "Error", err)
 		return nil, err
 	}
 
 	var cfg electionsmodels.ElectionConfig
 	err = json.Unmarshal(*raw, &cfg)
-	return &cfg, err
+	if err != nil {
+		slog.Debug("Could not unmarshal config", "Error", err)
+		return nil, err
+	}
+	return &cfg, nil
 }
 
 // UpdateElectionConfig serializes and updates the JSON global config state
-func (r *ElectionRepo) UpdateElectionConfig(cfg *electionsmodels.ElectionConfig) error {
-	return utils.UpdateConfig("election_config", &r.db, cfg)
+func (r *ElectionRepo) ResolveElection(tx *sqlx.Tx, cfg *electionsmodels.ElectionConfig) error {
+	cfg.CycleDoneState[cfg.ActiveCycle] = true
+	return utils.UpdateConfig("election_config", tx, cfg)
+}
+
+// UpdateElectionConfig serializes and updates the JSON global config state
+func (r *ElectionRepo) UpdateElectionConfig(tx *sqlx.Tx, cfg *electionsmodels.ElectionConfig) error {
+	return utils.UpdateConfig("election_config", tx, cfg)
 }
 
 // AggregateAndSaveResults computes DENSE_RANK based on vote counts and saves to history

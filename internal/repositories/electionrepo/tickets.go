@@ -2,6 +2,7 @@ package electionrepo
 
 import (
 	"fmt"
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 
 	"github.com/jmoiron/sqlx"
@@ -37,7 +38,7 @@ func (r *ElectionRepo) UseTicket(tx *sqlx.Tx, ticket string) error {
 	}
 
 	if rows == 0 {
-		return fmt.Errorf("invalid or already used ticket")
+		return errs.New(errs.Forbidden, "invalid or already used ticket", nil)
 	}
 
 	return nil
