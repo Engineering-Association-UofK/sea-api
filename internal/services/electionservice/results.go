@@ -11,11 +11,41 @@ import (
 	"sea-api/internal/models/electionsmodels"
 )
 
-func (s *ElectionService) GetResults(cycle int) ([]electionsmodels.Result, error) {
+func (s *ElectionService) GetResults(ctx context.Context, cycle int) ([]electionsmodels.Result, error) {
+	cfg, err := s.repo.GetElectionConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.ActiveCycle > int64(cycle) {
+		return s.repo.GetResultsByCycle(cycle)
+	}
+	if cfg.ActiveCycle < int64(cycle) {
+		return nil, errs.New(errs.BadRequest, "Unreachable cycle number", nil)
+	}
+
+	if time.Now().Before(cfg.EndDate) {
+		return nil, errs.New(errs.Forbidden, "cannot resolve: election is still active", nil)
+	}
+	if !cfg.CycleDoneState[cfg.ActiveCycle] {
+		if err := s.ResolveAndReset(ctx); err != nil {
+			// Handles potential concurrent attempt race conditions
+			cfgCheck, checkErr := s.repo.GetElectionConfig()
+			if checkErr == nil && cfgCheck.CycleDoneState[cfgCheck.ActiveCycle] {
+				// It resolved successfully by another request, proceed silently
+			} else {
+				return nil, fmt.Errorf("auto-resolving election results failed: %w", err)
+			}
+		}
+	}
+
 	return s.repo.GetResultsByCycle(cycle)
 }
 
 func (s *ElectionService) ResolveAndReset(ctx context.Context) error {
+	s.resolveMu.Lock()
+	defer s.resolveMu.Unlock()
+
 	cfg, err := s.repo.GetElectionConfig()
 	if err != nil {
 		return err
@@ -88,8 +118,11 @@ func ResolveCouncilOfThirty(results []electionsmodels.Result) ([]electionsmodels
 		return res, res // No bumping needed if <= 30 candidates ran
 	}
 
-	top30 := results[:30]
-	others := results[30:]
+	top30 := make([]electionsmodels.Result, 30)
+	copy(top30, results[:30])
+
+	others := make([]electionsmodels.Result, len(results)-30)
+	copy(others, results[30:])
 
 	deptCounts := make(map[models.Department]int)
 	for _, r := range top30 {
@@ -147,7 +180,7 @@ func ResolveCouncilOfThirty(results []electionsmodels.Result) ([]electionsmodels
 	}
 
 	// Recombine and assign numerical placements (Dense Rank)
-	finalResults := append(top30, others...)
+	finalResults := append(append([]electionsmodels.Result{}, top30...), others...)
 	return assignPlaces(top30), assignPlaces(finalResults)
 }
 

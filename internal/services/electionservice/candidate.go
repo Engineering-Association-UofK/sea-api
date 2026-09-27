@@ -9,13 +9,15 @@ import (
 	"sea-api/internal/repositories"
 	"sea-api/internal/repositories/electionrepo"
 	"sea-api/internal/services/storage"
+	"sync"
 	"time"
 )
 
 type ElectionService struct {
-	repo    *electionrepo.ElectionRepo
-	cmsRepo *repositories.CmsRepository
-	s3      *storage.S3
+	repo      *electionrepo.ElectionRepo
+	cmsRepo   *repositories.CmsRepository
+	s3        *storage.S3
+	resolveMu sync.Mutex
 }
 
 func NewElectionService(repo *electionrepo.ElectionRepo, cmsRepo *repositories.CmsRepository, s3 *storage.S3) *ElectionService {
@@ -72,7 +74,8 @@ func (s *ElectionService) GetCandidateList(ctx context.Context) ([]electionsmode
 		res[i] = electionsmodels.CandidateResponse{
 			ID:      r.ID,
 			Placing: int64(i + 1),
-			Name:    r.Name,
+			NameAr:  r.NameAr,
+			NameEn:  r.NameEn,
 			Url:     url,
 		}
 	}
