@@ -27,13 +27,26 @@ type CandidateRaw struct {
 	Belonging models.Department `db:"belonging"`
 }
 
-type VoteStatistics struct {
-	TicketsDistributed int64   `db:"tickets_distributed" json:"tickets_distributed"`
-	NumberOfVoters     int64   `db:"number_of_voters" json:"number_of_voters"`
-	VotesInLastDay     int64   `db:"votes_in_last_day" json:"votes_in_last_day"`
-	VotePercentage     float32 `db:"vote_percentage" json:"vote_percentage"`
+type Stats struct {
+	TicketsDistributed int64 `db:"tickets_distributed" json:"tickets_distributed"`
+	NumberOfVoters     int64 `db:"number_of_voters" json:"number_of_voters"`
+	VotesInLastDay     int64 `db:"votes_in_last_day" json:"votes_in_last_day"`
+}
 
-	TicketsStartTime time.Time `db:"tickets_start_time" json:"tickets_start_time"`
-	StartTime        time.Time `db:"start_time" json:"start_time"`
-	EndTime          time.Time `db:"end_time" json:"end_time"`
+type PublicStats struct {
+	VotePercentage   float32   `json:"vote_percentage"`
+	TicketsStartTime time.Time `json:"tickets_start_time"`
+	StartTime        time.Time `json:"start_time"`
+	EndTime          time.Time `json:"end_time"`
+}
+
+type PrivateStats struct {
+	Stats
+
+	VotePercentage float32 `json:"vote_percentage"`
+	StudentBody    int64   `json:"student_body"`
+
+	TicketsStartTime time.Time `json:"tickets_start_time"`
+	StartTime        time.Time `json:"start_time"`
+	EndTime          time.Time `json:"end_time"`
 }

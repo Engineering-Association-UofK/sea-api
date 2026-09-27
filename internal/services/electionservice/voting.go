@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (s *ElectionService) ElectionStatistics() (*electionsmodels.VoteStatistics, error) {
+func (s *ElectionService) PublicElectionStatistics() (*electionsmodels.PublicStats, error) {
 	stats, err := s.repo.GetVotesStatistics()
 	if err != nil {
 		return nil, err
@@ -19,12 +19,33 @@ func (s *ElectionService) ElectionStatistics() (*electionsmodels.VoteStatistics,
 		return nil, err
 	}
 
-	stats.VotePercentage = (float32(stats.NumberOfVoters) / float32(cfg.StudentBase)) * 100
-	stats.TicketsStartTime = cfg.TicketStartDate
-	stats.StartTime = cfg.StartDate
-	stats.EndTime = cfg.EndDate
+	return &electionsmodels.PublicStats{
+		VotePercentage:   (float32(stats.NumberOfVoters) / float32(cfg.StudentBase)) * 100,
+		TicketsStartTime: cfg.TicketStartDate,
+		StartTime:        cfg.StartDate,
+		EndTime:          cfg.EndDate,
+	}, nil
+}
 
-	return stats, nil
+func (s *ElectionService) PrivateElectionStatistics() (*electionsmodels.PrivateStats, error) {
+	stats, err := s.repo.GetVotesStatistics()
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := s.repo.GetElectionConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return &electionsmodels.PrivateStats{
+		Stats:            *stats,
+		VotePercentage:   (float32(stats.NumberOfVoters) / float32(cfg.StudentBase)) * 100,
+		StudentBody:      cfg.StudentBase,
+		TicketsStartTime: cfg.TicketStartDate,
+		StartTime:        cfg.StartDate,
+		EndTime:          cfg.EndDate,
+	}, nil
 }
 
 func (s *ElectionService) Vote(ctx context.Context, req electionsmodels.VoteRequest) error {

@@ -32,7 +32,7 @@ func (r *ElectionRepo) Vote(tx *sqlx.Tx, candidateIDs []int64) error {
 }
 
 // GetVotesStatistics returns the total number of voters and the number of votes cast in the last 24 hours
-func (r *ElectionRepo) GetVotesStatistics() (*electionsmodels.VoteStatistics, error) {
+func (r *ElectionRepo) GetVotesStatistics() (*electionsmodels.Stats, error) {
 	query := fmt.Sprintf(`
 		SELECT 
 			(SELECT COUNT(*) FROM %s) AS tickets_distributed,
@@ -40,7 +40,7 @@ func (r *ElectionRepo) GetVotesStatistics() (*electionsmodels.VoteStatistics, er
 			(SELECT COUNT(*) FROM %s WHERE created_at >= NOW() - INTERVAL 1 DAY) AS votes_in_last_day
 	`, models.TableTicketRecords, models.TableVoteTickets, models.TableVotes)
 
-	var stats = electionsmodels.VoteStatistics{}
+	var stats = electionsmodels.Stats{}
 
 	err := r.db.Get(&stats, query)
 	if err != nil {
