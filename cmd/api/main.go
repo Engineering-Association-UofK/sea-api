@@ -1,23 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
+	"sea-api/cmd/app"
 	"sea-api/cmd/routes"
 	"sea-api/internal/config"
-	"sea-api/internal/handlers"
-	"sea-api/internal/repositories"
-	"sea-api/internal/repositories/certrepo"
-	"sea-api/internal/repositories/eventrepo"
 	"sea-api/internal/services"
-	"sea-api/internal/services/auth"
-	"sea-api/internal/services/bot"
-	"sea-api/internal/services/certservice"
-	"sea-api/internal/services/eventservice"
-	"sea-api/internal/services/forms"
 	"sea-api/internal/services/schedular"
-	st "sea-api/internal/services/storage"
 	"sea-api/internal/services/userservice"
-	"sea-api/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,100 +43,34 @@ func Go() {
 	logger := config.NewMultiHandlerLog(slog.Level(config.App.LoggingLevel))
 	slog.SetDefault(logger)
 
-	// Initialize database
-	db := storage.NewMySQLConnection()
-
-	// Initialize repositories
-	userRepository := repositories.NewUserRepository(db)
-	suspensionsRepo := repositories.NewSuspensionsRepo(db)
-
-	// FIXME: Remove implementation
-	// eventRepository := eventrepo.NewEventRepository(db)
-
-	// FIXME: Remove implementation
-	// certificateRepository := repositories.NewCertificateRepository(db)
-	verificationRepo := repositories.NewVerificationRepo(db)
-	fileRepo := repositories.NewFileRepository(db)
-	galleryRepository := repositories.NewGalleryRepository(db)
-	CmsRepository := repositories.NewCmsRepository(db)
-	formRepository := repositories.NewFormRepository(db)
-	rateLimitRepository := repositories.NewRateLimitRepository(db)
-
-	// FIXME: Remove implementation
-	// documentRepository := repositories.NewDocumentRepository(db)
-	notificationRepository := repositories.NewNotificationRepository(db)
-	botRepository := repositories.NewBotRepository(db)
-	feedbackRepository := repositories.NewFeedbackRepository(db)
-	authRepository := repositories.NewAuthRepository(db)
-	certRepo := certrepo.NewCertRepository(db)
-	eventRepo := eventrepo.NewEventRepository(db)
-
-	// Initialize services
-
-	// FIXME: Remove implementation
-	// pdfService := services.NewPDFService(10)
-	S3 := st.NewS3Service(fileRepo)
-	galleryService := services.NewGalleryService(galleryRepository, S3)
-	rateLimitService := services.NewRateLimitService(rateLimitRepository)
-	notificationService := services.NewNotificationService(notificationRepository)
-	feedbackService := services.NewFeedbackService(feedbackRepository)
-
-	botService := bot.NewBotService(botRepository, feedbackService)
-	eventService := eventservice.NewEventService(eventRepo, formRepository, S3, galleryService)
-	accountService := services.NewAccountService(userRepository, S3, certRepo)
-
-	userService := userservice.NewUserService(userRepository, suspensionsRepo, S3)
-	mailService := services.NewMailService(userService)
-	authService := auth.NewAuthService(userRepository, mailService, verificationRepo, authRepository)
-
-	CmsService := services.NewCmsService(CmsRepository, userService, galleryService)
-	FormService := forms.NewFormService(formRepository, eventService, galleryService)
-
-	certService := certservice.NewCertService(certRepo, S3, eventService, userService)
-
-	// FIXME: Remove implementation
-	// certificateService := cert.NewCertificateService(
-	// 	userRepository,
-	// 	eventService,
-	// 	S3,
-	// 	pdfService,
-	// 	mailService,
-	// 	collaboratorService,
-	// 	notificationService,
-	// 	certificateRepository,
-	// 	documentRepository,
-	// )
-	schedularService := schedular.NewSchedularService(
-		userRepository,
-		verificationRepo,
-		suspensionsRepo,
-		botRepository,
-		mailService,
-		rateLimitService,
-	)
-	schedularService.Run()
-
-	// Initialize handlers
-	routes.UserHandler = handlers.NewUserHandler(userService)
-	routes.EventHandler = handlers.NewEventHandler(eventService)
-	routes.MailHandler = handlers.NewMailHandler(mailService)
-	// FIXME: Remove implementation
-	// routes.CertificateHandler = handlers.NewCertificateHandler(certificateService)
-	routes.AuthHandler = handlers.NewAuthHandler(authService)
-	routes.AccountHandler = handlers.NewAccountHandler(accountService)
-	routes.GalleryHandler = handlers.NewGalleryHandler(galleryService)
-	routes.CmsHandler = handlers.NewCmsHandler(CmsService)
-	routes.FormHandler = handlers.NewFormHandler(FormService)
-	routes.NotificationHandler = handlers.NewNotificationHandler(notificationService)
-	routes.BotHandler = handlers.NewBotHandler(botService)
-	routes.CertHandler = handlers.NewCertificatesHandler(certService)
-
-	// Initialize routes
-
-	r := routes.SetupRouter(userService, rateLimitService)
-	slog.Info("Starting server on port " + config.App.Port)
-	err := r.Run("0.0.0.0:" + config.App.Port)
+	container, err := app.BuildContainer()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Failed to build DI container: %v", err))
+	}
+
+	// Resolve scheduler and execute background tasks
+	err = container.Invoke(func(schedularService *schedular.SchedularService) {
+		schedularService.Run()
+	})
+	if err != nil {
+		panic(fmt.Sprintf("Failed to start scheduler: %v", err))
+	}
+
+	// Resolve router dependencies and run HTTP server
+	err = container.Invoke(func(
+		userService *userservice.UserService,
+		rateLimitService *services.RateLimitService,
+		h app.Handlers,
+	) {
+		r := routes.SetupRouter(userService, rateLimitService, h)
+
+		slog.Info("Starting server on port " + config.App.Port)
+		if err := r.Run("0.0.0.0:" + config.App.Port); err != nil {
+			panic(err)
+		}
+	})
+
+	if err != nil {
+		panic(fmt.Sprintf("Failed to invoke application runner: %v", err))
 	}
 }
