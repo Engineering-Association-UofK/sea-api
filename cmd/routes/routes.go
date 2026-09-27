@@ -82,6 +82,14 @@ func SetupRouter(
 		event.GET("/:id", h.Event.GetEventView)
 	}
 
+	{ // ==== Elections
+		election := apiV1.Group("/election")
+		election.GET("/candidates", h.Election.GetCandidateList)
+		election.GET("/statistics", h.Election.GetElectionStatistics)
+		election.GET("/results", h.Election.GetResults)
+		election.POST("/vote", h.Election.Vote)
+	}
+
 	{ // ==== OPEN
 		cms := apiV1.Group("/cms")
 		cms.GET("/blogs/:slug", h.Cms.GetViewPostBySlug)
@@ -135,6 +143,10 @@ func SetupRouter(
 			notification.POST("/:id", h.Notification.MarkAsRead)
 			notification.POST("", h.Notification.MarkAllAsRead)
 			notification.DELETE("/:id", h.Notification.DeleteNotification)
+		}
+
+		{ // ==== Elections
+			account.GET("/election/ticket", midLimit, h.Election.GetTicket)
 		}
 	}
 
@@ -270,6 +282,16 @@ func SetupRouter(
 
 			event.GET("/:id/participant", h.Event.GetParticipantList)
 			event.DELETE("/:id/participant/:participation_id", h.Event.RemoveParticipant)
+		}
+
+		{ // ==== Elections
+			election := admin.Group("/election")
+			election.Use(middleware.RequireRole(models.RoleSystemAdminManager))
+			election.POST("/candidate", h.Election.CreateCandidate)
+			election.PUT("/candidate/:id", h.Election.UpdateCandidate)
+			election.DELETE("/candidate/:id", h.Election.RemoveCandidate)
+
+			election.POST("/reset", h.Election.ResolveElection)
 		}
 
 		{ // ==== CERTIFICATES
