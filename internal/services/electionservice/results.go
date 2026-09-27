@@ -2,22 +2,31 @@ package electionservice
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"sort"
 	"time"
 
+	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/models/electionsmodels"
 )
 
-func (s *ElectionService) Reset(ctx context.Context) error {
+func (s *ElectionService) GetResults(cycle int) ([]electionsmodels.Result, error) {
+	return s.repo.GetResultsByCycle(cycle)
+}
+
+func (s *ElectionService) ResolveAndReset(ctx context.Context) error {
 	cfg, err := s.repo.GetElectionConfig()
 	if err != nil {
 		return err
 	}
 
+	if cfg.CycleDoneState[cfg.ActiveCycle] {
+		return errs.New(errs.Forbidden, "Cycle already resolved", nil)
+	}
+
 	if time.Now().Before(cfg.EndDate) {
-		return errors.New("cannot reset: election is still active")
+		return errs.New(errs.Forbidden, "cannot resolve: election is still active", nil)
 	}
 
 	tx, err := s.repo.Transaction(ctx)
@@ -27,13 +36,13 @@ func (s *ElectionService) Reset(ctx context.Context) error {
 	defer tx.Rollback()
 
 	// Get raw aggregated votes
-	rawResults, err := s.repo.GetRawVoteResults(tx, cfg.ActiveCycle, cfg.StudentBase)
+	rawResults, err := s.repo.GetRawVoteResults(tx, cfg.ActiveCycle)
 	if err != nil {
 		return err
 	}
 
 	// Resolve Council of 30 Quotas and Placements
-	finalResults := ResolveCouncilOfThirty(rawResults)
+	top30, finalResults := ResolveCouncilOfThirty(rawResults)
 
 	// Save historical data
 	if err := s.repo.SaveFinalResults(tx, finalResults); err != nil {
@@ -48,13 +57,35 @@ func (s *ElectionService) Reset(ctx context.Context) error {
 		return err
 	}
 
+	// Create the new list of the thirty council members to be changed later on
+	var replacement []models.TeamMemberModel
+	for i, t := range top30 {
+		replacement = append(replacement, models.TeamMemberModel{
+			ID:           int64(i + 1),
+			UserID:       t.UserID,
+			Role:         fmt.Sprintf("Candidate Num: %d", i+1),
+			Bio:          fmt.Sprintf("With a total number of votes: %d", t.NumberOfVotes),
+			DisplayOrder: i + 1,
+			IsActive:     true,
+			CreatedAt:    time.Now(),
+		})
+	}
+	if err := s.cmsRepo.ReplaceTeamMembers(tx, replacement); err != nil {
+		return err
+	}
+
+	if err := s.repo.ResolveElection(tx, cfg); err != nil {
+		return err
+	}
+
 	return tx.Commit()
 }
 
 // ResolveCouncilOfThirty enforces department quotas and calculates DENSE_RANK placements
-func ResolveCouncilOfThirty(results []electionsmodels.Result) []electionsmodels.Result {
+func ResolveCouncilOfThirty(results []electionsmodels.Result) ([]electionsmodels.Result, []electionsmodels.Result) {
 	if len(results) <= 30 {
-		return assignPlaces(results) // No bumping needed if <= 30 candidates ran
+		res := assignPlaces(results)
+		return res, res // No bumping needed if <= 30 candidates ran
 	}
 
 	top30 := results[:30]
@@ -117,7 +148,7 @@ func ResolveCouncilOfThirty(results []electionsmodels.Result) []electionsmodels.
 
 	// Recombine and assign numerical placements (Dense Rank)
 	finalResults := append(top30, others...)
-	return assignPlaces(finalResults)
+	return assignPlaces(top30), assignPlaces(finalResults)
 }
 
 // assignPlaces iterates through the resolved list and maps placement numbers
