@@ -18,14 +18,14 @@ type Candidate struct {
 type Result struct {
 	ID     int64  `db:"id" json:"id"`
 	UserID int64  `db:"user_id" json:"user_id"`
-	Name   string `db:"name"`
-	Cycle  int64  `db:"cycle"`
-	Place  int64  `db:"place"`
+	Name   string `db:"name" json:"name"`
+	Cycle  int64  `db:"cycle" json:"cycle"`
+	Place  int64  `db:"place" json:"place"`
 
-	NumberOfVotes int64 `db:"number_of_votes"`
+	NumberOfVotes int64 `db:"number_of_votes" json:"number_of_votes"`
 
-	Belonging models.Department `db:"belonging"`
-	CreatedAt time.Time         `db:"created_at"`
+	Belonging models.Department `db:"belonging" json:"belonging"`
+	CreatedAt time.Time         `db:"created_at" json:"created_at"`
 }
 
 // ticket_records
