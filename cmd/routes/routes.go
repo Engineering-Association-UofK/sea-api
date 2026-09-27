@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"embed"
+	"io/fs"
 	"net/http"
 	"time"
 
@@ -11,8 +13,6 @@ import (
 	"sea-api/internal/response"
 	"sea-api/internal/services"
 	"sea-api/internal/services/userservice"
-
-	_ "sea-api/docs"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -27,12 +27,21 @@ var (
 	strictLimit = middleware.RateLimiter(rate.Every(time.Minute), 1)
 )
 
+//go:embed docs
+var docsFS embed.FS
+
 func SetupRouter(
 	u *userservice.UserService,
 	rateLimitService *services.RateLimitService,
 	h app.Handlers,
 ) *gin.Engine {
 	r := gin.New()
+
+	subFS, err := fs.Sub(docsFS, "docs")
+	if err != nil {
+		panic(err)
+	}
+
 	{ // ==== Config ====
 		r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
 			response.BaseErrorResponse(500, "Internal Server Error", c)
@@ -50,7 +59,7 @@ func SetupRouter(
 		r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 		r.GET("/test", func(ctx *gin.Context) { ctx.JSON(200, gin.H{"status": 200}) })
 
-		r.StaticFS("/docs", http.Dir("./docs"))
+		r.StaticFS("/docs", http.FS(subFS))
 		r.GET("/docs-ui", func(c *gin.Context) { c.File("./scalar.html") })
 
 		r.GET("/favicon.ico", func(c *gin.Context) { c.File(config.App.ResourcesDir + "/favicon.ico") })
