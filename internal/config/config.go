@@ -8,8 +8,9 @@ import (
 var App Config
 
 type Config struct {
-	Port         string `env:"PORT" envDefault:"8000"`
-	LoggingLevel int    `env:"LOGGING_LEVEL" envDefault:"0"`
+	Port               string `env:"PORT" envDefault:"8000"`
+	LoggingLevel       int    `env:"LOGGING_LEVEL" envDefault:"0"`
+	CORSAllowedOrigins string `env:"cors_allowed_origins"`
 
 	// Resouses directories relative to where the backend server is launched in the file system
 	ResourcesDir  string `env:"RESOURCES_DIR" envDefault:"./resources"`

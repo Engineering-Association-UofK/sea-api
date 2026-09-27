@@ -4,6 +4,7 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"sea-api/cmd/app"
@@ -47,10 +48,20 @@ func SetupRouter(
 			response.BaseErrorResponse(500, "Internal Server Error", c)
 			c.Abort()
 		}), gin.Logger())
+		allowedOrigins := strings.Split(config.App.CORSAllowedOrigins, ",")
+		if len(allowedOrigins) == 0 || allowedOrigins[0] == "" {
+			allowedOrigins = []string{"https://sea.uofk.edu"}
+		}
 		r.Use(cors.New(cors.Config{
-			AllowOrigins:     []string{"*"},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+			AllowOrigins: allowedOrigins,
+			AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+			AllowHeaders: []string{
+				"Origin",
+				"Content-Type",
+				"Authorization",
+				"Accept",
+				"X-Requested-With",
+			},
 			ExposeHeaders:    []string{"Content-Length"},
 			AllowCredentials: false,
 			MaxAge:           12 * time.Hour,
