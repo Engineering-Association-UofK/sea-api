@@ -72,11 +72,12 @@ func (s *ElectionService) GetCandidateList(ctx context.Context) ([]electionsmode
 		}
 
 		res[i] = electionsmodels.CandidateResponse{
-			ID:      r.ID,
-			Placing: int64(i + 1),
-			NameAr:  r.NameAr,
-			NameEn:  r.NameEn,
-			Url:     url,
+			ID:        r.ID,
+			Placing:   int64(i + 1),
+			NameAr:    r.NameAr,
+			NameEn:    r.NameEn,
+			Belonging: r.Belonging,
+			Url:       url,
 		}
 	}
 	return res, nil

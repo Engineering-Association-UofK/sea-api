@@ -20,9 +20,10 @@ type VoteRequest struct {
 }
 
 type CandidateResponse struct {
-	Placing int64  `json:"placing"`
-	ID      int64  `json:"id"`
-	NameAr  string `json:"name_ar"`
-	NameEn  string `json:"name_en"`
-	Url     string `json:"url"`
+	Placing   int64             `json:"placing"`
+	ID        int64             `json:"id"`
+	NameAr    string            `json:"name_ar"`
+	NameEn    string            `json:"name_en"`
+	Belonging models.Department `json:"belonging"`
+	Url       string            `json:"url"`
 }
