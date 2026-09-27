@@ -381,3 +381,29 @@ func (r *CmsRepository) DeleteTeamMember(id int64) error {
 	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableTeamMembers), id)
 	return err
 }
+
+// Special
+
+// ReplaceTeamMembers atomically wipes the existing team members table
+// and populates it with the provided slice.
+func (r *CmsRepository) ReplaceTeamMembers(tx *sqlx.Tx, members []models.TeamMemberModel) error {
+	// Clear current team members table
+	deleteQuery := fmt.Sprintf(`DELETE FROM %s`, models.TableTeamMembers)
+	if _, err := tx.Exec(deleteQuery); err != nil {
+		return fmt.Errorf("failed to clear existing team members: %w", err)
+	}
+
+	// Insert new team members set
+	if len(members) > 0 {
+		insertQuery := fmt.Sprintf(`
+		INSERT INTO %s (user_id, role, bio, link, display_order, is_active, created_at)
+		VALUES (:user_id, :role, :bio, :link, :display_order, :is_active, :created_at)
+		`, models.TableTeamMembers)
+
+		if _, err := tx.NamedExec(insertQuery, members); err != nil {
+			return fmt.Errorf("failed to insert new team members: %w", err)
+		}
+	}
+
+	return nil
+}

@@ -24,14 +24,14 @@ func GetConfig(name string, db *sqlx.DB) (*json.RawMessage, error) {
 }
 
 // UpdateConfig serializes and updates the JSON global config state
-func UpdateConfig(name string, db *sqlx.DB, cfg any) error {
+func UpdateConfig(name string, tx *sqlx.Tx, cfg any) error {
 	val, err := json.Marshal(cfg)
 	if err != nil {
 		return err
 	}
 
 	query := fmt.Sprintf("UPDATE %s SET value = ? WHERE `key` = ?", models.TableConfig)
-	_, err = db.Exec(query, val, name)
+	_, err = tx.Exec(query, val, name)
 	return err
 }
 
