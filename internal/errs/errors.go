@@ -9,6 +9,7 @@ const (
 	Unauthorized        ErrorType = "UNAUTHORIZED"
 	Forbidden           ErrorType = "FORBIDDEN"
 	Conflict            ErrorType = "CONFLICT"
+	Accepted            ErrorType = "ACCEPTED"
 
 	MultiBadRequest ErrorType = "MULTI_BAD_REQUEST"
 )

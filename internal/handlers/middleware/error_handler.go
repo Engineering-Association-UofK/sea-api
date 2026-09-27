@@ -28,6 +28,8 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 		var appErr *errs.AppError
 		if errors.As(err, &appErr) {
 			switch appErr.Type {
+			case errs.Accepted:
+				response.BaseErrorResponse(http.StatusAccepted, appErr.Message, c)
 			case errs.BadRequest:
 				response.BaseErrorResponse(http.StatusBadRequest, appErr.Message, c)
 
