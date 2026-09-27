@@ -47,7 +47,7 @@ CREATE TABLE election_votes (
     INDEX idx_vote_created_at (created_at),
 
     CONSTRAINT fk_votes_candidate FOREIGN KEY (candidate_id) 
-        REFERENCES candidates(id) ON DELETE CASCADE
+        REFERENCES election_candidates(id) ON DELETE CASCADE
 );
 
 CREATE TABLE election_results (
