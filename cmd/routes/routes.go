@@ -105,7 +105,7 @@ func SetupRouter(
 	{ // ==== Elections
 		election := apiV1.Group("/election")
 		election.GET("/candidates", h.Election.GetCandidateList)
-		election.GET("/statistics", h.Election.GetElectionStatistics)
+		election.GET("/statistics", h.Election.GetPublicElectionStatistics)
 		election.GET("/results", h.Election.GetResults)
 		election.POST("/vote", h.Election.Vote)
 	}
@@ -311,6 +311,7 @@ func SetupRouter(
 			election.PUT("/candidate/:id", h.Election.UpdateCandidate)
 			election.DELETE("/candidate/:id", h.Election.RemoveCandidate)
 
+			election.GET("/statistics", h.Election.GetPrivateElectionStatistics)
 			election.POST("/reset", h.Election.ResolveElection)
 		}
 

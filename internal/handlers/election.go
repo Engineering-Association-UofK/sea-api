@@ -20,17 +20,38 @@ func NewElectionHandler(service *electionservice.ElectionService) *ElectionHandl
 	return &ElectionHandler{service: service}
 }
 
-// GetElectionStatistics godocs
+// GetPublicElectionStatistics godocs
 //
-//	@Summary		Get election statistics
+//	@Summary		Get Public election statistics
 //	@Description	Retrieve real-time voter metrics and election cycle timelines
 //	@Tags			Election:Public
 //	@Produce		json
-//	@Success		200	{object}	electionsmodels.VoteStatistics
+//	@Success		200	{object}	electionsmodels.PublicStats
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/election/statistics [get]
-func (h *ElectionHandler) GetElectionStatistics(c *gin.Context) {
-	stats, err := h.service.ElectionStatistics()
+func (h *ElectionHandler) GetPublicElectionStatistics(c *gin.Context) {
+	stats, err := h.service.PublicElectionStatistics()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.PureJSON(http.StatusOK, stats)
+}
+
+// GetPrivateElectionStatistics godocs
+//
+//	@Summary		Get Public election statistics
+//	@Description	Retrieve real-time voter metrics and election cycle timelines
+//	@Tags			Election:Admin
+//	@Produce		json
+//	@Success		200	{object}	electionsmodels.PrivateStats
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/election/statistics [get]
+//
+//	@Security		ApiKeyAuth
+func (h *ElectionHandler) GetPrivateElectionStatistics(c *gin.Context) {
+	stats, err := h.service.PrivateElectionStatistics()
 	if err != nil {
 		c.Error(err)
 		return
