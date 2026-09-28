@@ -357,8 +357,8 @@ func (a *AccountHandler) UpdateUsername(c *gin.Context) {
 
 // CheckUsernameAvailability godocs
 //
-//	@Summary		Update Username
-//	@Description	Update username
+//	@Summary		Check Username
+//	@Description	Check if username is free
 //	@Tags			Account:profile
 //	@Produce		json
 //	@Param			body	body	models.UpdateUsernameRequest 	true	"Request body"
