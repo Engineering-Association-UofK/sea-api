@@ -34,23 +34,9 @@ type Stats struct {
 	VotesInLastDay     int64 `db:"votes_in_last_day" json:"votes_in_last_day"`
 }
 
-type PublicStats struct {
-	VotePercentage   float32   `json:"vote_percentage"`
-	TicketsStartTime time.Time `json:"tickets_start_time"`
-	StartTime        time.Time `json:"start_time"`
-	EndTime          time.Time `json:"end_time"`
-
-	CurrentCycle int64 `json:"current_cycle"`
-	VoteLimit    int64 `json:"vote_limit"`
-}
-
-type PrivateStats struct {
-	Stats
-
-	VotePercentage float32 `json:"vote_percentage"`
-	StudentBody    int64   `json:"student_body"`
-
-	TicketsStartTime time.Time `json:"tickets_start_time"`
-	StartTime        time.Time `json:"start_time"`
-	EndTime          time.Time `json:"end_time"`
+type ResultsRaw struct {
+	Result
+	NameAr    string            `db:"name_ar"`
+	NameEn    string            `db:"name_en"`
+	Belonging models.Department `db:"belonging"`
 }
