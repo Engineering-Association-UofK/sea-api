@@ -9,15 +9,16 @@ import (
 )
 
 // GetRawVoteResults aggregates the votes for all candidates
-func (r *ElectionRepo) GetRawVoteResults(tx *sqlx.Tx, cycle int64) ([]electionsmodels.Result, error) {
-	var results []electionsmodels.Result
+func (r *ElectionRepo) GetRawVoteResults(tx *sqlx.Tx, cycle int64) ([]electionsmodels.ResultsRaw, error) {
+	var results []electionsmodels.ResultsRaw
 	query := fmt.Sprintf(`
 		SELECT 
-			u.name_en AS name,
+			u.name_ar,
+			u.name_en,
 			c.cycle,
 			c.user_id,
 			COUNT(v.id) AS number_of_votes,
-			c.belonging
+			u.department AS belonging
 		FROM %s c
 		JOIN %s u ON c.user_id = u.id
 		LEFT JOIN %s v ON c.id = v.candidate_id
@@ -37,8 +38,8 @@ func (r *ElectionRepo) SaveFinalResults(tx *sqlx.Tx, results []electionsmodels.R
 	}
 
 	query := fmt.Sprintf(`
-		INSERT INTO %s (name, cycle, user_id, place, number_of_votes, belonging)
-		VALUES (:name, :cycle, :user_id, :place, :number_of_votes, :belonging)
+		INSERT INTO %s (cycle, user_id, place, number_of_votes)
+		VALUES (:cycle, :user_id, :place, :number_of_votes)
 	`, models.TableElectionResults)
 
 	_, err := tx.NamedExec(query, results)
@@ -54,6 +55,34 @@ func (r *ElectionRepo) GetResultsByCycle(cycle int) ([]electionsmodels.Result, e
 	`, models.TableElectionResults)
 
 	var results = []electionsmodels.Result{}
+	err := r.db.Select(&results, query, cycle)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+// GetResultsViewByCycle retrieves election results for a specific cycle ordered by place
+func (r *ElectionRepo) GetResultsViewByCycle(cycle int) ([]electionsmodels.ResultResponse, error) {
+	query := fmt.Sprintf(`
+        SELECT 
+            u.name_ar,
+            u.name_en,
+            u.department AS belonging,
+            r.id,
+            r.user_id,
+            r.cycle,
+            r.place,
+            r.number_of_votes,
+            r.created_at
+        FROM %s r
+        LEFT JOIN %s u ON u.id = r.user_id
+        WHERE r.cycle = ?
+        ORDER BY r.place ASC
+    `, models.TableElectionResults, models.TableUsers)
+
+	var results []electionsmodels.ResultResponse
 	err := r.db.Select(&results, query, cycle)
 	if err != nil {
 		return nil, err

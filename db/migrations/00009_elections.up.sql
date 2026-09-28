@@ -53,11 +53,9 @@ CREATE TABLE election_votes (
 CREATE TABLE election_results (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
     cycle INT NOT NULL,
     place INT NOT NULL,
     number_of_votes INT NOT NULL DEFAULT 0,
-    belonging VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     INDEX idx_results_cycle (cycle),

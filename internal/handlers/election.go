@@ -275,7 +275,7 @@ func (h *ElectionHandler) ResolveElection(c *gin.Context) {
 //	@Tags			Election:Public
 //	@Produce		json
 //	@Param			cycle	query		int	true	"Election Cycle Number"
-//	@Success		200		{array}		electionsmodels.Result
+//	@Success		200		{array}		electionsmodels.ResultResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
 //	@Router			/election/results [get]

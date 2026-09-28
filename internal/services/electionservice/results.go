@@ -11,14 +11,14 @@ import (
 	"sea-api/internal/models/electionsmodels"
 )
 
-func (s *ElectionService) GetResults(ctx context.Context, cycle int) ([]electionsmodels.Result, error) {
+func (s *ElectionService) GetResults(ctx context.Context, cycle int) ([]electionsmodels.ResultResponse, error) {
 	cfg, err := s.repo.GetElectionConfig()
 	if err != nil {
 		return nil, err
 	}
 
 	if cfg.ActiveCycle > int64(cycle) {
-		return s.repo.GetResultsByCycle(cycle)
+		return s.repo.GetResultsViewByCycle(cycle)
 	}
 	if cfg.ActiveCycle < int64(cycle) {
 		return nil, errs.New(errs.BadRequest, "Unreachable cycle number", nil)
@@ -39,7 +39,7 @@ func (s *ElectionService) GetResults(ctx context.Context, cycle int) ([]election
 		}
 	}
 
-	return s.repo.GetResultsByCycle(cycle)
+	return s.repo.GetResultsViewByCycle(cycle)
 }
 
 func (s *ElectionService) ResolveAndReset(ctx context.Context) error {
@@ -75,7 +75,11 @@ func (s *ElectionService) ResolveAndReset(ctx context.Context) error {
 	top30, finalResults := ResolveCouncilOfThirty(rawResults)
 
 	// Save historical data
-	if err := s.repo.SaveFinalResults(tx, finalResults); err != nil {
+	var res = []electionsmodels.Result{}
+	for _, r := range finalResults {
+		res = append(res, r.Result)
+	}
+	if err := s.repo.SaveFinalResults(tx, res); err != nil {
 		return err
 	}
 
@@ -112,16 +116,16 @@ func (s *ElectionService) ResolveAndReset(ctx context.Context) error {
 }
 
 // ResolveCouncilOfThirty enforces department quotas and calculates DENSE_RANK placements
-func ResolveCouncilOfThirty(results []electionsmodels.Result) ([]electionsmodels.Result, []electionsmodels.Result) {
+func ResolveCouncilOfThirty(results []electionsmodels.ResultsRaw) ([]electionsmodels.ResultsRaw, []electionsmodels.ResultsRaw) {
 	if len(results) <= 30 {
 		res := assignPlaces(results)
 		return res, res // No bumping needed if <= 30 candidates ran
 	}
 
-	top30 := make([]electionsmodels.Result, 30)
+	top30 := make([]electionsmodels.ResultsRaw, 30)
 	copy(top30, results[:30])
 
-	others := make([]electionsmodels.Result, len(results)-30)
+	others := make([]electionsmodels.ResultsRaw, len(results)-30)
 	copy(others, results[30:])
 
 	deptCounts := make(map[models.Department]int)
@@ -180,12 +184,12 @@ func ResolveCouncilOfThirty(results []electionsmodels.Result) ([]electionsmodels
 	}
 
 	// Recombine and assign numerical placements (Dense Rank)
-	finalResults := append(append([]electionsmodels.Result{}, top30...), others...)
+	finalResults := append(append([]electionsmodels.ResultsRaw{}, top30...), others...)
 	return assignPlaces(top30), assignPlaces(finalResults)
 }
 
 // assignPlaces iterates through the resolved list and maps placement numbers
-func assignPlaces(results []electionsmodels.Result) []electionsmodels.Result {
+func assignPlaces(results []electionsmodels.ResultsRaw) []electionsmodels.ResultsRaw {
 	if len(results) == 0 {
 		return results
 	}
