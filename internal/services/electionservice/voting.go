@@ -8,6 +8,17 @@ import (
 	"time"
 )
 
+func (s *ElectionService) IsElectionLive() (*electionsmodels.CheckElection, error) {
+	cfg, err := s.repo.GetElectionConfig()
+	if err != nil {
+		return nil, err
+	}
+	return &electionsmodels.CheckElection{
+		Live:  cfg.EngageElection,
+		Cycle: cfg.ActiveCycle,
+	}, nil
+}
+
 func (s *ElectionService) PublicElectionStatistics() (*electionsmodels.PublicStats, error) {
 	stats, err := s.repo.GetVotesStatistics()
 	if err != nil {
@@ -20,6 +31,7 @@ func (s *ElectionService) PublicElectionStatistics() (*electionsmodels.PublicSta
 	}
 
 	return &electionsmodels.PublicStats{
+		EngageElection:   cfg.EngageElection,
 		VotePercentage:   (float32(stats.NumberOfVoters) / float32(cfg.StudentBase)) * 100,
 		TicketsStartTime: cfg.TicketStartDate,
 		StartTime:        cfg.StartDate,
@@ -43,6 +55,7 @@ func (s *ElectionService) PrivateElectionStatistics() (*electionsmodels.PrivateS
 
 	return &electionsmodels.PrivateStats{
 		Stats:            *stats,
+		EngageElection:   cfg.EngageElection,
 		VotePercentage:   (float32(stats.NumberOfVoters) / float32(cfg.StudentBase)) * 100,
 		StudentBody:      cfg.StudentBase,
 		TicketsStartTime: cfg.TicketStartDate,

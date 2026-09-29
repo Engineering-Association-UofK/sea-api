@@ -20,6 +20,24 @@ func NewElectionHandler(service *electionservice.ElectionService) *ElectionHandl
 	return &ElectionHandler{service: service}
 }
 
+// IsElectionLive godocs
+//
+//	@Summary		Check election
+//	@Description	Check if elections are live right now
+//	@Tags			Election:Public
+//	@Produce		json
+//	@Success		200	{object}	electionsmodels.CheckElection
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/election [get]
+func (h *ElectionHandler) IsElectionLive(c *gin.Context) {
+	res, err := h.service.IsElectionLive()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.JSON(200, res)
+}
+
 // GetPublicElectionStatistics godocs
 //
 //	@Summary		Get Public election statistics

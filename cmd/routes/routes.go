@@ -104,6 +104,7 @@ func SetupRouter(
 
 	{ // ==== Elections
 		election := apiV1.Group("/election")
+		election.GET("", h.Election.IsElectionLive)
 		election.GET("/candidates", h.Election.GetCandidateList)
 		election.GET("/statistics", h.Election.GetPublicElectionStatistics)
 		election.GET("/results", h.Election.GetResults)

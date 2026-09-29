@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+type CheckElection struct {
+	Live  bool  `json:"live"`
+	Cycle int64 `json:"cycle"`
+}
+
 type CandidateCreateRequest struct {
 	UserID    int64             `json:"user_id"`
 	Belonging models.Department `json:"belonging"`
@@ -32,6 +37,8 @@ type CandidateResponse struct {
 }
 
 type PublicStats struct {
+	EngageElection bool `json:"engage_election"`
+
 	VotePercentage   float32   `json:"vote_percentage"`
 	TicketsStartTime time.Time `json:"tickets_start_time"`
 	StartTime        time.Time `json:"start_time"`
@@ -43,6 +50,7 @@ type PublicStats struct {
 
 type PrivateStats struct {
 	Stats
+	EngageElection bool `json:"engage_election"`
 
 	VotePercentage float32 `json:"vote_percentage"`
 	StudentBody    int64   `json:"student_body"`
