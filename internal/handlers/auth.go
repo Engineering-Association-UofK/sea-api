@@ -81,8 +81,7 @@ func (h *AuthHandler) CheckState(c *gin.Context) {
 //	@Description	Do registration step with it's data and step number
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.CheckRegistrationRequest	true	"Request body"
-//
+//	@Param			body	body	models.RegistrationRequest	true	"Request body"
 //	@Success		201	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
