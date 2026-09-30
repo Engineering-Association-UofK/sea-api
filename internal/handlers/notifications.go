@@ -72,7 +72,7 @@ func (h *NotificationHandler) CreateDemoNotifications(c *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (h *NotificationHandler) GetNotifications(c *gin.Context) {
-	var req models.ListRequest
+	var req models.NotificationListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return

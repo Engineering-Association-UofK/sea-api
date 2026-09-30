@@ -1,21 +1,19 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type NotificationType string
 
 const (
-	NotifyBasic       NotificationType = "basic"
-	NotifyEvent       NotificationType = "event"
-	NotifyCertificate NotificationType = "certificate"
-	NotifyApplication NotificationType = "application"
+	NotifyBasic    NotificationType = "basic"
+	NotifyRedirect NotificationType = "redirect"
 )
 
 var AllowedNotificationTypes = map[NotificationType]bool{
-	NotifyBasic:       true,
-	NotifyEvent:       true,
-	NotifyCertificate: true,
-	NotifyApplication: true,
+	NotifyBasic:    true,
+	NotifyRedirect: true,
 }
 
 type Notification struct {
@@ -29,15 +27,9 @@ type Notification struct {
 	IsRead    bool             `json:"is_read" db:"is_read"`
 }
 
-type NotifyEventData struct {
-	EventID   int64  `json:"event_id"`
-	EventName string `json:"event_name"`
-	Action    string `json:"action"`
-}
-
-type NotifyCertificateData struct {
-	EventID         int64  `json:"event_id"`
-	CertificateHash string `json:"certificate_hash"`
+type NotifyRedirectData struct {
+	Title string `json:"title"`
+	Path  string `json:"path"`
 }
 
 type NotificationRequest struct {
@@ -63,8 +55,11 @@ type NotificationResponse struct {
 	IsRead    bool             `json:"is_read"`
 }
 
+type NotificationListRequest struct {
+	ListRequest
+}
+
 type NotificationsListResponse struct {
-	Notifications []NotificationResponse `json:"notifications"`
-	Pages         int64                  `json:"pages"`
-	Current       int64                  `json:"current"`
+	ListResponse
+	List []NotificationResponse `json:"list"`
 }
