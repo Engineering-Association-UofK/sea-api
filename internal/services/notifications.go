@@ -42,33 +42,33 @@ func (s *NotificationService) CreateDemoNotifications(userId int64, req *models.
 	})
 }
 
-func (s *NotificationService) GetNotificationsByUserID(userID int64, limit models.ListRequest) (*models.NotificationsListResponse, error) {
+func (s *NotificationService) GetNotificationsByUserID(userID int64, req models.NotificationListRequest) (*models.NotificationsListResponse, error) {
 	total, err := s.repo.GetTotalWithUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	pages := valid.Limit(&limit, total)
+	pages := valid.Limit(&req.ListRequest, total)
 
-	responses, err := s.repo.GetByUserIDWithLimit(userID, limit)
+	responses, err := s.repo.GetByUserIDWithLimit(userID, req.ListRequest)
 	if err != nil {
 		return nil, err
 	}
 
 	var notifications = []models.NotificationResponse{}
 	for _, r := range responses {
-		for h, v := range models.AllowedNotificationTypes {
-			if r.Type == h && v {
-				switch h {
-				case models.NotifyEvent:
-					r.Data = r.Data.(models.NotifyEventData)
-				case models.NotifyCertificate:
-					r.Data = r.Data.(models.NotifyCertificateData)
-				default:
+		if r.Data != nil {
+			for h, v := range models.AllowedNotificationTypes {
+				if r.Type == h && v {
+					switch h {
+					case models.NotifyRedirect:
+						r.Data = r.Data.(models.NotifyRedirectData)
+					default:
+						r.Data = nil
+					}
+				} else {
 					r.Data = nil
 				}
-			} else {
-				r.Data = nil
 			}
 		}
 		notifications = append(
@@ -86,9 +86,12 @@ func (s *NotificationService) GetNotificationsByUserID(userID int64, limit model
 	}
 
 	return &models.NotificationsListResponse{
-		Notifications: notifications,
-		Pages:         pages,
-		Current:       limit.Page,
+		List: notifications,
+		ListResponse: models.ListResponse{
+			TotalPages:  pages,
+			CurrentPage: req.Limit,
+			Count:       total,
+		},
 	}, nil
 }
 

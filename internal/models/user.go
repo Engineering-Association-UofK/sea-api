@@ -252,10 +252,17 @@ type TempUserListResponse struct {
 }
 
 type UserProfileSummaryResponse struct {
-	ID         int64  `json:"id"`
-	Username   string `json:"username"`
-	Email      string `json:"email"`
-	ProfilePic string `json:"profile_pic"`
+	// The unique identifier university Index for the user
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+
+	// Link to the user profile picture
+	ProfilePic string     `json:"profile_pic"`
+	NameAr     string     `json:"name_ar"`
+	NameEn     string     `json:"name_en"`
+	Department Department `json:"department"`
+	Gender     Gender     `json:"gender"`
 }
 
 type UserProfileResponse struct {
