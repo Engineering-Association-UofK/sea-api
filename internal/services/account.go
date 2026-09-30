@@ -58,6 +58,10 @@ func (s *AccountService) GetProfileSummary(ctx context.Context, claims *models.M
 		Username:   user.Username,
 		Email:      user.Email,
 		ProfilePic: url,
+		NameAr:     user.NameAr,
+		NameEn:     user.NameEn,
+		Department: user.Department,
+		Gender:     user.Gender,
 	}, nil
 }
 
