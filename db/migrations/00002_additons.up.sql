@@ -79,7 +79,7 @@ CREATE TABLE bot_user_states (
 -- ------ NOTIFICATIONS SCHEMA
 
 CREATE TABLE notifications (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE notifications (
 -- ------ LOGS SCHEMA
 
 CREATE TABLE logs (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     action ENUM('CREATE', 'UPDATE', 'DELETE') NOT NULL,
     table_name VARCHAR(50) NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE logs (
 );
 
 CREATE TABLE feedback (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
     message TEXT NOT NULL,
     user_id INT,
     type VARCHAR(50) NOT NULL,
