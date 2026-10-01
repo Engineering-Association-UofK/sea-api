@@ -10,6 +10,7 @@ type ElectionConfig struct {
 	MaxVotes    int64 `json:"max_votes"`
 	StudentBase int64 `json:"student_base"`
 
+	EngageElection bool           `json:"engage_election"`
 	CycleDoneState map[int64]bool `json:"cycle_done_state"`
 
 	TicketStartDate time.Time `json:"ticket_start_date"`

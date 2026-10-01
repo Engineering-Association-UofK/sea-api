@@ -12,7 +12,7 @@ import (
 )
 
 func (s *ElectionService) GetResults(ctx context.Context, cycle int) ([]electionsmodels.ResultResponse, error) {
-	cfg, err := s.repo.GetElectionConfig()
+	cfg, err := s.Guard(false, false, true)
 	if err != nil {
 		return nil, err
 	}
@@ -24,9 +24,6 @@ func (s *ElectionService) GetResults(ctx context.Context, cycle int) ([]election
 		return nil, errs.New(errs.BadRequest, "Unreachable cycle number", nil)
 	}
 
-	if time.Now().Before(cfg.EndDate) {
-		return nil, errs.New(errs.Forbidden, "cannot resolve: election is still active", nil)
-	}
 	if !cfg.CycleDoneState[cfg.ActiveCycle] {
 		if err := s.ResolveAndReset(ctx); err != nil {
 			// Handles potential concurrent attempt race conditions
@@ -46,17 +43,13 @@ func (s *ElectionService) ResolveAndReset(ctx context.Context) error {
 	s.resolveMu.Lock()
 	defer s.resolveMu.Unlock()
 
-	cfg, err := s.repo.GetElectionConfig()
+	cfg, err := s.Guard(false, false, true)
 	if err != nil {
 		return err
 	}
 
 	if cfg.CycleDoneState[cfg.ActiveCycle] {
 		return errs.New(errs.Forbidden, "Cycle already resolved", nil)
-	}
-
-	if time.Now().Before(cfg.EndDate) {
-		return errs.New(errs.Forbidden, "cannot resolve: election is still active", nil)
 	}
 
 	tx, err := s.repo.Transaction(ctx)

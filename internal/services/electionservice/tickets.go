@@ -13,7 +13,7 @@ import (
 )
 
 func (s *ElectionService) GetTicket(ctx context.Context, userId int64) (*electionsmodels.TicketResponse, error) {
-	cfg, err := s.repo.GetElectionConfig()
+	cfg, err := s.Guard(true, true, false)
 	if err != nil {
 		return nil, err
 	}

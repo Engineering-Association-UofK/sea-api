@@ -2,15 +2,12 @@ package electionservice
 
 import (
 	"context"
-	"errors"
-	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/models/electionsmodels"
 	"sea-api/internal/repositories"
 	"sea-api/internal/repositories/electionrepo"
 	"sea-api/internal/services/storage"
 	"sync"
-	"time"
 )
 
 type ElectionService struct {
@@ -29,12 +26,9 @@ func NewElectionService(repo *electionrepo.ElectionRepo, cmsRepo *repositories.C
 }
 
 func (s *ElectionService) CreateCandidate(req *electionsmodels.CandidateCreateRequest) (int64, error) {
-	cfg, err := s.repo.GetElectionConfig()
+	cfg, err := s.Guard(true, false, false)
 	if err != nil {
 		return 0, err
-	}
-	if time.Now().After(cfg.StartDate) {
-		return 0, errs.New(errs.Forbidden, "cannot add candidates: election has already started", nil)
 	}
 
 	return s.repo.CreateCandidate(electionsmodels.Candidate{
@@ -45,17 +39,19 @@ func (s *ElectionService) CreateCandidate(req *electionsmodels.CandidateCreateRe
 }
 
 func (s *ElectionService) UpdateCandidate(id int64, belonging models.Department) error {
-	cfg, err := s.repo.GetElectionConfig()
+	_, err := s.Guard(true, false, false)
 	if err != nil {
 		return err
-	}
-	if time.Now().After(cfg.StartDate) {
-		return errs.New(errs.Forbidden, "cannot update candidates: election has already started", nil)
 	}
 	return s.repo.UpdateCandidateBelonging(id, belonging)
 }
 
 func (s *ElectionService) GetCandidateList(ctx context.Context) ([]electionsmodels.CandidateResponse, error) {
+	_, err := s.Guard(true, true, true)
+	if err != nil {
+		return nil, err
+	}
+
 	raws, err := s.repo.GetCandidateListForActiveCycle()
 	if err != nil {
 		return nil, err
@@ -84,12 +80,9 @@ func (s *ElectionService) GetCandidateList(ctx context.Context) ([]electionsmode
 }
 
 func (s *ElectionService) RemoveCandidate(id int64) error {
-	cfg, err := s.repo.GetElectionConfig()
+	_, err := s.Guard(true, false, false)
 	if err != nil {
 		return err
-	}
-	if time.Now().After(cfg.StartDate) {
-		return errors.New("cannot remove candidates: election has already started")
 	}
 	return s.repo.RemoveCandidate(id)
 }
