@@ -5,7 +5,6 @@ import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models/electionsmodels"
 	"slices"
-	"time"
 )
 
 func (s *ElectionService) IsElectionLive() (*electionsmodels.CheckElection, error) {
@@ -20,12 +19,12 @@ func (s *ElectionService) IsElectionLive() (*electionsmodels.CheckElection, erro
 }
 
 func (s *ElectionService) PublicElectionStatistics() (*electionsmodels.PublicStats, error) {
-	stats, err := s.repo.GetVotesStatistics()
+	cfg, err := s.Guard(true, true, true)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg, err := s.repo.GetElectionConfig()
+	stats, err := s.repo.GetVotesStatistics()
 	if err != nil {
 		return nil, err
 	}
@@ -42,12 +41,11 @@ func (s *ElectionService) PublicElectionStatistics() (*electionsmodels.PublicSta
 }
 
 func (s *ElectionService) PrivateElectionStatistics() (*electionsmodels.PrivateStats, error) {
-	stats, err := s.repo.GetVotesStatistics()
+	cfg, err := s.Guard(true, true, true)
 	if err != nil {
 		return nil, err
 	}
-
-	cfg, err := s.repo.GetElectionConfig()
+	stats, err := s.repo.GetVotesStatistics()
 	if err != nil {
 		return nil, err
 	}
@@ -63,15 +61,9 @@ func (s *ElectionService) PrivateElectionStatistics() (*electionsmodels.PrivateS
 }
 
 func (s *ElectionService) Vote(ctx context.Context, req electionsmodels.VoteRequest) error {
-	cfg, err := s.repo.GetElectionConfig()
+	cfg, err := s.Guard(false, true, false)
 	if err != nil {
 		return err
-	}
-
-	// Check if it's voting period
-	now := time.Now()
-	if now.Before(cfg.StartDate) || now.After(cfg.EndDate) {
-		return errs.New(errs.Forbidden, "voting is currently closed", nil)
 	}
 
 	// Check the voting count
