@@ -31,7 +31,6 @@ func (s *ElectionService) PublicElectionStatistics() (*electionsmodels.PublicSta
 	}
 
 	return &electionsmodels.PublicStats{
-		EngageElection:   cfg.EngageElection,
 		VotePercentage:   (float32(stats.NumberOfVoters) / float32(cfg.StudentBase)) * 100,
 		TicketsStartTime: cfg.TicketStartDate,
 		StartTime:        cfg.StartDate,
@@ -55,7 +54,6 @@ func (s *ElectionService) PrivateElectionStatistics() (*electionsmodels.PrivateS
 
 	return &electionsmodels.PrivateStats{
 		Stats:            *stats,
-		EngageElection:   cfg.EngageElection,
 		VotePercentage:   (float32(stats.NumberOfVoters) / float32(cfg.StudentBase)) * 100,
 		StudentBody:      cfg.StudentBase,
 		TicketsStartTime: cfg.TicketStartDate,
