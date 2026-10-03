@@ -1,6 +1,8 @@
 package eventservice
 
 import (
+	"database/sql"
+	"errors"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/models/eventmodels"
@@ -8,13 +10,38 @@ import (
 	"time"
 )
 
+func (s *EventService) CheckStatus(eventID, userID int64) (*eventmodels.ApplicationStatus, error) {
+	var res eventmodels.ApplicationStatus
+
+	_, err := s.repo.GetParticipationWithEventAndUserIDs(eventID, userID)
+	if err == nil {
+		res.Applied = true
+		res.Accepted = true
+		return &res, nil
+	}
+
+	application, err := s.repo.GetApplicationByUserAndEvent(eventID, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &res, nil
+		}
+		return nil, err
+	}
+
+	res.Applied = true
+	res.NeedsForm = true
+	res.FormID = &application.FormID
+
+	return &res, nil
+}
+
 func (s *EventService) Apply(EventID int64, claims models.ManagedClaims) (*eventmodels.ApplyResponse, error) {
 	// Start by checking if the application state already started before
 	application, err := s.repo.GetApplicationByUserAndEvent(EventID, claims.UserID)
 	if err == nil {
 		// User already accepted, no need for any further processing
 		if application.Accepted {
-			return nil, errs.New(errs.Conflict, "Already a participant", nil)
+			return nil, errs.New(errs.Conflict, "User completed application", nil)
 		}
 
 		// User still in application process, send back form ID
@@ -27,7 +54,7 @@ func (s *EventService) Apply(EventID int64, claims models.ManagedClaims) (*event
 	// Then check for participation in case the event does not require a form
 	_, err = s.repo.GetParticipationWithEventAndUserIDs(EventID, claims.UserID)
 	if err == nil {
-		return nil, errs.New(errs.Conflict, "Already a participant", nil)
+		return nil, errs.New(errs.Conflict, "User is a participant", nil)
 	}
 
 	event, err := s.repo.Get(EventID)

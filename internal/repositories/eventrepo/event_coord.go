@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/eventmodels"
+
+	"github.com/jmoiron/sqlx"
 )
 
 func (r *EventRepository) CreateCoord(req *eventmodels.EventCoord) (int64, error) {
@@ -43,6 +45,26 @@ func (r *EventRepository) GetCoordsByEventID(eventID int64) ([]eventmodels.Event
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE event_id = ?`, models.TableEventCoords)
 	err := r.db.Select(&list, query, eventID)
 	if err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
+func (r *EventRepository) GetCoordsByEventIDs(eventIDs []int64) ([]eventmodels.EventCoord, error) {
+	if len(eventIDs) == 0 {
+		return []eventmodels.EventCoord{}, nil
+	}
+
+	query, args, err := sqlx.In(
+		fmt.Sprintf(`SELECT * FROM %s WHERE event_id IN (?) ORDER BY id`, models.TableEventCoords),
+		eventIDs,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var list []eventmodels.EventCoord
+	if err := r.db.Select(&list, query, args...); err != nil {
 		return nil, err
 	}
 	return list, nil

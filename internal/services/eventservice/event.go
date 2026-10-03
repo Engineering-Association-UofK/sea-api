@@ -112,29 +112,34 @@ func (s *EventService) Update(req *eventmodels.EventUpdateRequest) error {
 	return nil
 }
 
-func (s *EventService) Get(id int64) (*eventmodels.EventUpdateRequest, error) {
-	event, err := s.repo.Get(id)
+func (s *EventService) Get(ctx context.Context, id int64) (*eventmodels.EventResponse, error) {
+	event, err := s.repo.GetView(id)
 	if err != nil {
 		return nil, errs.New(errs.NotFound, "event not found", nil)
 	}
-	return &eventmodels.EventUpdateRequest{
-		ID: event.ID,
-		EventRequest: eventmodels.EventRequest{
-			Name:            event.Name,
-			Description:     event.Description,
-			BackgroundID:    event.BackgroundID,
-			Belonging:       event.Belonging,
-			RequireApplying: event.RequireApplying,
-			FormID:          &event.FormID.Int64,
-			MaxApplications: &event.MaxApplications.Int64,
-			StartDate:       event.StartDate,
-			EndDate:         event.EndDate,
-		},
+
+	url, err := s.s3.GenerateDownloadUrlByKey(ctx, event.BackgroundKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &eventmodels.EventResponse{
+		ID:              event.ID,
+		Name:            event.Name,
+		Description:     event.Description,
+		BackgroundID:    event.BackgroundID,
+		BackgroundURL:   url,
+		Belonging:       event.Belonging,
+		RequireApplying: event.RequireApplying,
+		FormID:          &event.FormID.Int64,
+		MaxApplications: &event.MaxApplications.Int64,
+		StartDate:       event.StartDate,
+		EndDate:         event.EndDate,
 	}, nil
 }
 
 func (s *EventService) GetList(ctx context.Context, req *eventmodels.EventListRequest) (*eventmodels.EventListResponse, error) {
-	count, err := s.repo.CountEvents()
+	count, err := s.repo.GetCount(req)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +151,7 @@ func (s *EventService) GetList(ctx context.Context, req *eventmodels.EventListRe
 		return nil, err
 	}
 
-	var list = []eventmodels.EventResponse{}
+	var list = []eventmodels.EventPrivateListResponse{}
 	for _, e := range *events {
 		url, err := s.s3.GenerateDownloadUrlByKey(ctx, e.BackgroundKey)
 		if err != nil {
@@ -158,23 +163,14 @@ func (s *EventService) GetList(ctx context.Context, req *eventmodels.EventListRe
 			formId = e.FormID.Int64
 		}
 
-		var max int64
-		if e.MaxApplications.Valid {
-			max = e.MaxApplications.Int64
-		}
-
-		list = append(list, eventmodels.EventResponse{
+		list = append(list, eventmodels.EventPrivateListResponse{
 			ID:              e.ID,
 			Name:            e.Name,
-			Description:     e.Description,
-			BackgroundID:    e.BackgroundID,
 			BackgroundURL:   url,
 			Belonging:       e.Belonging,
 			RequireApplying: e.RequireApplying,
 			FormID:          &formId,
-			MaxApplications: &max,
-			StartDate:       e.StartDate,
-			EndDate:         e.EndDate,
+			CreatedAt:       e.CreatedAt,
 		})
 	}
 

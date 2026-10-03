@@ -48,10 +48,31 @@ func (r *EventRepository) Update(event *eventmodels.Event) error {
 	return err
 }
 
-func (r *EventRepository) CountEvents() (int64, error) {
+func (r *EventRepository) GetCount(req *eventmodels.EventListRequest) (int64, error) {
 	var count int64
-	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TableNewEvents)
-	err := r.db.Get(&count, query)
+	var conditions []string
+	var args []interface{}
+
+	// Base query
+	baseQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", models.TableNewEvents)
+
+	if req.Search != "" {
+		conditions = append(conditions, "(name LIKE ? OR description LIKE ?)")
+		searchTerm := "%" + req.Search + "%"
+		args = append(args, searchTerm, searchTerm)
+	}
+
+	if req.Belonging != "" {
+		conditions = append(conditions, "belonging = ?")
+		args = append(args, req.Belonging)
+	}
+
+	query := baseQuery
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	err := r.db.Get(&count, query, args...)
 	return count, err
 }
 
@@ -73,7 +94,7 @@ func (r *EventRepository) GetView(id int64) (*eventmodels.EventsRow, error) {
 		e.id,
 		e.name,
 		e.description,
-		g.file_key AS background_key,
+		f.file_key AS background_key,
 		e.belonging,
 		e.require_applying,
 		e.form_id,
@@ -84,10 +105,10 @@ func (r *EventRepository) GetView(id int64) (*eventmodels.EventsRow, error) {
 	FROM %s e
 	LEFT JOIN %s g ON e.background_id = g.id
 	LEFT JOIN %s f ON g.file_id = f.id
-	WHERE id = ?
+	WHERE e.id = ?
 	`, models.TableNewEvents, models.TableGalleryAssets, models.TableFiles)
 
-	err := r.db.Get(model, query, id)
+	err := r.db.Get(&model, query, id)
 	if err != nil {
 		return nil, err
 	}

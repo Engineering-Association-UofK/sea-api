@@ -44,6 +44,18 @@ type EventResponse struct {
 	EndDate   time.Time `json:"end_date"`
 }
 
+type EventPrivateListResponse struct {
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	BackgroundURL string             `json:"background_url"`
+	Belonging     models.Secretariat `json:"belonging"`
+
+	RequireApplying bool   `json:"require_applying"`
+	FormID          *int64 `json:"form_id"`
+
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type EventListRequest struct {
 	models.ListRequest
 	Search    string             `form:"search-name"`
@@ -63,42 +75,36 @@ type EventCoordListResponse struct {
 }
 
 type EventListResponse struct {
-	List []EventResponse `json:"list"`
+	List []EventPrivateListResponse `json:"list"`
 	models.ListResponse
 }
 
 type EventViewResponse struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	BackgroundURL string `json:"background_url"`
+	ID              int64     `json:"id"`
+	Name            string    `json:"name"`
+	Description     string    `json:"description"`
+	BackgroundURL   string    `json:"background_url"`
+	StartDate       time.Time `json:"start_date"`
+	EndDate         time.Time `json:"end_date"`
+	RequireApplying bool      `json:"require_applying"`
 
 	Belonging models.Secretariat `json:"belonging"`
-
-	RequireApplying bool `json:"require_applying"`
-
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-}
-
-type EventListItemResponse struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	BackgroundURL string `json:"background_url"`
-
-	Belonging models.Secretariat `json:"belonging"`
-
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
+	Coords    []CoordResponse    `json:"coords"`
 }
 
 type EventViewListResponse struct {
-	List []EventListItemResponse `json:"list"`
+	List []EventViewResponse `json:"list"`
 	models.ListResponse
 }
 
 // Participation
+
+type ApplicationStatus struct {
+	Applied   bool   `json:"applied"`
+	Accepted  bool   `json:"accepted"`
+	NeedsForm bool   `json:"needs_form"`
+	FormID    *int64 `json:"form_id,omitempty"`
+}
 
 type ApplyResponse struct {
 	NeedsForm bool   `json:"needs_form"`
@@ -140,6 +146,11 @@ type EventParticipantListResponse struct {
 type CoordRequest struct {
 	Name string `json:"name" binding:"required"`
 	Role string `json:"role" binding:"required"`
+}
+
+type CoordResponse struct {
+	Name string `json:"name"`
+	Role string `json:"role"`
 }
 
 type AddCoordsRequest struct {

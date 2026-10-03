@@ -2,14 +2,13 @@ package eventservice
 
 import (
 	"context"
-	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/models/eventmodels"
 	"sea-api/internal/utils/valid"
 )
 
 func (s *EventService) GetEventViewList(ctx context.Context, req *eventmodels.EventListRequest) (*eventmodels.EventViewListResponse, error) {
-	count, err := s.repo.CountEvents()
+	count, err := s.repo.GetCount(req)
 	if err != nil {
 		return nil, err
 	}
@@ -21,21 +20,40 @@ func (s *EventService) GetEventViewList(ctx context.Context, req *eventmodels.Ev
 		return nil, err
 	}
 
-	var list = []eventmodels.EventListItemResponse{}
+	eventIDs := make([]int64, 0, len(*events))
+	for _, event := range *events {
+		eventIDs = append(eventIDs, event.ID)
+	}
+
+	coords, err := s.repo.GetCoordsByEventIDs(eventIDs)
+	if err != nil {
+		return nil, err
+	}
+	coordsByEventID := make(map[int64][]eventmodels.CoordResponse, len(eventIDs))
+	for _, coord := range coords {
+		coordsByEventID[coord.EventID] = append(coordsByEventID[coord.EventID], eventmodels.CoordResponse{
+			Name: coord.Name,
+			Role: coord.Role,
+		})
+	}
+
+	var list = []eventmodels.EventViewResponse{}
 	for _, e := range *events {
 		url, err := s.s3.GenerateDownloadUrlByKey(ctx, e.BackgroundKey)
 		if err != nil {
 			return nil, err
 		}
 
-		list = append(list, eventmodels.EventListItemResponse{
-			ID:            e.ID,
-			Name:          e.Name,
-			Description:   e.Description,
-			BackgroundURL: url,
-			Belonging:     e.Belonging,
-			StartDate:     e.StartDate,
-			EndDate:       e.EndDate,
+		list = append(list, eventmodels.EventViewResponse{
+			ID:              e.ID,
+			Name:            e.Name,
+			Description:     e.Description,
+			BackgroundURL:   url,
+			RequireApplying: e.RequireApplying,
+			Belonging:       e.Belonging,
+			StartDate:       e.StartDate,
+			EndDate:         e.EndDate,
+			Coords:          coordsByEventID[e.ID],
 		})
 	}
 
@@ -46,28 +64,5 @@ func (s *EventService) GetEventViewList(ctx context.Context, req *eventmodels.Ev
 			CurrentPage: req.Page,
 			Count:       count,
 		},
-	}, nil
-}
-
-func (s *EventService) GetEventView(ctx context.Context, id int64) (*eventmodels.EventViewResponse, error) {
-	event, err := s.repo.GetView(id)
-	if err != nil {
-		return nil, errs.New(errs.NotFound, "event not found", nil)
-	}
-
-	url, err := s.s3.GenerateDownloadUrlByKey(ctx, event.BackgroundKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return &eventmodels.EventViewResponse{
-		ID:              event.ID,
-		Name:            event.Name,
-		Description:     event.Description,
-		BackgroundURL:   url,
-		Belonging:       event.Belonging,
-		RequireApplying: event.RequireApplying,
-		StartDate:       event.StartDate,
-		EndDate:         event.EndDate,
 	}, nil
 }
