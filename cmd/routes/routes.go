@@ -283,6 +283,7 @@ func SetupRouter(
 		{ // ==== EVENTS
 			event := admin.Group("/event")
 			event.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
+			event.GET(":id", h.Event.GetEvent)
 			event.GET("", h.Event.GetEventList)
 			event.POST("", h.Event.CreateEvent)
 			event.PUT("", h.Event.UpdateEvent)

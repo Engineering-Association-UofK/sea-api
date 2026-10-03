@@ -515,7 +515,7 @@ func (h *EventHandler) GetApplicationList(ctx *gin.Context) {
 		return
 	}
 
-	res, err := h.service.GetApplications(eventId, &req)
+	res, err := h.service.GetApplications(ctx.Request.Context(), eventId, &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -635,7 +635,7 @@ func (h *EventHandler) GetParticipantList(ctx *gin.Context) {
 		return
 	}
 
-	participants, err := h.service.GetParticipants(eventId, &req)
+	participants, err := h.service.GetParticipants(ctx.Request.Context(), eventId, &req)
 	if err != nil {
 		ctx.Error(err)
 		return
