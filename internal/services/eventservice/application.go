@@ -73,7 +73,7 @@ func (s *EventService) Apply(EventID int64, claims models.ManagedClaims) (*event
 			return nil, err
 		}
 
-		_, err = s.repo.CreateApplication(&eventmodels.EventApplication{
+		_, err = s.repo.CreateApplication(&eventmodels.Application{
 			EventID:   EventID,
 			UserID:    claims.UserID,
 			FormID:    event.FormID.Int64,
@@ -88,7 +88,7 @@ func (s *EventService) Apply(EventID int64, claims models.ManagedClaims) (*event
 	}
 
 	// Otherwise, make instantly as a participant
-	_, err = s.repo.CreateParticipation(&eventmodels.EventParticipant{
+	_, err = s.repo.CreateParticipation(&eventmodels.Participant{
 		EventID:  EventID,
 		UserID:   claims.UserID,
 		JoinedAt: time.Now(),
@@ -107,7 +107,7 @@ func (s *EventService) ProcessApplication(eventID, userID int64, accept bool) er
 	}
 
 	if accept {
-		_, err := s.repo.CreateParticipation(&eventmodels.EventParticipant{
+		_, err := s.repo.CreateParticipation(&eventmodels.Participant{
 			EventID:  eventID,
 			UserID:   userID,
 			JoinedAt: time.Now(),
@@ -120,7 +120,7 @@ func (s *EventService) ProcessApplication(eventID, userID int64, accept bool) er
 	return nil
 }
 
-func (s *EventService) GetApplications(eventID int64, req *eventmodels.EventApplicationListRequest) (*eventmodels.EventApplicationListResponse, error) {
+func (s *EventService) GetApplications(eventID int64, req *eventmodels.ApplicationListRequest) (*eventmodels.ApplicationListResponse, error) {
 	count, err := s.repo.CountApplications(eventID)
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func (s *EventService) GetApplications(eventID int64, req *eventmodels.EventAppl
 		return nil, err
 	}
 
-	return &eventmodels.EventApplicationListResponse{
+	return &eventmodels.ApplicationListResponse{
 		List: apps,
 		ListResponse: models.ListResponse{
 			TotalPages:  pages,

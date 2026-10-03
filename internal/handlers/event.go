@@ -304,7 +304,7 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 //	@Tags			Events:v2:coordinator
 //	@Produce		json
 //	@Param			id	path		int	true	"Event ID"
-//	@Success		200		{array}	eventmodels.EventCoord
+//	@Success		200		{array}	eventmodels.Coordinator
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -483,7 +483,7 @@ func (h *EventHandler) DeleteCoords(ctx *gin.Context) {
 	response.NewTransactionResponse(200, "All coordinators for event removed successfully", id, ctx)
 }
 
-// ======== PARTICIPATION ========
+// ======== APPLICATIONS ========
 
 // GetApplicationList godocs
 //
@@ -494,7 +494,7 @@ func (h *EventHandler) DeleteCoords(ctx *gin.Context) {
 //	@Param			id	path		int	true	"Event ID"
 //	@Param			limit		query		int	false	"Content count limit"
 //	@Param			page		query		int	false	"Page number"
-//	@Success		200		{object}	eventmodels.EventApplicationListResponse
+//	@Success		200		{object}	eventmodels.ApplicationListResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -509,7 +509,7 @@ func (h *EventHandler) GetApplicationList(ctx *gin.Context) {
 		return
 	}
 
-	var req eventmodels.EventApplicationListRequest
+	var req eventmodels.ApplicationListRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -603,6 +603,8 @@ func (h *EventHandler) RejectApplication(ctx *gin.Context) {
 	response.NewTransactionResponse(200, "Application Rejected successfully", appId, ctx)
 }
 
+// ======== PARTICIPATION ========
+
 // GetParticipantList godocs
 //
 //	@Summary		Get event participants
@@ -612,7 +614,7 @@ func (h *EventHandler) RejectApplication(ctx *gin.Context) {
 //	@Param			id	path		int	true	"Event ID"
 //	@Param			limit		query		int	false	"Content count limit"
 //	@Param			page		query		int	false	"Page number"
-//	@Success		200		{object}	eventmodels.EventParticipantListResponse
+//	@Success		200		{object}	eventmodels.ParticipantListResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -627,7 +629,7 @@ func (h *EventHandler) GetParticipantList(ctx *gin.Context) {
 		return
 	}
 
-	var req eventmodels.EventParticipantListRequest
+	var req eventmodels.ParticipantListRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return

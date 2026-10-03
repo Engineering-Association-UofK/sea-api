@@ -62,15 +62,15 @@ type EventListRequest struct {
 	Belonging models.Secretariat `form:"belonging"`
 }
 
-type EventCoordResponse struct {
+type CoordinatorResponse struct {
 	ID      int64  `json:"id"`
 	EventID int64  `json:"event_id"`
 	Name    string `json:"name"`
 	Role    string `json:"role"`
 }
 
-type EventCoordListResponse struct {
-	List []EventCoordResponse `json:"list"`
+type CoordinatorListResponse struct {
+	List []CoordinatorResponse `json:"list"`
 	models.ListResponse
 }
 
@@ -111,11 +111,11 @@ type ApplyResponse struct {
 	FormID    *int64 `json:"form_id"`
 }
 
-type EventApplicationListRequest struct {
+type ApplicationListRequest struct {
 	models.ListRequest
 }
 
-type EventApplicationResponse struct {
+type ApplicationResponse struct {
 	ID        int64  `json:"id"`
 	EventID   int64  `json:"event_id"`
 	UserID    int64  `json:"user_id"`
@@ -124,20 +124,20 @@ type EventApplicationResponse struct {
 	StartedAt string `json:"started_at"`
 }
 
-type EventApplicationListResponse struct {
-	List []EventApplication `json:"list"`
+type ApplicationListResponse struct {
+	List []ApplicationResponse `json:"list"`
 	models.ListResponse
 }
 
 // Participation Pagination
 
-type EventParticipantListRequest struct {
+type ParticipantListRequest struct {
 	EventID int64 `form:"event_id"`
 	models.ListRequest
 }
 
-type EventParticipantListResponse struct {
-	List []EventParticipant `json:"list"`
+type ParticipantListResponse struct {
+	List []Participant `json:"list"`
 	models.ListResponse
 }
 
@@ -149,6 +149,7 @@ type CoordRequest struct {
 }
 
 type CoordResponse struct {
+	ID   int64  `json:"id"`
 	Name string `json:"name"`
 	Role string `json:"role"`
 }

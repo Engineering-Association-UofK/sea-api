@@ -7,7 +7,7 @@ import (
 	"sea-api/internal/utils/valid"
 )
 
-func (s *EventService) GetParticipants(eventID int64, req *eventmodels.EventParticipantListRequest) (*eventmodels.EventParticipantListResponse, error) {
+func (s *EventService) GetParticipants(eventID int64, req *eventmodels.ParticipantListRequest) (*eventmodels.ParticipantListResponse, error) {
 	count, err := s.repo.CountApplications(eventID)
 	if err != nil {
 		return nil, err
@@ -19,7 +19,7 @@ func (s *EventService) GetParticipants(eventID int64, req *eventmodels.EventPart
 	if err != nil {
 		return nil, err
 	}
-	return &eventmodels.EventParticipantListResponse{
+	return &eventmodels.ParticipantListResponse{
 		List: participants,
 		ListResponse: models.ListResponse{
 			TotalPages:  pages,

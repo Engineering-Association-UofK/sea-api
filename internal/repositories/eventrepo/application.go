@@ -6,7 +6,7 @@ import (
 	"sea-api/internal/models/eventmodels"
 )
 
-func (r *EventRepository) CreateApplication(app *eventmodels.EventApplication) (int64, error) {
+func (r *EventRepository) CreateApplication(app *eventmodels.Application) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (event_id, user_id, form_id, Accepted, started_at)
 	VALUES (:event_id, :user_id, :form_id, :Accepted, :started_at)
@@ -18,8 +18,8 @@ func (r *EventRepository) CreateApplication(app *eventmodels.EventApplication) (
 	return res.LastInsertId()
 }
 
-func (r *EventRepository) GetApplication(applicationID int64) (*eventmodels.EventApplication, error) {
-	var app eventmodels.EventApplication
+func (r *EventRepository) GetApplication(applicationID int64) (*eventmodels.Application, error) {
+	var app eventmodels.Application
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableEventApplication)
 	err := r.db.Get(&app, query, applicationID)
 	if err != nil {
@@ -28,8 +28,8 @@ func (r *EventRepository) GetApplication(applicationID int64) (*eventmodels.Even
 	return &app, nil
 }
 
-func (r *EventRepository) GetApplicationByUserAndEvent(eventID, userID int64) (*eventmodels.EventApplication, error) {
-	var app eventmodels.EventApplication
+func (r *EventRepository) GetApplicationByUserAndEvent(eventID, userID int64) (*eventmodels.Application, error) {
+	var app eventmodels.Application
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE event_id = ? AND user_id = ?`, models.TableEventApplication)
 	err := r.db.Get(&app, query, eventID, userID)
 	if err != nil {
@@ -38,9 +38,9 @@ func (r *EventRepository) GetApplicationByUserAndEvent(eventID, userID int64) (*
 	return &app, nil
 }
 
-func (r *EventRepository) GetApplicationListByEventID(eventID int64, limit, page int64) ([]eventmodels.EventApplication, error) {
+func (r *EventRepository) GetApplicationListByEventID(eventID int64, limit, page int64) ([]eventmodels.Application, error) {
 	offset := (page - 1) * limit
-	var list = []eventmodels.EventApplication{}
+	var list = []eventmodels.Application{}
 	query := fmt.Sprintf(`
 	SELECT * FROM %s 
 	WHERE event_id = ? 
