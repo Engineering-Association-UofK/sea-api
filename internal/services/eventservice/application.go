@@ -1,6 +1,7 @@
 package eventservice
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"sea-api/internal/errs"
@@ -88,7 +89,7 @@ func (s *EventService) Apply(EventID int64, claims models.ManagedClaims) (*event
 	}
 
 	// Otherwise, make instantly as a participant
-	_, err = s.repo.CreateParticipation(&eventmodels.Participant{
+	_, err = s.repo.CreateParticipation(nil, &eventmodels.Participant{
 		EventID:  EventID,
 		UserID:   claims.UserID,
 		JoinedAt: time.Now(),
@@ -96,31 +97,7 @@ func (s *EventService) Apply(EventID int64, claims models.ManagedClaims) (*event
 	return &eventmodels.ApplyResponse{NeedsForm: false}, nil
 }
 
-func (s *EventService) ProcessApplication(eventID, userID int64, accept bool) error {
-	app, err := s.repo.GetApplicationByUserAndEvent(eventID, userID)
-	if err != nil {
-		return errs.New(errs.NotFound, "application not found", nil)
-	}
-
-	if err := s.repo.UpdateApplicationStatus(app.ID, accept); err != nil {
-		return err
-	}
-
-	if accept {
-		_, err := s.repo.CreateParticipation(&eventmodels.Participant{
-			EventID:  eventID,
-			UserID:   userID,
-			JoinedAt: time.Now(),
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (s *EventService) GetApplications(eventID int64, req *eventmodels.ApplicationListRequest) (*eventmodels.ApplicationListResponse, error) {
+func (s *EventService) GetApplications(ctx context.Context, eventID int64, req *eventmodels.ApplicationListRequest) (*eventmodels.ApplicationListResponse, error) {
 	count, err := s.repo.CountApplications(eventID)
 	if err != nil {
 		return nil, err
@@ -128,13 +105,35 @@ func (s *EventService) GetApplications(eventID int64, req *eventmodels.Applicati
 
 	pages := valid.Limit(&req.ListRequest, count)
 
-	apps, err := s.repo.GetApplicationListByEventID(eventID, req.Limit, req.Page)
+	apps, err := s.repo.GetApplicationViews(eventID, req.Limit, req.Page)
 	if err != nil {
 		return nil, err
 	}
 
+	list := make([]eventmodels.ApplicationResponse, 0, len(apps))
+	for _, app := range apps {
+		photoURL := ""
+		if app.PhotoKey != nil {
+			photoURL, err = s.s3.GenerateDownloadUrlByKey(ctx, *app.PhotoKey)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		list = append(list, eventmodels.ApplicationResponse{
+			ID:        app.ID,
+			EventID:   app.EventID,
+			UserID:    app.UserID,
+			Username:  app.Username,
+			PhotoURL:  photoURL,
+			FormID:    app.FormID,
+			Accepted:  app.Accepted,
+			StartedAt: app.StartedAt.Format(time.RFC3339),
+		})
+	}
+
 	return &eventmodels.ApplicationListResponse{
-		List: apps,
+		List: list,
 		ListResponse: models.ListResponse{
 			TotalPages:  pages,
 			CurrentPage: req.Page,
@@ -157,7 +156,25 @@ func (s *EventService) AcceptApplication(eventID, applicationID int64) error {
 		return errs.New(errs.Conflict, "Applicant Already accepted", nil)
 	}
 
-	return s.repo.UpdateApplicationStatus(applicationID, true)
+	tx, err := s.repo.StartTransaction()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if err = s.repo.DeleteApplication(tx, applicationID); err != nil {
+		return err
+	}
+
+	if _, err = s.repo.CreateParticipation(tx, &eventmodels.Participant{
+		EventID:  app.EventID,
+		UserID:   app.UserID,
+		JoinedAt: time.Now(),
+	}); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s *EventService) RejectApplication(eventID, applicationID int64) error {
@@ -170,5 +187,5 @@ func (s *EventService) RejectApplication(eventID, applicationID int64) error {
 		return errs.New(errs.Forbidden, "Applicant does not belong to event", nil)
 	}
 
-	return s.repo.DeleteApplication(applicationID)
+	return s.repo.DeleteApplication(nil, applicationID)
 }

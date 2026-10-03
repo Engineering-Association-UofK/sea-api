@@ -97,7 +97,7 @@ type EventViewListResponse struct {
 	models.ListResponse
 }
 
-// Participation
+// Application
 
 type ApplicationStatus struct {
 	Applied   bool   `json:"applied"`
@@ -119,6 +119,8 @@ type ApplicationResponse struct {
 	ID        int64  `json:"id"`
 	EventID   int64  `json:"event_id"`
 	UserID    int64  `json:"user_id"`
+	Username  string `json:"username"`
+	PhotoURL  string `json:"photo_url"`
 	FormID    int64  `json:"form_id"`
 	Accepted  bool   `json:"accepted"`
 	StartedAt string `json:"started_at"`
@@ -129,7 +131,16 @@ type ApplicationListResponse struct {
 	models.ListResponse
 }
 
-// Participation Pagination
+// Participation
+
+type ParticipantResponse struct {
+	ID       int64     `json:"id"`
+	EventID  int64     `json:"event_id"`
+	UserID   int64     `json:"user_id"`
+	Username string    `json:"username"`
+	PhotoURL string    `json:"photo_url"`
+	JoinedAt time.Time `json:"joined_at"`
+}
 
 type ParticipantListRequest struct {
 	EventID int64 `form:"event_id"`
@@ -137,7 +148,7 @@ type ParticipantListRequest struct {
 }
 
 type ParticipantListResponse struct {
-	List []Participant `json:"list"`
+	List []ParticipantResponse `json:"list"`
 	models.ListResponse
 }
 

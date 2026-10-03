@@ -70,9 +70,21 @@ type EventsRow struct {
 type ApplicationRaw struct {
 	ID      int64 `db:"id"`
 	EventID int64 `db:"event_id"`
-	UserID  int64 `db:"user_id"`
 	FormID  int64 `db:"form_id"`
 
-	Accepted  bool      `db:"Accepted"`
+	UserID   int64   `db:"user_id"`
+	Username string  `db:"username"`
+	PhotoKey *string `db:"photo_key"`
+	Accepted bool    `db:"Accepted"`
+
 	StartedAt time.Time `db:"started_at"`
+}
+
+type ParticipantRaw struct {
+	ID       int64     `db:"id"`
+	EventID  int64     `db:"event_id"`
+	UserID   int64     `db:"user_id"`
+	Username string    `db:"username"`
+	PhotoKey *string   `db:"photo_key"`
+	JoinedAt time.Time `db:"joined_at"`
 }

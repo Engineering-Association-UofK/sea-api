@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/eventmodels"
+
+	"github.com/jmoiron/sqlx"
 )
 
 func (r *EventRepository) CreateApplication(app *eventmodels.Application) (int64, error) {
@@ -54,10 +56,31 @@ func (r *EventRepository) GetApplicationListByEventID(eventID int64, limit, page
 	return list, nil
 }
 
-func (r *EventRepository) UpdateApplicationStatus(id int64, accepted bool) error {
-	query := fmt.Sprintf(`UPDATE %s SET Accepted = ? WHERE id = ?`, models.TableEventApplication)
-	_, err := r.db.Exec(query, accepted, id)
-	return err
+func (r *EventRepository) GetApplicationViews(eventID int64, limit, page int64) ([]eventmodels.ApplicationRaw, error) {
+	offset := (page - 1) * limit
+	var list = []eventmodels.ApplicationRaw{}
+	query := fmt.Sprintf(`
+	SELECT
+		a.id,
+		a.event_id,
+		a.form_id,
+		a.user_id,
+		u.username,
+		f.file_key AS photo_key,
+		a.Accepted,
+		a.started_at
+	FROM %s a
+	JOIN %s u ON a.user_id = u.id
+	LEFT JOIN %s f ON u.profile_image_id = f.id
+	WHERE a.event_id = ?
+	ORDER BY a.started_at DESC LIMIT ? OFFSET ?
+	`, models.TableEventApplication, models.TableUsers, models.TableFiles)
+
+	err := r.db.Select(&list, query, eventID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
 }
 
 func (r *EventRepository) CountApplications(eventID int64) (int64, error) {
@@ -67,8 +90,8 @@ func (r *EventRepository) CountApplications(eventID int64) (int64, error) {
 	return count, err
 }
 
-func (r *EventRepository) DeleteApplication(id int64) error {
+func (r *EventRepository) DeleteApplication(tx *sqlx.Tx, id int64) error {
 	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableEventApplication)
-	_, err := r.db.Exec(query, id)
+	_, err := tx.Exec(query, id)
 	return err
 }

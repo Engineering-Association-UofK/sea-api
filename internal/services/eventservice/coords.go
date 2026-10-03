@@ -25,7 +25,15 @@ func (s *EventService) GetCoordinators(eventID int64) ([]eventmodels.CoordRespon
 	if err != nil {
 		return nil, err
 	}
-	return coords, nil
+	var res = []eventmodels.CoordResponse{}
+	for _, c := range coords {
+		res = append(res, eventmodels.CoordResponse{
+			ID:   c.ID,
+			Name: c.Name,
+			Role: c.Role,
+		})
+	}
+	return res, nil
 }
 
 func (s *EventService) UpdateCoordinator(eventId, id int64, coord *eventmodels.CoordRequest) error {

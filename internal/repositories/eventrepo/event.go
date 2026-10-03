@@ -17,6 +17,10 @@ func NewEventRepository(db *sqlx.DB) *EventRepository {
 	return &EventRepository{db: db}
 }
 
+func (r *EventRepository) StartTransaction() (*sqlx.Tx, error) {
+	return r.db.Beginx()
+}
+
 func (r *EventRepository) Create(req *eventmodels.Event) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (name, description, background_id, belonging, require_applying, form_id, max_applications, created_at, start_date, end_date)
@@ -94,6 +98,7 @@ func (r *EventRepository) GetView(id int64) (*eventmodels.EventsRow, error) {
 		e.id,
 		e.name,
 		e.description,
+		e.background_id,
 		f.file_key AS background_key,
 		e.belonging,
 		e.require_applying,

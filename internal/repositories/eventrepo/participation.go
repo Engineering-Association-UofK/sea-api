@@ -4,13 +4,24 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/eventmodels"
+
+	"github.com/jmoiron/sqlx"
 )
 
-func (r *EventRepository) CreateParticipation(participant *eventmodels.Participant) (int64, error) {
+func (r *EventRepository) CreateParticipation(tx *sqlx.Tx, participant *eventmodels.Participant) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (event_id, user_id, joined_at)
 	VALUES (:event_id, :user_id, :joined_at)
 	`, models.TableEventParticipation)
+
+	if tx != nil {
+		res, err := tx.NamedExec(query, participant)
+		if err != nil {
+			return 0, err
+		}
+		return res.LastInsertId()
+	}
+
 	res, err := r.db.NamedExec(query, participant)
 	if err != nil {
 		return 0, err
@@ -46,6 +57,31 @@ func (r *EventRepository) GetParticipationByEventID(eventID int64, limit, page i
 	WHERE event_id = ? 
 	ORDER BY joined_at DESC LIMIT ? OFFSET ?
 	`, models.TableEventParticipation)
+
+	err := r.db.Select(&list, query, eventID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
+func (r *EventRepository) GetParticipantViews(eventID int64, limit, page int64) ([]eventmodels.ParticipantRaw, error) {
+	offset := (page - 1) * limit
+	var list = []eventmodels.ParticipantRaw{}
+	query := fmt.Sprintf(`
+	SELECT
+		p.id,
+		p.event_id,
+		p.user_id,
+		u.username,
+		f.file_key AS photo_key,
+		p.joined_at
+	FROM %s p
+	JOIN %s u ON p.user_id = u.id
+	LEFT JOIN %s f ON u.profile_image_id = f.id
+	WHERE p.event_id = ?
+	ORDER BY p.joined_at DESC LIMIT ? OFFSET ?
+	`, models.TableEventParticipation, models.TableUsers, models.TableFiles)
 
 	err := r.db.Select(&list, query, eventID, limit, offset)
 	if err != nil {
