@@ -4,13 +4,24 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/eventmodels"
+
+	"github.com/jmoiron/sqlx"
 )
 
-func (r *EventRepository) CreateParticipation(participant *eventmodels.EventParticipant) (int64, error) {
+func (r *EventRepository) CreateParticipation(tx *sqlx.Tx, participant *eventmodels.Participant) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (event_id, user_id, joined_at)
 	VALUES (:event_id, :user_id, :joined_at)
 	`, models.TableEventParticipation)
+
+	if tx != nil {
+		res, err := tx.NamedExec(query, participant)
+		if err != nil {
+			return 0, err
+		}
+		return res.LastInsertId()
+	}
+
 	res, err := r.db.NamedExec(query, participant)
 	if err != nil {
 		return 0, err
@@ -18,8 +29,8 @@ func (r *EventRepository) CreateParticipation(participant *eventmodels.EventPart
 	return res.LastInsertId()
 }
 
-func (r *EventRepository) GetParticipation(partID int64) (*eventmodels.EventParticipant, error) {
-	var model eventmodels.EventParticipant
+func (r *EventRepository) GetParticipation(partID int64) (*eventmodels.Participant, error) {
+	var model eventmodels.Participant
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableEventParticipation)
 	err := r.db.Get(&model, query, partID)
 	if err != nil {
@@ -28,8 +39,8 @@ func (r *EventRepository) GetParticipation(partID int64) (*eventmodels.EventPart
 	return &model, nil
 }
 
-func (r *EventRepository) GetParticipationWithEventAndUserIDs(eventID, userID int64) (*eventmodels.EventParticipant, error) {
-	var model eventmodels.EventParticipant
+func (r *EventRepository) GetParticipationWithEventAndUserIDs(eventID, userID int64) (*eventmodels.Participant, error) {
+	var model eventmodels.Participant
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE event_id = ? AND user_id = ?`, models.TableEventParticipation)
 	err := r.db.Get(&model, query, eventID, userID)
 	if err != nil {
@@ -38,14 +49,39 @@ func (r *EventRepository) GetParticipationWithEventAndUserIDs(eventID, userID in
 	return &model, nil
 }
 
-func (r *EventRepository) GetParticipationByEventID(eventID int64, limit, page int64) ([]eventmodels.EventParticipant, error) {
+func (r *EventRepository) GetParticipationByEventID(eventID int64, limit, page int64) ([]eventmodels.Participant, error) {
 	offset := (page - 1) * limit
-	var list = []eventmodels.EventParticipant{}
+	var list = []eventmodels.Participant{}
 	query := fmt.Sprintf(`
 	SELECT * FROM %s 
 	WHERE event_id = ? 
 	ORDER BY joined_at DESC LIMIT ? OFFSET ?
 	`, models.TableEventParticipation)
+
+	err := r.db.Select(&list, query, eventID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
+func (r *EventRepository) GetParticipantViews(eventID int64, limit, page int64) ([]eventmodels.ParticipantRaw, error) {
+	offset := (page - 1) * limit
+	var list = []eventmodels.ParticipantRaw{}
+	query := fmt.Sprintf(`
+	SELECT
+		p.id,
+		p.event_id,
+		p.user_id,
+		u.username,
+		f.file_key AS photo_key,
+		p.joined_at
+	FROM %s p
+	JOIN %s u ON p.user_id = u.id
+	LEFT JOIN %s f ON u.profile_image_id = f.id
+	WHERE p.event_id = ?
+	ORDER BY p.joined_at DESC LIMIT ? OFFSET ?
+	`, models.TableEventParticipation, models.TableUsers, models.TableFiles)
 
 	err := r.db.Select(&list, query, eventID, limit, offset)
 	if err != nil {

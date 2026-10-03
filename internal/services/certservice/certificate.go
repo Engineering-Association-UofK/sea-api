@@ -11,7 +11,7 @@ import (
 	"sea-api/internal/models"
 	"sea-api/internal/models/certmodels"
 	"sea-api/internal/repositories/certrepo"
-	"sea-api/internal/services/eventservice"
+	"sea-api/internal/repositories/eventrepo"
 	"sea-api/internal/services/storage"
 	"sea-api/internal/services/userservice"
 	"sea-api/internal/utils/valid"
@@ -23,19 +23,19 @@ type CertService struct {
 	repo *certrepo.CertRepository
 	s3   *storage.S3
 
-	eventService *eventservice.EventService
-	userService  *userservice.UserService
+	eventRepo   *eventrepo.EventRepository
+	userService *userservice.UserService
 
 	storePath string
 }
 
-func NewCertService(repo *certrepo.CertRepository, s3 *storage.S3, eventService *eventservice.EventService, userService *userservice.UserService) *CertService {
+func NewCertService(repo *certrepo.CertRepository, s3 *storage.S3, eventRepo *eventrepo.EventRepository, userService *userservice.UserService) *CertService {
 	return &CertService{
 		repo: repo,
 		s3:   s3,
 
-		eventService: eventService,
-		userService:  userService,
+		eventRepo:   eventRepo,
+		userService: userService,
 
 		storePath: "certificate",
 	}
@@ -86,7 +86,7 @@ func (s *CertService) Update(req *certmodels.UpdateRequest) error {
 		(!cert.EventID.Valid) {
 		slog.Debug("Updating Event ID", "Event ID", req.EventID)
 		if req.EventID != 0 {
-			_, err = s.eventService.Get(req.EventID)
+			_, err = s.eventRepo.Get(req.EventID)
 			if err != nil {
 				return errs.New(errs.NotFound, "Event with ID not found", nil)
 			}

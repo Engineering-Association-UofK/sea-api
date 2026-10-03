@@ -23,21 +23,21 @@ type Event struct {
 	EndDate   time.Time `db:"end_date" json:"end_date" binding:"required"`
 }
 
-type EventCoord struct {
+type Coordinator struct {
 	ID      int64  `db:"id"`
 	EventID int64  `db:"event_id"`
 	Name    string `db:"name"`
 	Role    string `db:"role"`
 }
 
-type EventParticipant struct {
+type Participant struct {
 	ID       int64     `db:"id"`
 	EventID  int64     `db:"event_id"`
 	UserID   int64     `db:"user_id"`
 	JoinedAt time.Time `db:"joined_at"`
 }
 
-type EventApplication struct {
+type Application struct {
 	ID      int64 `db:"id"`
 	EventID int64 `db:"event_id"`
 	UserID  int64 `db:"user_id"`
@@ -65,4 +65,26 @@ type EventsRow struct {
 	CreatedAt time.Time `db:"created_at"`
 	StartDate time.Time `db:"start_date"`
 	EndDate   time.Time `db:"end_date"`
+}
+
+type ApplicationRaw struct {
+	ID      int64 `db:"id"`
+	EventID int64 `db:"event_id"`
+	FormID  int64 `db:"form_id"`
+
+	UserID   int64   `db:"user_id"`
+	Username string  `db:"username"`
+	PhotoKey *string `db:"photo_key"`
+	Accepted bool    `db:"Accepted"`
+
+	StartedAt time.Time `db:"started_at"`
+}
+
+type ParticipantRaw struct {
+	ID       int64     `db:"id"`
+	EventID  int64     `db:"event_id"`
+	UserID   int64     `db:"user_id"`
+	Username string    `db:"username"`
+	PhotoKey *string   `db:"photo_key"`
+	JoinedAt time.Time `db:"joined_at"`
 }

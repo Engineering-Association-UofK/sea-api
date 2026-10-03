@@ -6,9 +6,9 @@ import (
 )
 
 func (s *EventService) AddCoordinators(eventID int64, list *eventmodels.AddCoordsRequest) error {
-	models := []eventmodels.EventCoord{}
+	models := []eventmodels.Coordinator{}
 	for _, e := range list.List {
-		models = append(models, eventmodels.EventCoord{
+		models = append(models, eventmodels.Coordinator{
 			EventID: eventID,
 			Name:    e.Name,
 			Role:    e.Role,
@@ -20,16 +20,24 @@ func (s *EventService) AddCoordinators(eventID int64, list *eventmodels.AddCoord
 	return nil
 }
 
-func (s *EventService) GetCoordinators(eventID int64) ([]eventmodels.EventCoord, error) {
+func (s *EventService) GetCoordinators(eventID int64) ([]eventmodels.CoordResponse, error) {
 	coords, err := s.repo.GetCoordsByEventID(eventID)
 	if err != nil {
 		return nil, err
 	}
-	return coords, nil
+	var res = []eventmodels.CoordResponse{}
+	for _, c := range coords {
+		res = append(res, eventmodels.CoordResponse{
+			ID:   c.ID,
+			Name: c.Name,
+			Role: c.Role,
+		})
+	}
+	return res, nil
 }
 
 func (s *EventService) UpdateCoordinator(eventId, id int64, coord *eventmodels.CoordRequest) error {
-	if err := s.repo.UpdateCoord(&eventmodels.EventCoord{
+	if err := s.repo.UpdateCoord(&eventmodels.Coordinator{
 		ID:      id,
 		EventID: eventId,
 		Name:    coord.Name,

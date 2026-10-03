@@ -23,6 +23,46 @@ func NewEventHandler(service *eventservice.EventService) *EventHandler {
 
 // ======== PUBLIC EVENTS ========
 
+// CheckStatus godocs
+//
+//	@Summary		Check Event Status
+//	@Description	Check user application status for an event
+//	@Tags			Events:v2:Public
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int								true	"Event ID"
+//	@Success		201		{object}	eventmodels.ApplicationStatus
+//	@Failure		400		{object}	response.BaseError
+//	@Failure		401		{object}	response.BaseError
+//	@Failure		500		{object}	response.BaseError
+//	@Router			/account/event/{id} [get]
+//
+//	@Security		ApiKeyAuth
+func (h *EventHandler) CheckStatus(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	eventId, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
+		return
+	}
+
+	value, exists := ctx.Get("user")
+	claims, ok := value.(*models.ManagedClaims)
+	if !exists || !ok {
+		slog.Debug("NoN", "Claims", claims, "Value", value)
+		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
+		return
+	}
+
+	res, err := h.service.CheckStatus(eventId, claims.UserID)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, res)
+}
+
 // ApplyForEvent godocs
 //
 //	@Summary		Apply for event
@@ -31,7 +71,7 @@ func NewEventHandler(service *eventservice.EventService) *EventHandler {
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path		int								true	"Event ID"
-//	@Success		201		{object}	response.TransactionResponse
+//	@Success		201		{object}	eventmodels.ApplyResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -91,35 +131,6 @@ func (h *EventHandler) GetEventViewList(ctx *gin.Context) {
 	}
 
 	ctx.PureJSON(http.StatusOK, events)
-}
-
-// GetEventView godocs
-//
-//	@Summary		Get public event details
-//	@Description	Get details of a specific event for public viewing
-//	@Tags			Events:v2:Public
-//	@Produce		json
-//	@Param			id	path		int	true	"Event ID"
-//	@Success		200	{object}	eventmodels.EventViewResponse
-//	@Failure		400	{object}	response.BaseError
-//	@Failure		404	{object}	response.BaseError
-//	@Failure		500	{object}	response.BaseError
-//	@Router			/event/{id} [get]
-func (h *EventHandler) GetEventView(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
-
-	event, err := h.service.GetEventView(ctx.Request.Context(), id)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.PureJSON(http.StatusOK, event)
 }
 
 // ======== ADMIN EVENTS ========
@@ -210,7 +221,7 @@ func (h *EventHandler) GetEvent(ctx *gin.Context) {
 		return
 	}
 
-	event, err := h.service.Get(id)
+	event, err := h.service.Get(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -293,7 +304,7 @@ func (h *EventHandler) DeleteEvent(ctx *gin.Context) {
 //	@Tags			Events:v2:coordinator
 //	@Produce		json
 //	@Param			id	path		int	true	"Event ID"
-//	@Success		200		{array}	eventmodels.EventCoord
+//	@Success		200		{array}	eventmodels.Coordinator
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -472,7 +483,7 @@ func (h *EventHandler) DeleteCoords(ctx *gin.Context) {
 	response.NewTransactionResponse(200, "All coordinators for event removed successfully", id, ctx)
 }
 
-// ======== PARTICIPATION ========
+// ======== APPLICATIONS ========
 
 // GetApplicationList godocs
 //
@@ -483,7 +494,7 @@ func (h *EventHandler) DeleteCoords(ctx *gin.Context) {
 //	@Param			id	path		int	true	"Event ID"
 //	@Param			limit		query		int	false	"Content count limit"
 //	@Param			page		query		int	false	"Page number"
-//	@Success		200		{object}	eventmodels.EventApplicationListResponse
+//	@Success		200		{object}	eventmodels.ApplicationListResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -498,13 +509,13 @@ func (h *EventHandler) GetApplicationList(ctx *gin.Context) {
 		return
 	}
 
-	var req eventmodels.EventApplicationListRequest
+	var req eventmodels.ApplicationListRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
-	res, err := h.service.GetApplications(eventId, &req)
+	res, err := h.service.GetApplications(ctx.Request.Context(), eventId, &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -592,6 +603,8 @@ func (h *EventHandler) RejectApplication(ctx *gin.Context) {
 	response.NewTransactionResponse(200, "Application Rejected successfully", appId, ctx)
 }
 
+// ======== PARTICIPATION ========
+
 // GetParticipantList godocs
 //
 //	@Summary		Get event participants
@@ -601,7 +614,7 @@ func (h *EventHandler) RejectApplication(ctx *gin.Context) {
 //	@Param			id	path		int	true	"Event ID"
 //	@Param			limit		query		int	false	"Content count limit"
 //	@Param			page		query		int	false	"Page number"
-//	@Success		200		{object}	eventmodels.EventParticipantListResponse
+//	@Success		200		{object}	eventmodels.ParticipantListResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -616,13 +629,13 @@ func (h *EventHandler) GetParticipantList(ctx *gin.Context) {
 		return
 	}
 
-	var req eventmodels.EventParticipantListRequest
+	var req eventmodels.ParticipantListRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
-	participants, err := h.service.GetParticipants(eventId, &req)
+	participants, err := h.service.GetParticipants(ctx.Request.Context(), eventId, &req)
 	if err != nil {
 		ctx.Error(err)
 		return

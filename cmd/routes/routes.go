@@ -99,7 +99,6 @@ func SetupRouter(
 	{ // ==== EVENTS
 		event := apiV1.Group("/event")
 		event.GET("", h.Event.GetEventViewList)
-		event.GET("/:id", h.Event.GetEventView)
 	}
 
 	{ // ==== Elections
@@ -145,6 +144,7 @@ func SetupRouter(
 			// event.GET("/all-status", h.Event.GetApplicationStatus)
 			// event.GET("/status/:id", h.Event.GetOneApplicationStatus)
 
+			event.GET("/:id", h.Event.CheckStatus)
 			event.POST("/:id", h.Event.ApplyForEvent)
 
 			// FIXME
@@ -283,7 +283,7 @@ func SetupRouter(
 		{ // ==== EVENTS
 			event := admin.Group("/event")
 			event.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
-			event.GET("/:id", h.Event.GetEvent)
+			event.GET(":id", h.Event.GetEvent)
 			event.GET("", h.Event.GetEventList)
 			event.POST("", h.Event.CreateEvent)
 			event.PUT("", h.Event.UpdateEvent)

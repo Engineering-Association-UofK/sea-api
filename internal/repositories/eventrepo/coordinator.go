@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/eventmodels"
+
+	"github.com/jmoiron/sqlx"
 )
 
-func (r *EventRepository) CreateCoord(req *eventmodels.EventCoord) (int64, error) {
+func (r *EventRepository) CreateCoord(req *eventmodels.Coordinator) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (event_id, name, role)
 	VALUES (:event_id, :name, :role)
@@ -18,7 +20,7 @@ func (r *EventRepository) CreateCoord(req *eventmodels.EventCoord) (int64, error
 	return res.LastInsertId()
 }
 
-func (r *EventRepository) UpdateCoord(coord *eventmodels.EventCoord) error {
+func (r *EventRepository) UpdateCoord(coord *eventmodels.Coordinator) error {
 	query := fmt.Sprintf(`
 	UPDATE %s SET
 		name = :name,
@@ -29,7 +31,7 @@ func (r *EventRepository) UpdateCoord(coord *eventmodels.EventCoord) error {
 	return err
 }
 
-func (r *EventRepository) CreateBatchCoords(coords []eventmodels.EventCoord) error {
+func (r *EventRepository) CreateBatchCoords(coords []eventmodels.Coordinator) error {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (event_id, name, role)
 	VALUES (:event_id, :name, :role)
@@ -38,11 +40,31 @@ func (r *EventRepository) CreateBatchCoords(coords []eventmodels.EventCoord) err
 	return err
 }
 
-func (r *EventRepository) GetCoordsByEventID(eventID int64) ([]eventmodels.EventCoord, error) {
-	var list = []eventmodels.EventCoord{}
+func (r *EventRepository) GetCoordsByEventID(eventID int64) ([]eventmodels.Coordinator, error) {
+	var list = []eventmodels.Coordinator{}
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE event_id = ?`, models.TableEventCoords)
 	err := r.db.Select(&list, query, eventID)
 	if err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
+func (r *EventRepository) GetCoordsByEventIDs(eventIDs []int64) ([]eventmodels.Coordinator, error) {
+	if len(eventIDs) == 0 {
+		return []eventmodels.Coordinator{}, nil
+	}
+
+	query, args, err := sqlx.In(
+		fmt.Sprintf(`SELECT * FROM %s WHERE event_id IN (?) ORDER BY id`, models.TableEventCoords),
+		eventIDs,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var list []eventmodels.Coordinator
+	if err := r.db.Select(&list, query, args...); err != nil {
 		return nil, err
 	}
 	return list, nil
