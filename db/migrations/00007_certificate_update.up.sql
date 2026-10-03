@@ -21,8 +21,8 @@ CREATE TABLE certificates (
     recipient_user_id INT NULL,
     event_id INT NULL,
     
-    FOREIGN KEY (template_id) REFERENCES certificate_templates(id),
-    FOREIGN KEY (recipient_user_id) REFERENCES users(id),
-    FOREIGN KEY (event_id) REFERENCES event(id),
+    CONSTRAINT certificates_template_FK FOREIGN KEY (template_id) REFERENCES certificate_templates(id),
+    CONSTRAINT certificates_user_FK FOREIGN KEY (recipient_user_id) REFERENCES users(id),
+    CONSTRAINT certificates_event_FK FOREIGN KEY (event_id) REFERENCES event(id),
     INDEX idx_event (event_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
