@@ -8,6 +8,7 @@ import (
 	"sea-api/internal/repositories/certrepo"
 	"sea-api/internal/repositories/electionrepo"
 	"sea-api/internal/repositories/eventrepo"
+	"sea-api/internal/repositories/notificationsrepo"
 	"sea-api/internal/services"
 	"sea-api/internal/services/analytics"
 	"sea-api/internal/services/auth"
@@ -16,6 +17,7 @@ import (
 	"sea-api/internal/services/electionservice"
 	"sea-api/internal/services/eventservice"
 	"sea-api/internal/services/forms"
+	"sea-api/internal/services/notificationservice"
 	"sea-api/internal/services/schedular"
 	"sea-api/internal/services/storage"
 	"sea-api/internal/services/userservice"
@@ -64,7 +66,7 @@ func BuildContainer() (*dig.Container, error) {
 		repositories.NewCmsRepository,
 		repositories.NewFormRepository,
 		repositories.NewRateLimitRepository,
-		repositories.NewNotificationRepository,
+		notificationsrepo.NewNotificationRepository,
 		repositories.NewBotRepository,
 		repositories.NewFeedbackRepository,
 		repositories.NewAuthRepository,
@@ -87,7 +89,7 @@ func BuildContainer() (*dig.Container, error) {
 		storage.NewS3Service,
 		services.NewGalleryService,
 		services.NewRateLimitService,
-		services.NewNotificationService,
+		notificationservice.NewNotificationService,
 		services.NewFeedbackService,
 		bot.NewBotService,
 		eventservice.NewEventService,

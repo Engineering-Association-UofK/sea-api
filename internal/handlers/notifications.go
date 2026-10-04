@@ -4,56 +4,80 @@ import (
 	"fmt"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/notificationsmodels"
 	"sea-api/internal/response"
-	"sea-api/internal/services"
+	"sea-api/internal/services/notificationservice"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type NotificationHandler struct {
-	service *services.NotificationService
+	service *notificationservice.NotificationService
 }
 
-func NewNotificationHandler(service *services.NotificationService) *NotificationHandler {
+func NewNotificationHandler(service *notificationservice.NotificationService) *NotificationHandler {
 	return &NotificationHandler{service: service}
 }
 
-// CreateDemoNotifications godocs
+// BulkCreateForUsers godocs
 //
-//	@Summary		Create demo notification
-//	@Description	Create a demo notification for the account that sends the request
+//	@Summary		Create notifications
+//	@Description	Create a notification for every user whose ID is in the request
 //	@Tags			Notifications
-//	@Param			body	body	models.DemoNotificationRequest	true	"Request body"
+//	@Param			body	body	notificationsmodels.BulkCreateForUsersRequest	true	"Request body"
 //	@Produce		json
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
-//	@Router			/account/notifications/demo [post]
+//	@Router			/admin/notifications [post]
 //
 //	@Security		ApiKeyAuth
-func (h *NotificationHandler) CreateDemoNotifications(c *gin.Context) {
-	var req models.DemoNotificationRequest
+func (h *NotificationHandler) BulkCreateForUsers(c *gin.Context) {
+	var req notificationsmodels.BulkCreateForUsersRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Invalid request body", nil))
 		return
 	}
 
-	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
-	if !exists || !ok {
-		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
-		return
-	}
-
-	id, err := h.service.CreateDemoNotifications(claims.UserID, &req)
+	err := h.service.BulkGenerateForUsers(&req)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	response.NewTransactionResponse(201, "Notification created successfully", id, c)
+	response.NewTransactionResponse(201, "Notifications created successfully", 0, c)
+}
+
+// BulkCreateForAllUsers godocs
+//
+//	@Summary		Create a Global Notification
+//	@Description	Create a notification for all users
+//	@Tags			Notifications
+//	@Param			body	body	notificationsmodels.BulkNotificationRequest	true	"Request body"
+//	@Produce		json
+//	@Success		200	{object}	response.TransactionResponse
+//	@Failure		400	{object}	response.BaseError
+//	@Failure		401	{object}	response.BaseError
+//	@Failure		500	{object}	response.BaseError
+//	@Router			/admin/notifications/all [post]
+//
+//	@Security		ApiKeyAuth
+func (h *NotificationHandler) BulkCreateForAllUsers(c *gin.Context) {
+	var req notificationsmodels.BulkNotificationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(errs.New(errs.BadRequest, "Invalid request body", nil))
+		return
+	}
+
+	err := h.service.BulkGenerateForAllUsers(&req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.NewTransactionResponse(201, "Notification created successfully", 0, c)
 }
 
 // GetNotifications godocs
@@ -64,7 +88,7 @@ func (h *NotificationHandler) CreateDemoNotifications(c *gin.Context) {
 //	@Param			limit	query	int	true	"Content count limit"
 //	@Param			page	query	int	true	"Page number"
 //	@Produce		json
-//	@Success		200	{object}	models.NotificationsListResponse
+//	@Success		200	{object}	notificationsmodels.NotificationsListResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
@@ -72,7 +96,7 @@ func (h *NotificationHandler) CreateDemoNotifications(c *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (h *NotificationHandler) GetNotifications(c *gin.Context) {
-	var req models.NotificationListRequest
+	var req notificationsmodels.NotificationListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return

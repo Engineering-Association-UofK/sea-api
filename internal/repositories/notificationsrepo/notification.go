@@ -1,8 +1,10 @@
-package repositories
+package notificationsrepo
 
 import (
 	"fmt"
 	"sea-api/internal/models"
+	"sea-api/internal/models/notificationsmodels"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -15,7 +17,7 @@ func NewNotificationRepository(db *sqlx.DB) *NotificationRepository {
 	return &NotificationRepository{db: db}
 }
 
-func (r *NotificationRepository) Create(notification *models.Notification) (int64, error) {
+func (r *NotificationRepository) Create(notification *notificationsmodels.Notification) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (user_id, title, message, type, data, created_at, is_read)
 	VALUES (:user_id, :title, :message, :type, :data, :created_at, :is_read)
@@ -27,7 +29,31 @@ func (r *NotificationRepository) Create(notification *models.Notification) (int6
 	return res.LastInsertId()
 }
 
-func (r *NotificationRepository) GetByUserIDWithLimit(userID int64, limit models.ListRequest) ([]models.Notification, error) {
+func (r *NotificationRepository) BulkCreateForUsers(req *notificationsmodels.NotificationInsertRow) error {
+	rawQuery := fmt.Sprintf(`
+	INSERT INTO %s (user_id, title, message, type, data, created_at, is_read)
+	SELECT id, ?, ?, ?, ?, ?, false
+	FROM %s
+	`, models.TableNotifications, models.TableUsers)
+
+	var err error
+	if req.IDs != nil {
+		rawQuery += ` WHERE id IN (?)`
+
+		query, args, err := sqlx.In(rawQuery, req.Title, req.Message, req.Type, req.Data, time.Now(), req.IDs)
+		if err != nil {
+			return err
+		}
+		query = r.db.Rebind(query)
+		_, err = r.db.Exec(query, args...)
+	} else {
+		_, err = r.db.Exec(rawQuery, req.Title, req.Message, req.Type, req.Data, time.Now())
+	}
+
+	return err
+}
+
+func (r *NotificationRepository) GetByUserIDWithLimit(userID int64, limit models.ListRequest) ([]notificationsmodels.Notification, error) {
 	offset := (limit.Page - 1) * limit.Limit
 	query := fmt.Sprintf(`
 	SELECT * FROM %s 
@@ -35,7 +61,7 @@ func (r *NotificationRepository) GetByUserIDWithLimit(userID int64, limit models
 	ORDER BY created_at DESC
 	LIMIT ? OFFSET ? 
 	`, models.TableNotifications)
-	var notifications = []models.Notification{}
+	var notifications = []notificationsmodels.Notification{}
 	err := r.db.Select(&notifications, query, userID, limit.Limit, offset)
 	if err != nil {
 		return nil, err
