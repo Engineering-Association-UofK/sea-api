@@ -159,7 +159,6 @@ func SetupRouter(
 
 		{ // ==== Notifications
 			notification := account.Group("/notifications")
-			notification.POST("/demo", h.Notification.CreateDemoNotifications)
 			notification.GET("", h.Notification.GetNotifications)
 			notification.POST("/:id", h.Notification.MarkAsRead)
 			notification.POST("", h.Notification.MarkAllAsRead)
@@ -178,6 +177,12 @@ func SetupRouter(
 		{ // ==== Analysis
 			analysis := admin.Group("/analysis")
 			analysis.GET("", midLimit, h.Analytics.GetGeneralAnalytics)
+		}
+
+		{ // ==== Notifications
+			notifications := admin.Group("/notifications")
+			notifications.POST("", h.Notification.BulkCreateForUsers)
+			notifications.POST("/all", h.Notification.BulkCreateForAllUsers)
 		}
 
 		{ // ==== USERS
