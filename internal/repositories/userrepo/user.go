@@ -55,13 +55,9 @@ func (r *UserRepository) GetAll(limit int64, page int64) ([]models.UserModel, er
 	return users, nil
 }
 
-func (r *UserRepository) GetTotal(isTempUser bool) (int64, error) {
-	table := tables.Users
-	if isTempUser {
-		table = tables.TempUsers
-	}
+func (r *UserRepository) GetTotal() (int64, error) {
 	var count int64
-	err := r.DB.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, table))
+	err := r.DB.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, tables.Users))
 	if err != nil {
 		return 0, err
 	}
@@ -231,11 +227,6 @@ func (r *UserRepository) UpdateWithID(user *models.UserModel, tx *sqlx.Tx) error
 		return err
 	}
 	_, err := r.DB.NamedExec(query, user)
-	return err
-}
-
-func (r *UserRepository) UpdateTempPasscode(id int64, passcode string) error {
-	_, err := r.DB.Exec(fmt.Sprintf(`UPDATE %s SET password = ? WHERE id = ?`, tables.TempUsers), passcode, id)
 	return err
 }
 
