@@ -19,7 +19,7 @@ func (s *ElectionService) IsElectionLive() (*electionsmodels.CheckElection, erro
 }
 
 func (s *ElectionService) PublicElectionStatistics() (*electionsmodels.PublicStats, error) {
-	cfg, err := s.Guard(true, true, true)
+	cfg, err := s.repo.GetElectionConfig()
 	if err != nil {
 		return nil, err
 	}
