@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sea-api/internal/models/tables"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
