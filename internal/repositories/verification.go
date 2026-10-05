@@ -3,7 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"fmt"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
@@ -19,7 +19,7 @@ func NewVerificationRepo(db *sqlx.DB) *VerificationRepo {
 	}
 }
 
-func (r *VerificationRepo) Create(verification *models.VerificationCodeModel) error {
+func (r *VerificationRepo) Create(verification *authmodels.VerificationCodeModel) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (code, user_id, created_at)
 		VALUES (:code, :user_id, :created_at)
@@ -28,11 +28,11 @@ func (r *VerificationRepo) Create(verification *models.VerificationCodeModel) er
 	return err
 }
 
-func (r *VerificationRepo) GetByCode(code string) (*models.VerificationCodeModel, error) {
+func (r *VerificationRepo) GetByCode(code string) (*authmodels.VerificationCodeModel, error) {
 	query := fmt.Sprintf(`
 		SELECT * FROM %s WHERE code = ?
 	`, tables.VerificationCode)
-	var verification models.VerificationCodeModel
+	var verification authmodels.VerificationCodeModel
 	err := r.db.Get(&verification, query, code)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -43,11 +43,11 @@ func (r *VerificationRepo) GetByCode(code string) (*models.VerificationCodeModel
 	return &verification, nil
 }
 
-func (r *VerificationRepo) GetByUserID(user_id int64) (*models.VerificationCodeModel, error) {
+func (r *VerificationRepo) GetByUserID(user_id int64) (*authmodels.VerificationCodeModel, error) {
 	query := fmt.Sprintf(`
 		SELECT * FROM %s WHERE user_id = ?
 	`, tables.VerificationCode)
-	var verification models.VerificationCodeModel
+	var verification authmodels.VerificationCodeModel
 	err := r.db.Get(&verification, query, user_id)
 	if err != nil {
 		return nil, err

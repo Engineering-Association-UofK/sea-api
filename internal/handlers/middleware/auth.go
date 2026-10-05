@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"sea-api/internal/config"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/services/userservice"
 	"strings"
 
@@ -25,7 +25,7 @@ func AuthMiddleware(s *userservice.UserService) gin.HandlerFunc {
 		secretBytes := []byte(config.App.JwtSecret)
 
 		// Get token and claims
-		claims := &models.ManagedClaims{}
+		claims := &authmodels.ManagedClaims{}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])

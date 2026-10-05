@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/tables"
+	"sea-api/internal/models/usermodels"
 )
 
-func (r *UserRepository) GetAdmins(req *models.ListRequest) ([]models.AdminRow, error) {
-	var admins []models.AdminRow
+func (r *UserRepository) GetAdmins(req *models.ListRequest) ([]usermodels.AdminRow, error) {
+	var admins []usermodels.AdminRow
 	offset := (req.Page - 1) * req.Limit
 	query := fmt.Sprintf(`
 		SELECT 
@@ -23,7 +24,7 @@ func (r *UserRepository) GetAdmins(req *models.ListRequest) ([]models.AdminRow, 
 		LIMIT ? OFFSET ?
 	`, tables.Users, tables.UserRoles, tables.Files, tables.UserRoles)
 
-	err := r.DB.Select(&admins, query, models.RoleSystemAdmin, req.Limit, offset)
+	err := r.DB.Select(&admins, query, usermodels.RoleSystemAdmin, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func (r *UserRepository) GetAdminsCount() (int64, error) {
 		SELECT COUNT(*) FROM %s u 
 		JOIN %s ur ON u.id = ur.user_id 
 		WHERE ur.role = ?
-	`, tables.Users, tables.UserRoles), models.RoleSystemAdmin)
+	`, tables.Users, tables.UserRoles), usermodels.RoleSystemAdmin)
 	if err != nil {
 		return 0, err
 	}
@@ -44,11 +45,11 @@ func (r *UserRepository) GetAdminsCount() (int64, error) {
 }
 
 func (r *UserRepository) AddAdmin(id int64) error {
-	_, err := r.DB.Exec(fmt.Sprintf(`INSERT INTO %s (user_id, role) VALUES (?, ?)`, tables.UserRoles), id, models.RoleSystemAdmin)
+	_, err := r.DB.Exec(fmt.Sprintf(`INSERT INTO %s (user_id, role) VALUES (?, ?)`, tables.UserRoles), id, usermodels.RoleSystemAdmin)
 	return err
 }
 
 func (r *UserRepository) RemoveAdmin(id int64) error {
-	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE user_id = ? AND role = ?`, tables.UserRoles), id, models.RoleSystemAdmin)
+	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE user_id = ? AND role = ?`, tables.UserRoles), id, usermodels.RoleSystemAdmin)
 	return err
 }

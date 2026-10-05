@@ -2,14 +2,14 @@ package userrepo
 
 import (
 	"fmt"
-	"sea-api/internal/models"
 	"sea-api/internal/models/tables"
+	"sea-api/internal/models/usermodels"
 
 	"github.com/jmoiron/sqlx"
 )
 
-func (r *UserRepository) GetAllRolesByUserIDs(ids []int64) ([]models.UserRole, error) {
-	var roles []models.UserRole
+func (r *UserRepository) GetAllRolesByUserIDs(ids []int64) ([]usermodels.UserRole, error) {
+	var roles []usermodels.UserRole
 	if len(ids) == 0 {
 		return roles, nil
 	}
@@ -28,8 +28,8 @@ func (r *UserRepository) GetAllRolesByUserIDs(ids []int64) ([]models.UserRole, e
 	return roles, nil
 }
 
-func (r *UserRepository) GetRolesByUserID(id int64) ([]models.UserRole, error) {
-	var roles []models.UserRole
+func (r *UserRepository) GetRolesByUserID(id int64) ([]usermodels.UserRole, error) {
+	var roles []usermodels.UserRole
 	err := r.DB.Select(&roles, fmt.Sprintf(`SELECT * FROM %s WHERE user_id = ?`, tables.UserRoles), id)
 	if err != nil {
 		return nil, err
@@ -37,12 +37,12 @@ func (r *UserRepository) GetRolesByUserID(id int64) ([]models.UserRole, error) {
 	return roles, nil
 }
 
-func (r *UserRepository) CreateRole(role *models.UserRole) error {
+func (r *UserRepository) CreateRole(role *usermodels.UserRole) error {
 	_, err := r.DB.NamedExec(fmt.Sprintf(`INSERT INTO %s (user_id, role) VALUES (:user_id, :role)`, tables.UserRoles), role)
 	return err
 }
 
-func (r *UserRepository) UpdateRole(role *models.UserRole, tx *sqlx.Tx) error {
+func (r *UserRepository) UpdateRole(role *usermodels.UserRole, tx *sqlx.Tx) error {
 	query := fmt.Sprintf(`UPDATE %s SET role = :role WHERE user_id = :id`, tables.UserRoles)
 	if tx != nil {
 		_, err := tx.NamedExec(query, role)
@@ -52,7 +52,7 @@ func (r *UserRepository) UpdateRole(role *models.UserRole, tx *sqlx.Tx) error {
 	return err
 }
 
-func (r *UserRepository) RemoveRole(id int64, role models.Role, tx *sqlx.Tx) error {
+func (r *UserRepository) RemoveRole(id int64, role usermodels.Role, tx *sqlx.Tx) error {
 	query := fmt.Sprintf(`DELETE FROM %s WHERE user_id = ? AND role = ?`, tables.UserRoles)
 	if tx != nil {
 		_, err := tx.Exec(query, id, role)
@@ -62,7 +62,7 @@ func (r *UserRepository) RemoveRole(id int64, role models.Role, tx *sqlx.Tx) err
 	return err
 }
 
-func (r *UserRepository) ReplaceRoles(id int64, roles []models.Role, tx *sqlx.Tx) error {
+func (r *UserRepository) ReplaceRoles(id int64, roles []usermodels.Role, tx *sqlx.Tx) error {
 	deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE user_id = ?`, tables.UserRoles)
 	insertQuery := fmt.Sprintf(`INSERT INTO %s (user_id, role) VALUES (?, ?)`, tables.UserRoles)
 
@@ -95,7 +95,7 @@ func (r *UserRepository) ReplaceRoles(id int64, roles []models.Role, tx *sqlx.Tx
 	return newTx.Commit()
 }
 
-func (r *UserRepository) DeleteRole(id int64, role models.Role, tx *sqlx.Tx) error {
+func (r *UserRepository) DeleteRole(id int64, role usermodels.Role, tx *sqlx.Tx) error {
 	query := fmt.Sprintf(`DELETE FROM %s WHERE user_id = ? AND role = ?`, tables.UserRoles)
 	if tx != nil {
 		_, err := tx.Exec(query, id, role)

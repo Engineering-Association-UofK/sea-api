@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"sea-api/internal/config"
 	"sea-api/internal/errs"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"strconv"
 	"time"
 
@@ -33,18 +33,18 @@ import (
 
 And done. The rest of the details can be filled later on if the user wanted to enter an event.
 */
-func (s *AuthService) CheckRegistration(req *models.CheckRegistrationRequest) (*models.CheckRegistrationResponse, int64, error) {
+func (s *AuthService) CheckRegistration(req *authmodels.CheckRegistrationRequest) (*authmodels.CheckRegistrationResponse, int64, error) {
 	state, err := s.AuthRepository.GetStateWithCode(req.RegCode)
 	if err != nil {
 		return nil, 0, err
 	}
-	return &models.CheckRegistrationResponse{
+	return &authmodels.CheckRegistrationResponse{
 		RegStep: state.Step,
 	}, state.UserID, nil
 }
 
 // # First Step
-func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest) error {
+func (s *AuthService) InitialRegistration(req *authmodels.InitialRegistrationRequest) error {
 	slog.Debug("Initial Registration Started")
 
 	_, err := s.UserRepo.GetUserRow(req.UserID)
@@ -75,7 +75,7 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 	}
 	defer tx.Rollback()
 
-	err = s.UserRepo.StartUserRegistration(tx, &models.RegInitCreate{
+	err = s.UserRepo.StartUserRegistration(tx, &authmodels.RegInitCreate{
 		ID:    req.UserID,
 		Email: req.Email,
 	})
@@ -93,7 +93,7 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 	// Start registration counter
 	data := []byte(fmt.Sprintf("%s|%d|%s", req.Email, req.UserID, time.Now()))
 	hash := sha256.Sum256(data)
-	err = s.AuthRepository.StartRegistration(tx, &models.RegistrationStepModel{
+	err = s.AuthRepository.StartRegistration(tx, &authmodels.RegistrationStepModel{
 		RegCode: fmt.Sprintf("%x", hash),
 		UserID:  req.UserID,
 		Step:    1,
@@ -117,8 +117,8 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 
 // # Second Step
 // Also acts as a password reset function
-func (s *AuthService) CredentialsRegistration(req *models.PasswordRegistrationRequest) error {
-	state, userID, err := s.CheckRegistration(&models.CheckRegistrationRequest{RegCode: req.RegCode})
+func (s *AuthService) CredentialsRegistration(req *authmodels.PasswordRegistrationRequest) error {
+	state, userID, err := s.CheckRegistration(&authmodels.CheckRegistrationRequest{RegCode: req.RegCode})
 	if err != nil {
 		return err
 	}
@@ -146,8 +146,8 @@ func (s *AuthService) CredentialsRegistration(req *models.PasswordRegistrationRe
 }
 
 // # Third step
-func (s *AuthService) DetailsRegistration(req *models.DetailsRegistrationRequest) error {
-	state, userID, err := s.CheckRegistration(&models.CheckRegistrationRequest{RegCode: req.RegCode})
+func (s *AuthService) DetailsRegistration(req *authmodels.DetailsRegistrationRequest) error {
+	state, userID, err := s.CheckRegistration(&authmodels.CheckRegistrationRequest{RegCode: req.RegCode})
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (s *AuthService) DetailsRegistration(req *models.DetailsRegistrationRequest
 		return err
 	}
 
-	err = s.UserRepo.UpdateDetails(&models.RegDetailsUpdate{
+	err = s.UserRepo.UpdateDetails(&authmodels.RegDetailsUpdate{
 		UserID:     userID,
 		NameAr:     req.NameAr,
 		NameEn:     req.NameEn,
@@ -177,8 +177,8 @@ func (s *AuthService) DetailsRegistration(req *models.DetailsRegistrationRequest
 }
 
 // # Fourth and final step
-func (s *AuthService) UsernameRegistration(req *models.UsernameRegistrationRequest) error {
-	state, userID, err := s.CheckRegistration(&models.CheckRegistrationRequest{RegCode: req.RegCode})
+func (s *AuthService) UsernameRegistration(req *authmodels.UsernameRegistrationRequest) error {
+	state, userID, err := s.CheckRegistration(&authmodels.CheckRegistrationRequest{RegCode: req.RegCode})
 	if err != nil {
 		return err
 	}

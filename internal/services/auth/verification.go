@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"math/big"
 	"sea-api/internal/errs"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Deprecated: No longer needed with new registration system as of v1.0.1
-func (s *AuthService) Verify(req models.VerifyRequest) error {
+func (s *AuthService) Verify(req authmodels.VerifyRequest) error {
 	code, err := s.VerificationRepo.GetByUserID(req.UserID)
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func (s *AuthService) SendVerificationCode(userID int64) error {
 	if err != nil {
 		return err
 	}
-	codeModel := &models.VerificationCodeModel{
+	codeModel := &authmodels.VerificationCodeModel{
 		Code:      string(hashedCode),
 		UserID:    userID,
 		CreatedAt: time.Now(),
@@ -82,7 +82,7 @@ func (s *AuthService) SendVerificationCode(userID int64) error {
 	if err != nil {
 		return err
 	}
-	err = s.MailService.SendVerificationCode(*user.Email, models.VerifyEmail{
+	err = s.MailService.SendVerificationCode(*user.Email, authmodels.VerifyEmail{
 		Input: code,
 		Year:  time.Now().Year(),
 	})

@@ -4,6 +4,8 @@ import (
 	"io"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
+	"sea-api/internal/models/usermodels"
 	"sea-api/internal/response"
 	"sea-api/internal/services/userservice"
 	"strconv"
@@ -255,7 +257,7 @@ func (u *UserHandler) GetTempUserPasscode(c *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (u *UserHandler) Update(c *gin.Context) {
-	var req models.UpdateProfileRequest
+	var req usermodels.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -379,7 +381,7 @@ func (u *UserHandler) RemoveAdminManager(c *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (u *UserHandler) UpdateAdmin(c *gin.Context) {
-	var req models.AdminRequest
+	var req usermodels.AdminRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -449,7 +451,7 @@ func (u *UserHandler) Suspend(c *gin.Context) {
 	}
 
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return

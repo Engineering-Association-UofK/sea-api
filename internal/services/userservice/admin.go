@@ -4,11 +4,12 @@ import (
 	"context"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/usermodels"
 	"sea-api/internal/utils/valid"
 	"slices"
 )
 
-func (s *UserService) GetAdmins(ctx context.Context, req *models.ListRequest) (*models.AdminResponseList, error) {
+func (s *UserService) GetAdmins(ctx context.Context, req *models.ListRequest) (*usermodels.AdminResponseList, error) {
 	total, err := s.repo.GetAdminsCount()
 	if err != nil {
 		return nil, err
@@ -20,12 +21,12 @@ func (s *UserService) GetAdmins(ctx context.Context, req *models.ListRequest) (*
 		return nil, err
 	}
 
-	adminMap := map[int64]models.AdminRow{}
-	adminRoles := map[int64][]models.Role{}
+	adminMap := map[int64]usermodels.AdminRow{}
+	adminRoles := map[int64][]usermodels.Role{}
 	for _, a := range admins {
 		role := a.Role
 		if _, ok := adminRoles[a.ID]; !ok {
-			adminRoles[a.ID] = []models.Role{}
+			adminRoles[a.ID] = []usermodels.Role{}
 		}
 		adminRoles[a.ID] = append(adminRoles[a.ID], role)
 		if _, ok := adminMap[a.ID]; !ok {
@@ -33,7 +34,7 @@ func (s *UserService) GetAdmins(ctx context.Context, req *models.ListRequest) (*
 		}
 	}
 
-	var adminResponses []models.AdminResponse
+	var adminResponses []usermodels.AdminResponse
 	for _, a := range admins {
 		url := ""
 		if a.ProfilePic.Valid {
@@ -42,7 +43,7 @@ func (s *UserService) GetAdmins(ctx context.Context, req *models.ListRequest) (*
 				return nil, err
 			}
 		}
-		adminResponses = append(adminResponses, models.AdminResponse{
+		adminResponses = append(adminResponses, usermodels.AdminResponse{
 			ID:         a.ID,
 			Email:      a.Email,
 			ProfilePic: url,
@@ -53,7 +54,7 @@ func (s *UserService) GetAdmins(ctx context.Context, req *models.ListRequest) (*
 		})
 	}
 
-	return &models.AdminResponseList{
+	return &usermodels.AdminResponseList{
 		Admins:  adminResponses,
 		Total:   total,
 		Current: req.Page,
@@ -66,10 +67,10 @@ func (s *UserService) AddAdmin(ID int64) error {
 	if err != nil {
 		return err
 	}
-	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
+	if slices.Contains(roles, usermodels.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot add a Super Admin as an admin", nil)
 	}
-	if slices.Contains(roles, models.RoleSystemAdmin) {
+	if slices.Contains(roles, usermodels.RoleSystemAdmin) {
 		return errs.New(errs.Conflict, "User is already an admin", nil)
 	}
 	err = s.repo.AddAdmin(ID)
@@ -84,13 +85,13 @@ func (s *UserService) MakeAdminManager(ID int64) error {
 	if err != nil {
 		return err
 	}
-	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
+	if slices.Contains(roles, usermodels.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot add a Super Admin as an admin", nil)
 	}
-	if slices.Contains(roles, models.RoleSystemAdminManager) {
+	if slices.Contains(roles, usermodels.RoleSystemAdminManager) {
 		return errs.New(errs.Conflict, "User is already an admin manager", nil)
 	}
-	err = s.repo.CreateRole(&models.UserRole{UserID: ID, Role: models.RoleSystemAdminManager})
+	err = s.repo.CreateRole(&usermodels.UserRole{UserID: ID, Role: usermodels.RoleSystemAdminManager})
 	if err != nil {
 		return err
 	}
@@ -102,40 +103,40 @@ func (s *UserService) RemoveAdminManager(ID int64) error {
 	if err != nil {
 		return err
 	}
-	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
+	if slices.Contains(roles, usermodels.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot remove a Super Admin as an admin manager", nil)
 	}
-	if !slices.Contains(roles, models.RoleSystemAdminManager) {
+	if !slices.Contains(roles, usermodels.RoleSystemAdminManager) {
 		return errs.New(errs.NotFound, "User is not an admin manager", nil)
 	}
-	err = s.repo.RemoveRole(ID, models.RoleSystemAdminManager, nil)
+	err = s.repo.RemoveRole(ID, usermodels.RoleSystemAdminManager, nil)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *UserService) UpdateAdminRoles(req *models.AdminRequest) error {
+func (s *UserService) UpdateAdminRoles(req *usermodels.AdminRequest) error {
 	roles, err := s.GetRolesByUserID(req.ID)
 	if err != nil {
 		return err
 	}
-	specialRoles := []models.Role{}
+	specialRoles := []usermodels.Role{}
 	for _, role := range roles {
-		if role == models.RoleSystemSuperAdmin {
+		if role == usermodels.RoleSystemSuperAdmin {
 			return errs.New(errs.Forbidden, "Cannot update a Super Admin's roles", nil)
 		}
-		if models.SpecialAdminRoles[role] {
+		if usermodels.SpecialAdminRoles[role] {
 			specialRoles = append(specialRoles, role)
 		}
 	}
-	if !slices.Contains(roles, models.RoleSystemAdmin) {
+	if !slices.Contains(roles, usermodels.RoleSystemAdmin) {
 		return errs.New(errs.NotFound, "User is not an admin", nil)
 	}
 
-	var rolesToAdd = []models.Role{}
+	var rolesToAdd = []usermodels.Role{}
 	for _, role := range req.Roles {
-		if models.AllowedAdminRoles[role] {
+		if usermodels.AllowedAdminRoles[role] {
 			rolesToAdd = append(rolesToAdd, role)
 		}
 	}
@@ -156,9 +157,9 @@ func (s *UserService) UpdateAdminRoles(req *models.AdminRequest) error {
 }
 
 func (s *UserService) RemoveAdmin(ID int64) error {
-	err := s.UpdateAdminRoles(&models.AdminRequest{
+	err := s.UpdateAdminRoles(&usermodels.AdminRequest{
 		ID:    ID,
-		Roles: []models.Role{},
+		Roles: []usermodels.Role{},
 	})
 	err = s.repo.RemoveAdmin(ID)
 	if err != nil {

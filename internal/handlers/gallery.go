@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
 	"strconv"
@@ -53,7 +54,7 @@ func (h *GalleryHandler) Upload(ctx *gin.Context) {
 	req.File = file
 
 	value, exists := ctx.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return

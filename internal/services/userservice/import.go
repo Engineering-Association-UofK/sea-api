@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"sea-api/internal/config"
 	"sea-api/internal/models"
+	"sea-api/internal/models/usermodels"
 	"sea-api/internal/utils"
 	"sea-api/internal/utils/sheets"
 	"strconv"
@@ -31,7 +32,7 @@ func (s *UserService) ImportUsers(eventID int64, file io.Reader) error {
 		return err
 	}
 
-	existingMap := utils.FromSlice(existing, func(u models.UserModel) int64 { return u.ID })
+	existingMap := utils.FromSlice(existing, func(u usermodels.UserModel) int64 { return u.ID })
 
 	tx, err := s.repo.DB.Beginx()
 	if err != nil {
@@ -48,7 +49,7 @@ func (s *UserService) ImportUsers(eventID int64, file io.Reader) error {
 			p, _ := generatePasscode(8)
 			pass, _ := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
 			password := string(pass)
-			err = s.repo.Create(&models.UserModel{
+			err = s.repo.Create(&usermodels.UserModel{
 				ID:         index,
 				UniID:      nil,
 				Username:   &[]string{hex.EncodeToString(username[:])}[0],
@@ -59,8 +60,8 @@ func (s *UserService) ImportUsers(eventID int64, file io.Reader) error {
 				Department: nil,
 				Verified:   false,
 				Password:   &password,
-				Status:     models.STATUS_INACTIVE,
-				Gender:     &[]models.Gender{models.MALE}[0],
+				Status:     usermodels.STATUS_INACTIVE,
+				Gender:     &[]usermodels.Gender{usermodels.MALE}[0],
 			}, tx)
 			if err != nil {
 				return err
@@ -101,7 +102,7 @@ func (s *UserService) UpdateUsersImport(file io.Reader) error {
 			}
 			u.ID = index
 			u.Phone = &[]string{user.Phone}[0]
-			u.Status = models.STATUS_INACTIVE
+			u.Status = usermodels.STATUS_INACTIVE
 			s.repo.UpdateWithID(&u, nil)
 		}
 	}

@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"fmt"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
@@ -16,7 +16,7 @@ func NewAuthRepository(db *sqlx.DB) *AuthRepository {
 	return &AuthRepository{db: db}
 }
 
-func (r *AuthRepository) StartRegistration(tx *sqlx.Tx, model *models.RegistrationStepModel) error {
+func (r *AuthRepository) StartRegistration(tx *sqlx.Tx, model *authmodels.RegistrationStepModel) error {
 	model.Step = 1
 	query := fmt.Sprintf(`INSERT INTO %s (reg_code, user_id, step) 
 		VALUES (:reg_code, :user_id, :step)`, tables.RegistrationStep)
@@ -43,15 +43,15 @@ func (r *AuthRepository) SetStep(RegCode string, stepNumber int64) error {
 	return err
 }
 
-func (r *AuthRepository) GetStateWithCode(RegCode string) (*models.RegistrationStepModel, error) {
-	var model models.RegistrationStepModel
+func (r *AuthRepository) GetStateWithCode(RegCode string) (*authmodels.RegistrationStepModel, error) {
+	var model authmodels.RegistrationStepModel
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE reg_code = ?`, tables.RegistrationStep)
 	err := r.db.Get(&model, query, RegCode)
 	return &model, err
 }
 
-func (r *AuthRepository) GetStateWithID(ID int64) (*models.RegistrationStepModel, error) {
-	var model models.RegistrationStepModel
+func (r *AuthRepository) GetStateWithID(ID int64) (*authmodels.RegistrationStepModel, error) {
+	var model authmodels.RegistrationStepModel
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE user_id = ?`, tables.RegistrationStep)
 	err := r.db.Get(&model, query, ID)
 	return &model, err
