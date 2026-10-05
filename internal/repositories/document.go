@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"sea-api/internal/models"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -19,7 +20,7 @@ func (r *DocumentRepository) Create(doc *models.DocumentModel, tx *sqlx.Tx) (int
 	query := fmt.Sprintf(`
 	INSERT INTO %s (doc_hash, file_id, type, created_at)
 	VALUES (:doc_hash, :file_id, :type, :created_at)
-	`, models.TableDocuments)
+	`, tables.Documents)
 	if tx != nil {
 		res, err := tx.NamedExec(query, doc)
 		if err != nil {
@@ -36,7 +37,7 @@ func (r *DocumentRepository) Create(doc *models.DocumentModel, tx *sqlx.Tx) (int
 
 func (r *DocumentRepository) GetByID(id int64) (*models.DocumentModel, error) {
 	var doc models.DocumentModel
-	err := r.DB.Get(&doc, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableDocuments), id)
+	err := r.DB.Get(&doc, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.Documents), id)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func (r *DocumentRepository) GetByID(id int64) (*models.DocumentModel, error) {
 
 func (r *DocumentRepository) GetByHash(hash string) (*models.DocumentModel, error) {
 	var doc models.DocumentModel
-	err := r.DB.Get(&doc, fmt.Sprintf(`SELECT * FROM %s WHERE doc_hash = ?`, models.TableDocuments), hash)
+	err := r.DB.Get(&doc, fmt.Sprintf(`SELECT * FROM %s WHERE doc_hash = ?`, tables.Documents), hash)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +57,7 @@ func (r *DocumentRepository) CreateRelation(rel *models.DocumentRelationModel, t
 	query := fmt.Sprintf(`
 	INSERT INTO %s (description, document_id, object_type, object_id)
 	VALUES (:description, :document_id, :object_type, :object_id)
-	`, models.TableDocumentRelations)
+	`, tables.DocumentRelations)
 	if tx != nil {
 		res, err := tx.NamedExec(query, rel)
 		if err != nil {
@@ -73,7 +74,7 @@ func (r *DocumentRepository) CreateRelation(rel *models.DocumentRelationModel, t
 
 func (r *DocumentRepository) GetRelationsByDocumentID(docID int64) ([]models.DocumentRelationModel, error) {
 	var relations []models.DocumentRelationModel
-	err := r.DB.Select(&relations, fmt.Sprintf(`SELECT * FROM %s WHERE document_id = ?`, models.TableDocumentRelations), docID)
+	err := r.DB.Select(&relations, fmt.Sprintf(`SELECT * FROM %s WHERE document_id = ?`, tables.DocumentRelations), docID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func (r *DocumentRepository) GetRelationsByDocumentID(docID int64) ([]models.Doc
 
 func (r *DocumentRepository) GetRelationsByObject(objectType models.ObjectType, objectID int64) ([]models.DocumentRelationModel, error) {
 	var relations []models.DocumentRelationModel
-	err := r.DB.Select(&relations, fmt.Sprintf(`SELECT * FROM %s WHERE object_type = ? AND object_id = ?`, models.TableDocumentRelations), objectType, objectID)
+	err := r.DB.Select(&relations, fmt.Sprintf(`SELECT * FROM %s WHERE object_type = ? AND object_id = ?`, tables.DocumentRelations), objectType, objectID)
 	if err != nil {
 		return nil, err
 	}
@@ -90,17 +91,17 @@ func (r *DocumentRepository) GetRelationsByObject(objectType models.ObjectType, 
 }
 
 func (r *DocumentRepository) Delete(id int64) error {
-	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableDocuments), id)
+	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.Documents), id)
 	return err
 }
 
 func (r *DocumentRepository) DeleteRelation(id int64) error {
-	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableDocumentRelations), id)
+	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.DocumentRelations), id)
 	return err
 }
 
 func (r *DocumentRepository) DeleteRelationsByObject(objectType models.ObjectType, objectID int64) error {
-	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE object_type = ? AND object_id = ?`, models.TableDocumentRelations), objectType, objectID)
+	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE object_type = ? AND object_id = ?`, tables.DocumentRelations), objectType, objectID)
 	return err
 }
 
@@ -112,7 +113,7 @@ func (d *DocumentRepository) CreateMetadata(item *models.DocumentMetadataModel, 
 	query := fmt.Sprintf(`
 	INSERT INTO %s (document_id, d_key, d_value)
 	VALUES (:document_id, :d_key, :d_value)
-	`, models.TableDocumentMetadata)
+	`, tables.DocumentMetadata)
 	if tx != nil {
 		res, err := tx.NamedExec(query, item)
 		if err != nil {
@@ -129,7 +130,7 @@ func (d *DocumentRepository) CreateMetadata(item *models.DocumentMetadataModel, 
 
 func (d *DocumentRepository) GetMetadataByDocumentID(documentID int64) ([]models.DocumentMetadataModel, error) {
 	items := []models.DocumentMetadataModel{}
-	err := d.DB.Select(&items, fmt.Sprintf(`SELECT * FROM %s WHERE document_id = ?`, models.TableDocumentMetadata), documentID)
+	err := d.DB.Select(&items, fmt.Sprintf(`SELECT * FROM %s WHERE document_id = ?`, tables.DocumentMetadata), documentID)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +139,7 @@ func (d *DocumentRepository) GetMetadataByDocumentID(documentID int64) ([]models
 
 func (d *DocumentRepository) GetMetadataByID(id int64) (*models.DocumentMetadataModel, error) {
 	var item models.DocumentMetadataModel
-	err := d.DB.Get(&item, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableDocumentMetadata), id)
+	err := d.DB.Get(&item, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.DocumentMetadata), id)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +151,7 @@ func (d *DocumentRepository) UpdateMetadata(item *models.DocumentMetadataModel, 
 	UPDATE %s
 	SET document_id = :document_id, d_key = :d_key, d_value = :d_value
 	WHERE id = :id
-	`, models.TableDocumentMetadata)
+	`, tables.DocumentMetadata)
 	if tx != nil {
 		_, err := tx.NamedExec(query, item)
 		return err
@@ -160,7 +161,7 @@ func (d *DocumentRepository) UpdateMetadata(item *models.DocumentMetadataModel, 
 }
 
 func (d *DocumentRepository) DeleteMetadata(id int64, tx *sqlx.Tx) error {
-	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableDocumentMetadata)
+	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.DocumentMetadata)
 	if tx != nil {
 		_, err := tx.Exec(query, id)
 		return err

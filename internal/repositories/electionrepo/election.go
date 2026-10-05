@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"sea-api/internal/models"
 	"sea-api/internal/models/electionsmodels"
+	"sea-api/internal/models/tables"
 	"sea-api/internal/utils"
 
 	"github.com/jmoiron/sqlx"
@@ -64,11 +64,11 @@ func (r *ElectionRepo) AggregateAndSaveResults(tx *sqlx.Tx, cycle int64) error {
 		WHERE c.cycle = ?
 		GROUP BY c.id, c.cycle, c.belonging, u.name_en
 	`,
-		models.TableElectionResults,
-		models.TableTicketRecords,
-		models.TableCandidates,
-		models.TableUsers,
-		models.TableVotes,
+		tables.ElectionResults,
+		tables.TicketRecords,
+		tables.Candidates,
+		tables.Users,
+		tables.Votes,
 	)
 
 	_, err := tx.Exec(query, cycle, cycle)

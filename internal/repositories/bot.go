@@ -6,6 +6,7 @@ import (
 	"os"
 	"sea-api/internal/config"
 	"sea-api/internal/models"
+	"sea-api/internal/models/tables"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -36,7 +37,7 @@ func (r *BotRepository) UpsertNodes(nodes []models.BotNode, tx *sqlx.Tx) error {
 			pos_x = VALUES(pos_x),
 			pos_y = VALUES(pos_y),
 			is_start = VALUES(is_start)
-	`, models.TableBotNodes)
+	`, tables.BotNodes)
 
 	if tx != nil {
 		_, err := tx.NamedExec(query, nodes)
@@ -53,7 +54,7 @@ func (r *BotRepository) UpsertNodeTranslations(translations []models.NodeTransla
 		VALUES (:node_id, :language, :content)
 		ON DUPLICATE KEY UPDATE 
 			content = VALUES(content)
-	`, models.TableBotNodeTranslations)
+	`, tables.BotNodeTranslations)
 
 	if tx != nil {
 		_, err := tx.NamedExec(query, translations)
@@ -72,7 +73,7 @@ func (r *BotRepository) UpsertEdges(edges []models.BotEdge, tx *sqlx.Tx) error {
 			from_node_id = VALUES(from_node_id), 
 			to_node_id = VALUES(to_node_id), 
 			keyword = VALUES(keyword)
-	`, models.TableBotEdges)
+	`, tables.BotEdges)
 
 	if tx != nil {
 		_, err := tx.NamedExec(query, edges)
@@ -89,7 +90,7 @@ func (r *BotRepository) UpsertEdgeTranslations(translations []models.EdgeTransla
 		VALUES (:edge_id, :language, :label)
 		ON DUPLICATE KEY UPDATE 
 			label = VALUES(label)
-	`, models.TableBotEdgeTranslations)
+	`, tables.BotEdgeTranslations)
 
 	if tx != nil {
 		_, err := tx.NamedExec(query, translations)
@@ -107,7 +108,7 @@ func (r *BotRepository) UpsertActions(actions []models.BotAction, tx *sqlx.Tx) e
 		ON DUPLICATE KEY UPDATE 
 			action_type = VALUES(action_type), 
 			action_text = VALUES(action_text)
-	`, models.TableBotActions)
+	`, tables.BotActions)
 
 	if tx != nil {
 		_, err := tx.NamedExec(query, actions)
@@ -123,7 +124,7 @@ func (r *BotRepository) UpsertSession(sessionID string, nodeID string, userID *i
         INSERT INTO %s (session_id, current_node_id, user_id)
         VALUES (?, ?, ?)
         ON DUPLICATE KEY UPDATE current_node_id = VALUES(current_node_id), user_id = VALUES(user_id)
-	`, models.TableBotUserStates)
+	`, tables.BotUserStates)
 
 	_, err := r.db.Exec(query, sessionID, nodeID, userID)
 	return err
@@ -135,7 +136,7 @@ func (r *BotRepository) UpsertSession(sessionID string, nodeID string, userID *i
 
 func (r *BotRepository) GetSession(sessionID string) (*models.UserState, error) {
 	var state models.UserState
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE session_id = ?`, models.TableBotUserStates)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE session_id = ?`, tables.BotUserStates)
 	err := r.db.Get(&state, query, sessionID)
 	if err == sql.ErrNoRows {
 		return nil, nil // No session exists yet
@@ -145,7 +146,7 @@ func (r *BotRepository) GetSession(sessionID string) (*models.UserState, error) 
 
 func (r *BotRepository) GetAction(nodeID string) (*models.BotAction, error) {
 	var action models.BotAction
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE node_id = ?`, models.TableBotActions)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE node_id = ?`, tables.BotActions)
 	err := r.db.Get(&action, query, nodeID)
 	return &action, err
 }
@@ -157,7 +158,7 @@ func (r *BotRepository) GetStartNode(lang *models.Language) (*models.NodeRow, er
 		FROM %s n
 		LEFT JOIN %s t ON n.id = t.node_id AND t.language = ?
 		WHERE is_start = TRUE
-	`, models.TableBotNodes, models.TableBotNodeTranslations)
+	`, tables.BotNodes, tables.BotNodeTranslations)
 
 	err := r.db.Get(&node, query, lang)
 	if err != nil {
@@ -172,7 +173,7 @@ func (r *BotRepository) GetNodeRow(nodeID string, lang models.Language) (*models
 		SELECT n.id, n.node_type, n.is_start, n.is_locked, n.created_at, t.content
 		FROM %s n
         LEFT JOIN %s t ON n.id = t.node_id AND t.language = ?
-		WHERE n.id = ?`, models.TableBotNodes, models.TableBotNodeTranslations)
+		WHERE n.id = ?`, tables.BotNodes, tables.BotNodeTranslations)
 
 	err := r.db.Get(&node, query, lang, nodeID)
 	if err != nil {
@@ -189,7 +190,7 @@ func (r *BotRepository) GetNextNodeRow(nodeID string, lang models.Language, keyw
 		JOIN %s e ON n.id = e.to_node_id
 		LEFT JOIN %s t ON n.id = t.node_id AND t.language = ?
 		WHERE e.from_node_id = ? AND e.keyword = ?`,
-		models.TableBotNodes, models.TableBotEdges, models.TableBotNodeTranslations)
+		tables.BotNodes, tables.BotEdges, tables.BotNodeTranslations)
 
 	err := r.db.Get(&node, query, lang, nodeID, keyword)
 	if err != nil {
@@ -206,7 +207,7 @@ func (r *BotRepository) GetParentOrStartNodeRow(nodeID string, lang models.Langu
 		JOIN %s e ON n.id = e.from_node_id
 		LEFT JOIN %s t ON n.id = t.node_id AND t.language = ?
 		WHERE e.to_node_id = ? AND e.keyword = ?`,
-		models.TableBotNodes, models.TableBotEdges, models.TableBotNodeTranslations)
+		tables.BotNodes, tables.BotEdges, tables.BotNodeTranslations)
 
 	err := r.db.Get(&node, query, lang, nodeID, keyword)
 	if err != nil {
@@ -224,7 +225,7 @@ func (r *BotRepository) GetEdgeRow(edgeID int64, lang models.Language) (*models.
 		SELECT e.id, e.from_node_id, e.to_node_id, e.keyword, t.label
 		FROM %s e
 		LEFT JOIN %s t ON e.id = t.edge_id AND t.language = ?
-		WHERE e.id = ?`, models.TableBotEdges, models.TableBotEdgeTranslations)
+		WHERE e.id = ?`, tables.BotEdges, tables.BotEdgeTranslations)
 
 	err := r.db.Get(&edge, query, lang, edgeID)
 	if err != nil {
@@ -239,7 +240,7 @@ func (r *BotRepository) GetEdgesForNode(nodeID string, lang models.Language) ([]
 		SELECT e.id, e.from_node_id, e.to_node_id, e.keyword, t.label
 		FROM %s e
 		LEFT JOIN %s t ON e.id = t.edge_id AND t.language = ?
-		WHERE e.from_node_id = ?`, models.TableBotEdges, models.TableBotEdgeTranslations)
+		WHERE e.from_node_id = ?`, tables.BotEdges, tables.BotEdgeTranslations)
 
 	err := r.db.Select(&edges, query, lang, nodeID)
 	if err != nil {
@@ -262,7 +263,7 @@ func (r *BotRepository) GetGraphNodes() ([]models.BotGraphNodeRow, error) {
 		FROM %s n
 		LEFT JOIN %s t ON n.id = t.node_id
 		LEFT JOIN %s a ON n.id = a.node_id
-	`, models.TableBotNodes, models.TableBotNodeTranslations, models.TableBotActions)
+	`, tables.BotNodes, tables.BotNodeTranslations, tables.BotActions)
 
 	err := r.db.Select(&nodes, query)
 	if err != nil {
@@ -279,7 +280,7 @@ func (r *BotRepository) GetGraphEdges() ([]models.BotGraphEdgeRow, error) {
 			t.language, t.label
 		FROM %s e
 		LEFT JOIN %s t ON e.id = t.edge_id
-	`, models.TableBotEdges, models.TableBotEdgeTranslations)
+	`, tables.BotEdges, tables.BotEdgeTranslations)
 
 	err := r.db.Select(&edges, query)
 	if err != nil {
@@ -298,7 +299,7 @@ func (r *BotRepository) GetLockedNodes() ([]models.NodeActionRow, error) {
 		FROM %s n
 		LEFT JOIN %s a ON n.id = a.node_id
 		WHERE n.is_locked = TRUE
-	`, models.TableBotNodes, models.TableBotActions)
+	`, tables.BotNodes, tables.BotActions)
 
 	err := r.db.Select(&nodes, query)
 	if err != nil {
@@ -316,19 +317,19 @@ func (r *BotRepository) ClearSessions() error {
 	query := fmt.Sprintf(`
 	DELETE FROM %s
     WHERE updated_at < NOW() - INTERVAL 5 HOUR
-	`, models.TableBotUserStates)
+	`, tables.BotUserStates)
 	_, err := r.db.Exec(query)
 	return err
 }
 
 func (r *BotRepository) ClearBotDatabase(tx *sqlx.Tx) error {
-	tables := []models.TableName{
-		models.TableBotEdgeTranslations,
-		models.TableBotNodeTranslations,
-		models.TableBotActions,
-		models.TableBotEdges,
-		models.TableBotNodes,
-		models.TableBotUserStates,
+	tables := []tables.Name{
+		tables.BotEdgeTranslations,
+		tables.BotNodeTranslations,
+		tables.BotActions,
+		tables.BotEdges,
+		tables.BotNodes,
+		tables.BotUserStates,
 	}
 
 	// Disable foreign key checks to allow for a clean wipe of all tables

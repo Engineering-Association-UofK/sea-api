@@ -2,8 +2,8 @@ package analyticsrepo
 
 import (
 	"fmt"
-	"sea-api/internal/models"
 	"sea-api/internal/models/analyticsmodel"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -27,11 +27,11 @@ func (r *AnalyticsRepo) General() (*analyticsmodel.General, error) {
 			(SELECT COUNT(*) FROM %s) AS forms,
 			(SELECT COUNT(*) FROM %s) AS posts
 	`,
-		models.TableUsers,
-		models.TableNewEvents,
-		models.TableNewCertificates,
-		models.TableForms,
-		models.TablePosts,
+		tables.Users,
+		tables.NewEvents,
+		tables.NewCertificates,
+		tables.Forms,
+		tables.Posts,
 	)
 
 	err := r.db.Get(&stats, query)

@@ -3,7 +3,7 @@ package electionrepo
 import (
 	"fmt"
 	"sea-api/internal/errs"
-	"sea-api/internal/models"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -13,7 +13,7 @@ func (r *ElectionRepo) SaveTicket(tx *sqlx.Tx, ticket string) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (code, used)
 		VALUES (?, FALSE)
-	`, models.TableVoteTickets)
+	`, tables.VoteTickets)
 
 	_, err := tx.Exec(query, ticket)
 	return err
@@ -25,7 +25,7 @@ func (r *ElectionRepo) UseTicket(tx *sqlx.Tx, ticket string) error {
 		UPDATE %s
 		SET used = TRUE, used_at = NOW()
 		WHERE code = ? AND used = FALSE
-	`, models.TableVoteTickets)
+	`, tables.VoteTickets)
 
 	res, err := tx.Exec(query, ticket)
 	if err != nil {
@@ -46,7 +46,7 @@ func (r *ElectionRepo) UseTicket(tx *sqlx.Tx, ticket string) error {
 
 // RemoveAllTickets purges active vote tickets after election closing
 func (r *ElectionRepo) RemoveAllTickets(tx *sqlx.Tx) error {
-	query := fmt.Sprintf(`TRUNCATE TABLE %s`, models.TableVoteTickets)
+	query := fmt.Sprintf(`TRUNCATE TABLE %s`, tables.VoteTickets)
 	_, err := tx.Exec(query)
 	return err
 }

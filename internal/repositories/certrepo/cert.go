@@ -2,8 +2,8 @@ package certrepo
 
 import (
 	"fmt"
-	"sea-api/internal/models"
 	"sea-api/internal/models/certmodels"
+	"sea-api/internal/models/tables"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -21,7 +21,7 @@ func (r *CertRepository) CreateCert(model *certmodels.Certificate) (int64, error
 	query := fmt.Sprintf(`
 	INSERT INTO %s (template_id, cert_hash, file_key, issuer_id, event_id, recipient_user_id, recipient_name, recipient_email, issued_date) 
 	VALUES (:template_id, :cert_hash, :file_key, :issuer_id, :event_id, :recipient_user_id, :recipient_name, :recipient_email, :issued_date)
-	`, models.TableNewCertificates)
+	`, tables.NewCertificates)
 
 	res, err := r.db.NamedExec(query, model)
 	if err != nil {
@@ -44,7 +44,7 @@ func (r *CertRepository) Update(model *certmodels.Certificate) error {
 	    recipient_email = :recipient_email, 
 	    issued_date = :issued_date
 	WHERE id = :id
-	`, models.TableNewCertificates)
+	`, tables.NewCertificates)
 	_, err := r.db.NamedExec(query, model)
 	return err
 }
@@ -53,7 +53,7 @@ func (r *CertRepository) GetCertWithHash(hash string) (*certmodels.Certificate, 
 	var model certmodels.Certificate
 	query := fmt.Sprintf(`
 	SELECT * FROM %s WHERE cert_hash = ?
-	`, models.TableNewCertificates)
+	`, tables.NewCertificates)
 
 	err := r.db.Get(&model, query, hash)
 	if err != nil {
@@ -66,7 +66,7 @@ func (r *CertRepository) GetCertWithID(id int64) (*certmodels.Certificate, error
 	var model certmodels.Certificate
 	query := fmt.Sprintf(`
 	SELECT * FROM %s WHERE id = ?
-	`, models.TableNewCertificates)
+	`, tables.NewCertificates)
 
 	err := r.db.Get(&model, query, id)
 	if err != nil {
@@ -137,7 +137,7 @@ func (r *CertRepository) GetCertsList(req *certmodels.CertListRequest) ([]certmo
 		WHERE %s
 		ORDER BY c.issued_date DESC
 		LIMIT :limit OFFSET :offset
-	`, models.TableNewCertificates, models.TableCertTemplate, whereClause)
+	`, tables.NewCertificates, tables.CertTemplate, whereClause)
 
 	nstmt, err := r.db.PrepareNamed(query)
 	if err != nil {
@@ -190,7 +190,7 @@ func (r *CertRepository) GetCertsCount(req *certmodels.CertListRequest) (int64, 
 		FROM %s c
 		JOIN %s t ON c.template_id = t.id
 		WHERE %s
-	`, models.TableNewCertificates, models.TableCertTemplate, whereClause)
+	`, tables.NewCertificates, tables.CertTemplate, whereClause)
 
 	nstmt, err := r.db.PrepareNamed(query)
 	if err != nil {

@@ -3,8 +3,8 @@ package electionrepo
 import (
 	"context"
 	"fmt"
-	"sea-api/internal/models"
 	"sea-api/internal/models/electionsmodels"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -15,7 +15,7 @@ func (r *ElectionRepo) Vote(tx *sqlx.Tx, candidateIDs []int64) error {
 		return nil
 	}
 
-	query := fmt.Sprintf(`INSERT INTO %s (candidate_id) VALUES `, models.TableVotes)
+	query := fmt.Sprintf(`INSERT INTO %s (candidate_id) VALUES `, tables.Votes)
 
 	// Dynamic bulk-insert query construction
 	vals := []interface{}{}
@@ -38,7 +38,7 @@ func (r *ElectionRepo) GetVotesStatistics() (*electionsmodels.Stats, error) {
 			(SELECT COUNT(*) FROM %s) AS tickets_distributed,
 			(SELECT COUNT(*) FROM %s WHERE used = 1) AS number_of_voters,
 			(SELECT COUNT(*) FROM %s WHERE created_at >= NOW() - INTERVAL 1 DAY) AS votes_in_last_day
-	`, models.TableTicketRecords, models.TableVoteTickets, models.TableVotes)
+	`, tables.TicketRecords, tables.VoteTickets, tables.Votes)
 
 	var stats = electionsmodels.Stats{}
 
@@ -52,7 +52,7 @@ func (r *ElectionRepo) GetVotesStatistics() (*electionsmodels.Stats, error) {
 
 // RemoveAllVotes purges votes after election closing
 func (r *ElectionRepo) RemoveAllVotes(tx *sqlx.Tx) error {
-	query := fmt.Sprintf(`TRUNCATE TABLE %s`, models.TableVotes)
+	query := fmt.Sprintf(`TRUNCATE TABLE %s`, tables.Votes)
 	_, err := tx.Exec(query)
 	return err
 }

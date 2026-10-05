@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/certmodels"
+	"sea-api/internal/models/tables"
 )
 
 func (r *CertRepository) CreateTemplate(model *certmodels.CertificateTemplate) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (name, language, version, layout_config, created_at)
 	VALUES (:name, :language, :version, :layout_config, :created_at)
-	`, models.TableCertTemplate)
+	`, tables.CertTemplate)
 
 	res, err := r.db.NamedExec(query, model)
 	if err != nil {
@@ -23,7 +24,7 @@ func (r *CertRepository) GetTemplateByID(id int64) (*certmodels.CertificateTempl
 	var model certmodels.CertificateTemplate
 	query := fmt.Sprintf(`
 	SELECT * FROM %s WHERE id = ?
-	`, models.TableCertTemplate)
+	`, tables.CertTemplate)
 
 	err := r.db.Get(&model, query, id)
 	if err != nil {
@@ -34,7 +35,7 @@ func (r *CertRepository) GetTemplateByID(id int64) (*certmodels.CertificateTempl
 
 func (r *CertRepository) GetCount() int64 {
 	var count int64
-	err := r.db.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TableCertTemplate))
+	err := r.db.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, tables.CertTemplate))
 	if err != nil {
 		return 0
 	}
@@ -47,7 +48,7 @@ func (r *CertRepository) ListTemplates(req *models.ListRequest) ([]certmodels.Ce
 	SELECT * FROM %s
 	ORDER BY created_at DESC
 	LIMIT ? OFFSET ?
-	`, models.TableCertTemplate)
+	`, tables.CertTemplate)
 
 	offset := (req.Page - 1) * req.Limit
 	err := r.db.Select(&templates, query, req.Limit, offset)
@@ -62,7 +63,7 @@ func (r *CertRepository) UpdateTemplate(model *certmodels.CertificateTemplate) e
 	UPDATE %s 
 	SET name = :name, language = :language, version = :version, layout_config = :layout_config
 	WHERE id = :id
-	`, models.TableCertTemplate)
+	`, tables.CertTemplate)
 
 	_, err := r.db.NamedExec(query, model)
 	return err
@@ -71,7 +72,7 @@ func (r *CertRepository) UpdateTemplate(model *certmodels.CertificateTemplate) e
 func (r *CertRepository) DeleteTemplate(id int64) error {
 	query := fmt.Sprintf(`
 	DELETE FROM %s WHERE id = ?
-	`, models.TableCertTemplate)
+	`, tables.CertTemplate)
 
 	_, err := r.db.Exec(query, id)
 	return err

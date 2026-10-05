@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"sea-api/internal/models"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -19,7 +20,7 @@ func (r *FileRepository) CreateFile(item models.FileModel) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (file_key, file_size, mime_type)
 	VALUES (:file_key, :file_size, :mime_type)
-	`, models.TableFiles)
+	`, tables.Files)
 	res, err := r.DB.NamedExec(query, &item)
 	if err != nil {
 		return 0, err
@@ -29,7 +30,7 @@ func (r *FileRepository) CreateFile(item models.FileModel) (int64, error) {
 
 func (r *FileRepository) GetFileById(id int64) (*models.FileModel, error) {
 	var item models.FileModel
-	err := r.DB.Get(&item, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableFiles), id)
+	err := r.DB.Get(&item, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.Files), id)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +39,7 @@ func (r *FileRepository) GetFileById(id int64) (*models.FileModel, error) {
 
 func (r *FileRepository) GetFileByKey(key string) (*models.FileModel, error) {
 	var item models.FileModel
-	err := r.DB.Get(&item, fmt.Sprintf(`SELECT * FROM %s WHERE file_key = ?`, models.TableFiles), key)
+	err := r.DB.Get(&item, fmt.Sprintf(`SELECT * FROM %s WHERE file_key = ?`, tables.Files), key)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +48,7 @@ func (r *FileRepository) GetFileByKey(key string) (*models.FileModel, error) {
 
 func (r *FileRepository) GetAllFiles() ([]models.FileModel, error) {
 	var items []models.FileModel
-	err := r.DB.Select(&items, fmt.Sprintf(`SELECT * FROM %s`, models.TableFiles))
+	err := r.DB.Select(&items, fmt.Sprintf(`SELECT * FROM %s`, tables.Files))
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (r *FileRepository) UpdateFile(item *models.FileModel) error {
 	UPDATE %s
 	SET file_key = :file_key, file_size = :file_size, mime_type = :mime_type
 	WHERE id = :id
-	`, models.TableFiles)
+	`, tables.Files)
 	_, err := r.DB.NamedExec(query, &item)
 	return err
 }
@@ -69,7 +70,7 @@ func (r *FileRepository) UpdateID(id int64, fileKey string) error {
 	UPDATE %s
 	SET id = :id
 	WHERE file_key = :file_key
-	`, models.TableFiles)
+	`, tables.Files)
 	_, err := r.DB.NamedExec(query, map[string]interface{}{
 		"id":       id,
 		"file_key": fileKey,
@@ -78,6 +79,6 @@ func (r *FileRepository) UpdateID(id int64, fileKey string) error {
 }
 
 func (r *FileRepository) DeleteFile(id int64) error {
-	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableFiles), id)
+	_, err := r.DB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.Files), id)
 	return err
 }

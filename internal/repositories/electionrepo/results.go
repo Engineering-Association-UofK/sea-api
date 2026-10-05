@@ -2,8 +2,8 @@ package electionrepo
 
 import (
 	"fmt"
-	"sea-api/internal/models"
 	"sea-api/internal/models/electionsmodels"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -25,7 +25,7 @@ func (r *ElectionRepo) GetRawVoteResults(tx *sqlx.Tx, cycle int64) ([]electionsm
 		WHERE c.cycle = ?
 		GROUP BY c.id, c.cycle, c.belonging, u.name_en
 		ORDER BY number_of_votes DESC, c.id ASC
-	`, models.TableCandidates, models.TableUsers, models.TableVotes)
+	`, tables.Candidates, tables.Users, tables.Votes)
 
 	err := tx.Select(&results, query, cycle)
 	return results, err
@@ -40,7 +40,7 @@ func (r *ElectionRepo) SaveFinalResults(tx *sqlx.Tx, results []electionsmodels.R
 	query := fmt.Sprintf(`
 		INSERT INTO %s (cycle, user_id, place, number_of_votes)
 		VALUES (:cycle, :user_id, :place, :number_of_votes)
-	`, models.TableElectionResults)
+	`, tables.ElectionResults)
 
 	_, err := tx.NamedExec(query, results)
 	return err
@@ -52,7 +52,7 @@ func (r *ElectionRepo) GetResultsByCycle(cycle int) ([]electionsmodels.Result, e
 		SELECT * FROM %s
 		WHERE cycle = ?
 		ORDER BY place ASC
-	`, models.TableElectionResults)
+	`, tables.ElectionResults)
 
 	var results = []electionsmodels.Result{}
 	err := r.db.Select(&results, query, cycle)
@@ -80,7 +80,7 @@ func (r *ElectionRepo) GetResultsViewByCycle(cycle int) ([]electionsmodels.Resul
         LEFT JOIN %s u ON u.id = r.user_id
         WHERE r.cycle = ?
         ORDER BY r.place ASC
-    `, models.TableElectionResults, models.TableUsers)
+    `, tables.ElectionResults, tables.Users)
 
 	var results []electionsmodels.ResultResponse
 	err := r.db.Select(&results, query, cycle)
