@@ -267,11 +267,11 @@ func (r *UserRepository) GetTempUser(id int64) (*models.TempUserModel, error) {
 
 // ======= CREATE ========
 
-func (r *UserRepository) StartUserRegistration(model *models.RegInitCreate) error {
+func (r *UserRepository) StartUserRegistration(tx *sqlx.Tx, model *models.RegInitCreate) error {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (id, email) VALUES (:id, :email)`, models.TableUsers)
 
-	_, err := r.DB.NamedExec(query, model)
+	_, err := tx.NamedExec(query, model)
 	return err
 }
 

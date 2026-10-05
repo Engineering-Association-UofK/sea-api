@@ -15,12 +15,12 @@ func NewAuthRepository(db *sqlx.DB) *AuthRepository {
 	return &AuthRepository{db: db}
 }
 
-func (r *AuthRepository) StartRegistration(model *models.RegistrationStepModel) error {
+func (r *AuthRepository) StartRegistration(tx *sqlx.Tx, model *models.RegistrationStepModel) error {
 	model.Step = 1
 	query := fmt.Sprintf(`INSERT INTO %s (reg_code, user_id, step) 
 		VALUES (:reg_code, :user_id, :step)`, models.TableRegistrationStep)
 
-	_, err := r.db.NamedExec(query, model)
+	_, err := tx.NamedExec(query, model)
 	return err
 }
 

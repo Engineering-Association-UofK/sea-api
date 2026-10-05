@@ -2,7 +2,6 @@ package auth
 
 import (
 	"crypto/sha256"
-	"database/sql"
 	"fmt"
 	"log/slog"
 	"sea-api/internal/config"
@@ -48,14 +47,14 @@ func (s *AuthService) CheckRegistration(req *models.CheckRegistrationRequest) (*
 func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest) error {
 	slog.Debug("Initial Registration Started")
 
-	// Get models and check them
+	_, err := s.UserRepo.GetUserRow(req.UserID)
+	if err == nil {
+		return errs.New(errs.Conflict, "User already registered", nil)
+	}
+
 	tempUser, err := s.UserRepo.GetTempUser(req.UserID)
 	if err != nil {
 		return errs.New(errs.NotFound, "Student Index was not found in out database, please contact administration", nil)
-	}
-	_, err = s.UserRepo.GetByUserID(req.UserID)
-	if err == nil || err != sql.ErrNoRows {
-		return errs.New(errs.Conflict, "User with Index already exists", nil)
 	}
 	slog.Debug("User found and not already registered")
 
@@ -69,8 +68,14 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 	}
 	slog.Debug("User passcode and email are clear")
 
-	// Create user model
-	err = s.UserRepo.StartUserRegistration(&models.RegInitCreate{
+	// Start the registration process
+	tx, err := s.UserRepo.DB.Beginx()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = s.UserRepo.StartUserRegistration(tx, &models.RegInitCreate{
 		ID:    req.UserID,
 		Email: req.Email,
 	})
@@ -78,27 +83,36 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 		return err
 	}
 
-	// // Delete temp user model
-	// err = s.UserRepo.DeleteTempUser(req.UserID, nil)
-	// if err != nil {
-	// 	slog.Error("error deleting temp user", "error", err, "user_id", req.UserID)
-	// }
-	// slog.Debug("User temp profile deleted")
+	// Delete temp user model
+	err = s.UserRepo.DeleteTempUser(req.UserID, tx)
+	if err != nil {
+		slog.Error("error deleting temp user", "error", err, "user_id", req.UserID)
+	}
+	slog.Debug("User temp profile deleted")
 
 	// Start registration counter
 	data := []byte(fmt.Sprintf("%s|%d|%s", req.Email, req.UserID, time.Now()))
 	hash := sha256.Sum256(data)
-	err = s.AuthRepository.StartRegistration(&models.RegistrationStepModel{
+	err = s.AuthRepository.StartRegistration(tx, &models.RegistrationStepModel{
 		RegCode: fmt.Sprintf("%x", hash),
 		UserID:  req.UserID,
 		Step:    1,
 	})
+	if err != nil {
+		return err
+	}
 	slog.Debug("Registration process started")
 
 	// Send email
 	link := fmt.Sprintf("%s/%x", config.Links.Register, hash)
 	slog.Debug("Sending email")
-	return s.MailService.SendRegistrationMail(string(req.Email), link, req.Lang)
+	err = s.MailService.SendRegistrationMail(string(req.Email), link, req.Lang)
+	if err != nil {
+		return err
+	}
+
+	// Apply transactions
+	return tx.Commit()
 }
 
 // # Second Step
