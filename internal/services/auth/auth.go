@@ -3,12 +3,13 @@ package auth
 import (
 	"sea-api/internal/config"
 	"sea-api/internal/repositories"
+	"sea-api/internal/repositories/userrepo"
 	"sea-api/internal/services"
 	"time"
 )
 
 type AuthService struct {
-	UserRepo         *repositories.UserRepository
+	UserRepo         *userrepo.UserRepository
 	MailService      *services.MailService
 	VerificationRepo *repositories.VerificationRepo
 	AuthRepository   *repositories.AuthRepository
@@ -18,7 +19,7 @@ type AuthService struct {
 	ExpiryTime time.Duration
 }
 
-func NewAuthService(userRepo *repositories.UserRepository, mailService *services.MailService, verificationRepo *repositories.VerificationRepo, AuthRepository *repositories.AuthRepository) *AuthService {
+func NewAuthService(userRepo *userrepo.UserRepository, mailService *services.MailService, verificationRepo *repositories.VerificationRepo, AuthRepository *repositories.AuthRepository) *AuthService {
 	return &AuthService{
 		UserRepo:         userRepo,
 		MailService:      mailService,
