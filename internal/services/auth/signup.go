@@ -54,6 +54,7 @@ func (s *AuthService) InitialRegistration(req *authmodels.InitialRegistrationReq
 
 	passcode, err := s.UserRepo.GetPasscode(req.UserID)
 	if err != nil {
+		slog.Debug("Failed to get passcode for registration", "Error", err)
 		return errs.New(errs.NotFound, "Student Index was not found, please contact administration", nil)
 	}
 	slog.Debug("User found and not already registered")
@@ -91,7 +92,7 @@ func (s *AuthService) InitialRegistration(req *authmodels.InitialRegistrationReq
 	slog.Debug("User temp profile deleted")
 
 	// Start registration counter
-	data := []byte(fmt.Sprintf("%s|%d|%s", req.Email, req.UserID, time.Now()))
+	data := fmt.Appendf(nil, "%s|%d|%s", req.Email, req.UserID, time.Now())
 	hash := sha256.Sum256(data)
 	err = s.AuthRepository.StartRegistration(tx, &authmodels.RegistrationStepModel{
 		RegCode: fmt.Sprintf("%x", hash),

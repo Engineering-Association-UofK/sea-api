@@ -17,8 +17,11 @@ func (r *UserRepository) CreatePasscode(userID int64, passcode string) error {
 func (r *UserRepository) GetPasscode(userID int64) (string, error) {
 	query := fmt.Sprintf(`SELECT passcode FROM %s WHERE id = ?`, tables.Passcodes)
 	var passcode string
-	err := r.DB.Select(passcode, query, userID)
-	return passcode, err
+	err := r.DB.Get(&passcode, query, userID)
+	if err != nil {
+		return "", err
+	}
+	return passcode, nil
 }
 
 func (r *UserRepository) DeletePasscode(id int64, tx *sqlx.Tx) error {
