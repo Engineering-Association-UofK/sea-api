@@ -12,7 +12,7 @@ func (s *UserService) GetPasscode(userID int64) (*usermodels.GetPasscodeResponse
 	if err == nil {
 		return &usermodels.GetPasscodeResponse{Passcode: passcode}, nil
 	}
-	if _, err = s.repo.GetUserRow(userID); err != nil {
+	if _, err = s.repo.GetUserRow(userID); err == nil {
 		return nil, errs.New(errs.Conflict, "User already Registered", nil)
 	}
 	passcode, err = generateAndSavePasscode(8)

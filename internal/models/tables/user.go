@@ -5,7 +5,7 @@ const (
 	UserRoles Name = "user_roles"
 	// TempUsers Name = "users_temp"
 
-	Passcodes        Name = "passcodes"
+	Passcodes        Name = "users_passcodes"
 	RegistrationStep Name = "registration_step"
 
 	Suspensions       Name = "suspensions"
