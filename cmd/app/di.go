@@ -9,6 +9,7 @@ import (
 	"sea-api/internal/repositories/electionrepo"
 	"sea-api/internal/repositories/eventrepo"
 	"sea-api/internal/repositories/notificationsrepo"
+	"sea-api/internal/repositories/userrepo"
 	"sea-api/internal/services"
 	"sea-api/internal/services/analytics"
 	"sea-api/internal/services/auth"
@@ -58,7 +59,7 @@ func BuildContainer() (*dig.Container, error) {
 	// 2. REPOSITORIES
 	// -------------------------------------------------------------------------
 	repos := []any{
-		repositories.NewUserRepository,
+		userrepo.NewUserRepository,
 		repositories.NewSuspensionsRepo,
 		repositories.NewVerificationRepo,
 		repositories.NewFileRepository,
