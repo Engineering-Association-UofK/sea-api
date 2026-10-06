@@ -21,3 +21,7 @@ type AdminRequest struct {
 	ID    int64  `json:"id"`
 	Roles []Role `json:"roles"`
 }
+
+type GetPasscodeResponse struct {
+	Passcode string `json:"passcode"`
+}

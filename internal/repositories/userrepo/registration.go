@@ -1,72 +1,36 @@
 package userrepo
 
 import (
-	"database/sql"
 	"fmt"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
 
-func (r *UserRepository) GetAllTempUsers(limit int64, page int64) ([]models.TempUserModel, error) {
-	var users []models.TempUserModel
-	offset := (page - 1) * limit
-	err := r.DB.Select(&users, fmt.Sprintf(`SELECT * FROM %s LIMIT ? OFFSET ?`, tables.TempUsers), limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	return users, nil
-}
-
-func (r *UserRepository) GetTempUsersWithNullPasswords() ([]models.TempUserModel, error) {
-	var users []models.TempUserModel
-	err := r.DB.Select(&users, fmt.Sprintf(`SELECT * FROM %s WHERE password IS NULL OR password = ''`, tables.TempUsers))
-	if err != nil {
-		return nil, err
-	}
-	return users, nil
-}
-
-func (r *UserRepository) CreateTempUser(id int64, tx *sqlx.Tx) error {
-	user := models.TempUserModel{ID: sql.NullInt64{Int64: id, Valid: true}}
-	query := fmt.Sprintf(`
-	INSERT INTO %s (
-		id, password
-	) VALUES (
-		:id, 
-	)`, tables.TempUsers)
-	if tx != nil {
-		_, err := tx.NamedExec(query, user)
-		return err
-	}
-	_, err := r.DB.NamedExec(query, user)
+func (r *UserRepository) CreatePasscode(userID int64, passcode string) error {
+	query := fmt.Sprintf(`INSERT INTO %s (id, passcode) VALUES (?, ?)`, tables.Passcodes)
+	_, err := r.DB.Exec(query, userID, passcode)
 	return err
 }
 
-func (r *UserRepository) GetTempUser(id int64) (*models.TempUserModel, error) {
-	var user models.TempUserModel
-	err := r.DB.Get(&user, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.TempUsers), id)
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+func (r *UserRepository) GetPasscode(userID int64) (string, error) {
+	query := fmt.Sprintf(`SELECT passcode FROM %s WHERE id = ?`, tables.Passcodes)
+	var passcode string
+	err := r.DB.Select(passcode, query, userID)
+	return passcode, err
 }
 
-func (r *UserRepository) StartUserRegistration(tx *sqlx.Tx, model *models.RegInitCreate) error {
+func (r *UserRepository) DeletePasscode(id int64, tx *sqlx.Tx) error {
+	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.Passcodes)
+	_, err := tx.Exec(query, id)
+	return err
+}
+
+func (r *UserRepository) StartUserRegistration(tx *sqlx.Tx, model *authmodels.RegInitCreate) error {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (id, email) VALUES (:id, :email)`, tables.Users)
 
 	_, err := tx.NamedExec(query, model)
-	return err
-}
-
-func (r *UserRepository) DeleteTempUser(id int64, tx *sqlx.Tx) error {
-	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.TempUsers)
-	if tx != nil {
-		_, err := tx.Exec(query, id)
-		return err
-	}
-	_, err := r.DB.Exec(query, id)
 	return err
 }

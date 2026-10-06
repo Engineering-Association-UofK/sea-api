@@ -5,10 +5,6 @@ import (
 	"sea-api/internal/models"
 )
 
-//////////////////
-////  MODELS  ////
-//////////////////
-
 type UserModel struct {
 	ID       int64   `db:"id"`
 	UniID    *string `db:"uni_id"`
@@ -33,37 +29,12 @@ type UserModel struct {
 	IsAnonymous bool `db:"is_anonymous"`
 }
 
-type TempUserModel struct {
-	ID       sql.NullInt64  `db:"id"`
-	UniID    sql.NullInt64  `db:"uni_id"`
-	Username sql.NullString `db:"username"`
-
-	NameAr sql.NullString `db:"name_ar"`
-	NameEn sql.NullString `db:"name_en"`
-	Email  sql.NullString `db:"email"`
-	Phone  sql.NullString `db:"phone"`
-
-	Department sql.NullString `db:"department"`
-	Gender     sql.NullString `db:"gender"`
-
-	Password sql.NullString `db:"password"`
-	Verified sql.NullBool   `db:"verified"`
-	Status   sql.NullString `db:"status"`
-}
-
 type UserRole struct {
 	UserID int64 `db:"user_id"`
 	Role   Role  `db:"role"`
 }
 
-//////////////////
-////   ROWS   ////
-//////////////////
-
-//////////////////
-////   DTOS   ////
-//////////////////
-
-type GetPasscodeResponse struct {
-	Passcode string `json:"passcode"`
+type Passcode struct {
+	ID       int64  `db:"id"`
+	Passcode string `db:"passcode"`
 }
