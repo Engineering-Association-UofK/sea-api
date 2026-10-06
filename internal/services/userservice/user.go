@@ -2,8 +2,6 @@ package userservice
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
@@ -30,7 +28,7 @@ func NewUserService(repo *userrepo.UserRepository, suspensionsRepo *repositories
 // ======== GET ALL ========
 
 func (s *UserService) GetAll(req *models.ListRequest) (*usermodels.UserListResponse, error) {
-	total, err := s.repo.GetTotal(false)
+	total, err := s.repo.GetTotal()
 	if err != nil {
 		return nil, err
 	}
@@ -333,13 +331,4 @@ func parseUserResponse(user *usermodels.UserModel, roles []usermodels.Role, url 
 		Status:     user.Status,
 		Roles:      roles,
 	}
-}
-
-func generatePasscode(length int) (string, error) {
-	bytes := make([]byte, length)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }
