@@ -25,9 +25,9 @@ func NewAuthHandler(authService *auth.AuthService) *AuthHandler {
 //	@Description	Login user
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.LoginRequest	true	"Request body"
+//	@Param			body	body	authmodels.LoginRequest	true	"Request body"
 //
-//	@Success		200	{object}	models.LoginResponse
+//	@Success		200	{object}	authmodels.LoginResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/auth/login [post]
@@ -53,9 +53,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 //	@Description	Check which registration step the user is in right now.
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.CheckRegistrationRequest	true	"Request body"
+//	@Param			body	body	authmodels.CheckRegistrationRequest	true	"Request body"
 //
-//	@Success		201	{object}	models.CheckRegistrationResponse
+//	@Success		201	{object}	authmodels.CheckRegistrationResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/auth/register/check [post]
@@ -81,7 +81,7 @@ func (h *AuthHandler) CheckState(c *gin.Context) {
 //	@Description	Do registration step with it's data and step number
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.RegistrationRequest	true	"Request body"
+//	@Param			body	body	authmodels.RegistrationRequest	true	"Request body"
 //	@Success		201	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
@@ -141,7 +141,7 @@ func (h *AuthHandler) DoRegistrationStep(c *gin.Context) {
 //	@Description	Forgot password endpoint to send a password reset email
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.ForgotPasswordRequest	true	"Request body"
+//	@Param			body	body	authmodels.ForgotPasswordRequest	true	"Request body"
 //
 //	@Success		201	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
@@ -169,7 +169,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 //		@Description	Verify user
 //		@Tags			Auth
 //		@Produce		json
-//		@Param			body	body	models.VerifyRequest	true	"Request body"
+//		@Param			body	body	authmodels.VerifyRequest	true	"Request body"
 //
 //		@Success		200	{object}	response.TransactionResponse
 //		@Failure		400	{object}	response.BaseError
@@ -198,7 +198,7 @@ func (h *AuthHandler) Verify(c *gin.Context) {
 //	@Description	Send verification code to user email
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.VerifyEmailRequest	true	"Request body"
+//	@Param			body	body	authmodels.VerifyEmailRequest	true	"Request body"
 //	@Success		200		{object}	response.TransactionResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError

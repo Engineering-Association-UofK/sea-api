@@ -52,14 +52,14 @@ func (s *AuthService) InitialRegistration(req *authmodels.InitialRegistrationReq
 		return errs.New(errs.Conflict, "User already registered", nil)
 	}
 
-	tempUser, err := s.UserRepo.GetTempUser(req.UserID)
+	passcode, err := s.UserRepo.GetPasscode(req.UserID)
 	if err != nil {
-		return errs.New(errs.NotFound, "Student Index was not found in out database, please contact administration", nil)
+		return errs.New(errs.NotFound, "Student Index was not found, please contact administration", nil)
 	}
 	slog.Debug("User found and not already registered")
 
 	// Check passed values
-	if tempUser.Password.Valid && tempUser.Password.String != req.Passcode {
+	if passcode != req.Passcode {
 		return errs.New(errs.BadRequest, "Passcode is not valid", nil)
 	}
 	_, err = s.UserRepo.GetByEmail(string(req.Email))
@@ -69,7 +69,7 @@ func (s *AuthService) InitialRegistration(req *authmodels.InitialRegistrationReq
 	slog.Debug("User passcode and email are clear")
 
 	// Start the registration process
-	tx, err := s.UserRepo.DB.Beginx()
+	tx, err := s.UserRepo.BeginTransaction()
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (s *AuthService) InitialRegistration(req *authmodels.InitialRegistrationReq
 	}
 
 	// Delete temp user model
-	err = s.UserRepo.DeleteTempUser(req.UserID, tx)
+	err = s.UserRepo.DeletePasscode(req.UserID, tx)
 	if err != nil {
 		slog.Error("error deleting temp user", "error", err, "user_id", req.UserID)
 	}

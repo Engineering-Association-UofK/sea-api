@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"io"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
 	"sea-api/internal/models/authmodels"
@@ -27,11 +26,11 @@ func NewUserHandler(service *userservice.UserService) *UserHandler {
 //
 //	@Summary		Get all users
 //	@Description	Get a list of all users with pagination
-//	@Tags			User
+//	@Tags			User::Management
 //	@Produce		json
 //	@Param			limit	query		int	true	"Content count limit"
 //	@Param			page	query		int	true	"Page number"
-//	@Success		200		{object}	models.UserListResponse
+//	@Success		200		{object}	usermodels.UserListResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -54,45 +53,15 @@ func (u *UserHandler) GetAll(c *gin.Context) {
 	c.JSON(200, resp)
 }
 
-// GetAllTempUsers godocs
-//
-//	@Summary		Get all temporary users
-//	@Description	Get a list of all temporary users with pagination
-//	@Tags			User
-//	@Produce		json
-//	@Param			limit	query		int	true	"Content count limit"
-//	@Param			page	query		int	true	"Page number"
-//	@Success		200		{object}	models.TempUserListResponse
-//	@Failure		400		{object}	response.BaseError
-//	@Failure		401		{object}	response.BaseError
-//	@Failure		500		{object}	response.BaseError
-//	@Router			/admin/user/temp-users [post]
-//
-//	@Security		ApiKeyAuth
-func (u *UserHandler) GetAllTempUsers(c *gin.Context) {
-	var req models.ListRequest
-	if err := c.ShouldBindQuery(&req); err != nil {
-		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
-	resp, err := u.service.GetAllTempUsers(&req)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
-	c.JSON(200, resp)
-}
-
 // GetAdmins godocs
 //
 //	@Summary		Get all admins
 //	@Description	Get a list of all administrative users
-//	@Tags			User
+//	@Tags			User::Admin
 //	@Produce		json
 //	@Param			limit	query		int	true	"Content count limit"
 //	@Param			page	query		int	true	"Page number"
-//	@Success		200	{object}		models.AdminResponseList
+//	@Success		200	{object}		usermodels.AdminResponseList
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/admin [get]
@@ -120,10 +89,10 @@ func (u *UserHandler) GetAdmins(c *gin.Context) {
 //
 //	@Summary		Get user by ID
 //	@Description	Get user details by their ID
-//	@Tags			User
+//	@Tags			User::Management
 //	@Produce		json
 //	@Param			id	path		int	true	"User ID"
-//	@Success		200	{object}	models.UserResponse
+//	@Success		200	{object}	usermodels.UserResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
@@ -152,10 +121,10 @@ func (u *UserHandler) GetByID(c *gin.Context) {
 //
 //	@Summary		Get user by username
 //	@Description	Get user details by their username
-//	@Tags			User
+//	@Tags			User::Management
 //	@Produce		json
 //	@Param			username	path		string	true	"Username"
-//	@Success		200			{object}	models.UserResponse
+//	@Success		200			{object}	usermodels.UserResponse
 //	@Failure		400			{object}	response.BaseError
 //	@Failure		401			{object}	response.BaseError
 //	@Failure		404			{object}	response.BaseError
@@ -174,46 +143,14 @@ func (u *UserHandler) GetByUsername(c *gin.Context) {
 	c.PureJSON(200, user)
 }
 
-// CreateTempUser godocs
+// GetPasscode godocs
 //
-//	@Summary		Create temporary user placeholder
-//	@Description	Get the registration passcode for a temporary user by their ID
-//	@Tags			User
+//	@Summary		Get Passcode
+//	@Description	Get the registration passcode for user by their ID
+//	@Tags			User::Management
 //	@Produce		json
 //	@Param			id	path		int	true	"User ID"
-//	@Success		200	{object}	models.GetPasscodeResponse
-//	@Failure		400	{object}	response.BaseError
-//	@Failure		401	{object}	response.BaseError
-//	@Failure		404	{object}	response.BaseError
-//	@Failure		500	{object}	response.BaseError
-//	@Router			/admin/user/passcode/create/{id} [post]
-//
-//	@Security		ApiKeyAuth
-func (u *UserHandler) CreateTempUser(c *gin.Context) {
-	id := c.Param("id")
-	intId, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
-		return
-	}
-
-	passcode, err := u.service.CreateTempUser(intId)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
-	c.JSON(200, passcode)
-}
-
-// GetTempUserPasscode godocs
-//
-//	@Summary		Get temporary user passcode
-//	@Description	Get the registration passcode for a temporary user by their ID
-//	@Tags			User
-//	@Produce		json
-//	@Param			id	path		int	true	"User ID"
-//	@Success		200	{object}	models.GetPasscodeResponse
+//	@Success		200	{object}	usermodels.GetPasscodeResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		404	{object}	response.BaseError
@@ -221,7 +158,7 @@ func (u *UserHandler) CreateTempUser(c *gin.Context) {
 //	@Router			/admin/user/passcode/{id} [get]
 //
 //	@Security		ApiKeyAuth
-func (u *UserHandler) GetTempUserPasscode(c *gin.Context) {
+func (u *UserHandler) GetPasscode(c *gin.Context) {
 	id := c.Param("id")
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
@@ -229,7 +166,7 @@ func (u *UserHandler) GetTempUserPasscode(c *gin.Context) {
 		return
 	}
 
-	passcode, err := u.service.GetTempUserPasscode(intId)
+	passcode, err := u.service.GetPasscode(intId)
 	if err != nil {
 		c.Error(err)
 		return
@@ -244,10 +181,10 @@ func (u *UserHandler) GetTempUserPasscode(c *gin.Context) {
 //
 //	@Summary		Update user
 //	@Description	Update user profile details by administration
-//	@Tags			User
+//	@Tags			User::Management
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		models.UpdateProfileRequest	true	"Update data"
+//	@Param			body	body		usermodels.UpdateProfileRequest	true	"Update data"
 //	@Success		200		{object}	response.TransactionResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
@@ -275,7 +212,7 @@ func (u *UserHandler) Update(c *gin.Context) {
 //
 //	@Summary		Make user admin
 //	@Description	Assign administrative roles to a user
-//	@Tags			User
+//	@Tags			User::Admin
 //	@Produce		json
 //	@Param			id	path		int	true	"User ID"
 //	@Success		200	{object}	response.TransactionResponse
@@ -306,7 +243,7 @@ func (u *UserHandler) MakeAdmin(c *gin.Context) {
 //
 //	@Summary		Make user admin manager
 //	@Description	Assign admin manager role to a user
-//	@Tags			User
+//	@Tags			User::Admin
 //	@Produce		json
 //	@Param			id	path		int	true	"User ID"
 //	@Success		200	{object}	response.TransactionResponse
@@ -337,7 +274,7 @@ func (u *UserHandler) MakeAdminManager(c *gin.Context) {
 //
 //	@Summary		Remove admin manager
 //	@Description	Remove admin manager role from a user
-//	@Tags			User
+//	@Tags			User::Admin
 //	@Produce		json
 //	@Param			id	path		int	true	"User ID"
 //	@Success		200	{object}	response.TransactionResponse
@@ -368,10 +305,10 @@ func (u *UserHandler) RemoveAdminManager(c *gin.Context) {
 //
 //	@Summary		Update admin roles
 //	@Description	Update administrative roles for an existing admin
-//	@Tags			User
+//	@Tags			User::Admin
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		models.AdminRequest	true	"Admin update data"
+//	@Param			body	body		usermodels.AdminRequest	true	"Admin update data"
 //	@Success		200		{object}	response.TransactionResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		401		{object}	response.BaseError
@@ -399,7 +336,7 @@ func (u *UserHandler) UpdateAdmin(c *gin.Context) {
 //
 //	@Summary		Delete admin
 //	@Description	Remove administrative roles from a user
-//	@Tags			User
+//	@Tags			User::Admin
 //	@Produce		json
 //	@Param			id	path		int	true	"User ID"
 //	@Success		200	{object}	response.TransactionResponse
@@ -432,7 +369,7 @@ func (u *UserHandler) DeleteAdmin(c *gin.Context) {
 //
 //	@Summary		Suspend user
 //	@Description	Suspend a user account for a specified duration
-//	@Tags			User
+//	@Tags			User::Management
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		models.SuspensionRequest	true	"Suspension data"
@@ -464,38 +401,4 @@ func (u *UserHandler) Suspend(c *gin.Context) {
 	}
 
 	response.NewTransactionResponse(200, "User suspended successfully", req.UserID, c)
-}
-
-// AssignPasscodes godocs
-//
-//	@Summary		Assign passcodes
-//	@Description	Generate and assign registration passcodes to all temporary users
-//	@Tags			User
-//	@Produce		text/event-stream
-//	@Success		200	{string}	string	"SSE stream"
-//	@Failure		401	{object}	response.BaseError
-//	@Failure		500	{object}	response.BaseError
-//	@Router			/admin/user/assign-passcodes [post]
-//
-//	@Security		ApiKeyAuth
-func (u *UserHandler) AssignPasscodes(c *gin.Context) {
-	c.Writer.Header().Set("Content-Type", "text/event-stream")
-	c.Writer.Header().Set("Cache-Control", "no-cache")
-	c.Writer.Header().Set("Connection", "keep-alive")
-
-	progressChan := make(chan string)
-
-	go u.service.AssignPasscodes(progressChan)
-
-	c.Stream(func(w io.Writer) bool {
-		msg, ok := <-progressChan
-		if !ok {
-			return false
-		}
-
-		c.SSEvent("message", msg)
-		return true
-	})
-
-	c.JSON(200, gin.H{"message": "Passcodes assigned successfully"})
 }

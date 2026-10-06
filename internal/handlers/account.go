@@ -33,7 +33,7 @@ func NewAccountHandler(accountService *services.AccountService) *AccountHandler 
 //	@Description	Get profile summary of requesting user
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Success		200	{object}	models.UserProfileSummaryResponse
+//	@Success		200	{object}	usermodels.UserProfileSummaryResponse
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/account/summary [get]
@@ -62,7 +62,7 @@ func (a *AccountHandler) GetProfileSummary(c *gin.Context) {
 //	@Description	Get all profile details of requesting user
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Success		200	{object}	models.UserProfileResponse
+//	@Success		200	{object}	usermodels.UserProfileResponse
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/account [get]
@@ -181,7 +181,7 @@ func (h *CertificatesHandler) GetCertificate(c *gin.Context) {
 //	@Description	Update profile text details
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdateProfileRequest 	true	"Request body"
+//	@Param			body	body	usermodels.UpdateProfileRequest 	true	"Request body"
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		400	{object}	response.ErrorResponse
@@ -259,7 +259,7 @@ func (a *AccountHandler) UpdatePicture(c *gin.Context) {
 //	@Description	Update user password
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdatePasswordRequest 	true	"Request body"
+//	@Param			body	body	usermodels.UpdatePasswordRequest 	true	"Request body"
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
@@ -293,7 +293,7 @@ func (a *AccountHandler) UpdatePassword(c *gin.Context) {
 //	@Description	Update user email address
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdateEmailRequest 	true	"Request body"
+//	@Param			body	body	usermodels.UpdateEmailRequest 	true	"Request body"
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
@@ -328,7 +328,7 @@ func (a *AccountHandler) UpdateEmail(c *gin.Context) {
 //	@Description	Update username
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdateUsernameRequest 	true	"Request body"
+//	@Param			body	body	usermodels.UpdateUsernameRequest 	true	"Request body"
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
@@ -362,8 +362,8 @@ func (a *AccountHandler) UpdateUsername(c *gin.Context) {
 //	@Description	Check if username is free
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdateUsernameRequest 	true	"Request body"
-//	@Success		200	{object}	models.CheckUsername
+//	@Param			body	body	usermodels.UpdateUsernameRequest 	true	"Request body"
+//	@Success		200	{object}	usermodels.CheckUsername
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError

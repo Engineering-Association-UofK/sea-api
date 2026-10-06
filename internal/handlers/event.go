@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sea-api/internal/errs"
+	_ "sea-api/internal/models"
 	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/eventmodels"
 	"sea-api/internal/response"
