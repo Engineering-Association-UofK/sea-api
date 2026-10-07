@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"sea-api/internal/models"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -16,9 +17,9 @@ func NewSuspensionsRepo(db *sqlx.DB) *SuspensionsRepo {
 }
 
 func (r *SuspensionsRepo) Create(suspension *models.SuspensionModel, tx *sqlx.Tx, isHistory bool) (int64, error) {
-	table := models.TableSuspensions
+	table := tables.Suspensions
 	if isHistory {
-		table = models.TableSuspensionHistory
+		table = tables.SuspensionHistory
 	}
 	query := fmt.Sprintf(`
 	INSERT INTO %s (user_id, admin_id, reason, started_at, ended_at)
@@ -40,7 +41,7 @@ func (r *SuspensionsRepo) Create(suspension *models.SuspensionModel, tx *sqlx.Tx
 
 func (r *SuspensionsRepo) GetByUserID(user_id int64) (*models.SuspensionModel, error) {
 	var suspension models.SuspensionModel
-	err := r.db.Get(&suspension, fmt.Sprintf(`SELECT * FROM %s WHERE user_id = ?`, models.TableSuspensions), user_id)
+	err := r.db.Get(&suspension, fmt.Sprintf(`SELECT * FROM %s WHERE user_id = ?`, tables.Suspensions), user_id)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func (r *SuspensionsRepo) GetByUserID(user_id int64) (*models.SuspensionModel, e
 }
 
 func (r *SuspensionsRepo) Delete(id int64) error {
-	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableSuspensions), id)
+	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.Suspensions), id)
 	return err
 }
 
@@ -61,7 +62,7 @@ func (r *SuspensionsRepo) CleanExpired() ([]int64, error) {
 	}
 	defer tx.Rollback()
 
-	err = tx.Select(&ids, fmt.Sprintf(`SELECT id FROM %s WHERE ended_at < NOW() FOR UPDATE`, models.TableSuspensions))
+	err = tx.Select(&ids, fmt.Sprintf(`SELECT id FROM %s WHERE ended_at < NOW() FOR UPDATE`, tables.Suspensions))
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +72,7 @@ func (r *SuspensionsRepo) CleanExpired() ([]int64, error) {
 		return ids, err
 	}
 
-	query, args, err := sqlx.In(fmt.Sprintf(`DELETE FROM %s WHERE id IN (?)`, models.TableSuspensions), ids)
+	query, args, err := sqlx.In(fmt.Sprintf(`DELETE FROM %s WHERE id IN (?)`, tables.Suspensions), ids)
 	if err != nil {
 		return nil, err
 	}

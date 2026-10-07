@@ -1,13 +1,14 @@
 package middleware
 
 import (
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
+	"sea-api/internal/models/usermodels"
 	"slices"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RequireRole(role models.Role) gin.HandlerFunc {
+func RequireRole(role usermodels.Role) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
@@ -18,9 +19,9 @@ func RequireRole(role models.Role) gin.HandlerFunc {
 			return
 		}
 
-		claims := userData.(*models.ManagedClaims)
+		claims := userData.(*authmodels.ManagedClaims)
 
-		if !slices.Contains(claims.Roles, models.RoleSystemSuperAdmin) {
+		if !slices.Contains(claims.Roles, usermodels.RoleSystemSuperAdmin) {
 			if !slices.Contains(claims.Roles, role) {
 				c.AbortWithStatus(403)
 				return
@@ -31,7 +32,7 @@ func RequireRole(role models.Role) gin.HandlerFunc {
 	}
 }
 
-func RequireAnyRole(roles ...models.Role) gin.HandlerFunc {
+func RequireAnyRole(roles ...usermodels.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userData, exists := c.Get("user")
 		if !exists {
@@ -39,9 +40,9 @@ func RequireAnyRole(roles ...models.Role) gin.HandlerFunc {
 			return
 		}
 
-		claims := userData.(*models.ManagedClaims)
+		claims := userData.(*authmodels.ManagedClaims)
 
-		if !slices.Contains(claims.Roles, models.RoleSystemSuperAdmin) {
+		if !slices.Contains(claims.Roles, usermodels.RoleSystemSuperAdmin) {
 			hasRole := false
 			for _, role := range roles {
 				if slices.Contains(claims.Roles, role) {

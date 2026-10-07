@@ -2,12 +2,11 @@ package auth
 
 import (
 	"crypto/sha256"
-	"database/sql"
 	"fmt"
 	"log/slog"
 	"sea-api/internal/config"
 	"sea-api/internal/errs"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"strconv"
 	"time"
 
@@ -34,33 +33,34 @@ import (
 
 And done. The rest of the details can be filled later on if the user wanted to enter an event.
 */
-func (s *AuthService) CheckRegistration(req *models.CheckRegistrationRequest) (*models.CheckRegistrationResponse, int64, error) {
+func (s *AuthService) CheckRegistration(req *authmodels.CheckRegistrationRequest) (*authmodels.CheckRegistrationResponse, int64, error) {
 	state, err := s.AuthRepository.GetStateWithCode(req.RegCode)
 	if err != nil {
 		return nil, 0, err
 	}
-	return &models.CheckRegistrationResponse{
+	return &authmodels.CheckRegistrationResponse{
 		RegStep: state.Step,
 	}, state.UserID, nil
 }
 
 // # First Step
-func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest) error {
+func (s *AuthService) InitialRegistration(req *authmodels.InitialRegistrationRequest) error {
 	slog.Debug("Initial Registration Started")
 
-	// Get models and check them
-	tempUser, err := s.UserRepo.GetTempUser(req.UserID)
-	if err != nil {
-		return errs.New(errs.NotFound, "Student Index was not found in out database, please contact administration", nil)
+	_, err := s.UserRepo.GetUserRow(req.UserID)
+	if err == nil {
+		return errs.New(errs.Conflict, "User already registered", nil)
 	}
-	_, err = s.UserRepo.GetByUserID(req.UserID)
-	if err == nil || err != sql.ErrNoRows {
-		return errs.New(errs.Conflict, "User with Index already exists", nil)
+
+	passcode, err := s.UserRepo.GetPasscode(req.UserID)
+	if err != nil {
+		slog.Debug("Failed to get passcode for registration", "Error", err)
+		return errs.New(errs.NotFound, "Student Index was not found, please contact administration", nil)
 	}
 	slog.Debug("User found and not already registered")
 
 	// Check passed values
-	if tempUser.Password.Valid && tempUser.Password.String != req.Passcode {
+	if passcode != req.Passcode {
 		return errs.New(errs.BadRequest, "Passcode is not valid", nil)
 	}
 	_, err = s.UserRepo.GetByEmail(string(req.Email))
@@ -69,8 +69,14 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 	}
 	slog.Debug("User passcode and email are clear")
 
-	// Create user model
-	err = s.UserRepo.StartUserRegistration(&models.RegInitCreate{
+	// Start the registration process
+	tx, err := s.UserRepo.BeginTransaction()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = s.UserRepo.StartUserRegistration(tx, &authmodels.RegInitCreate{
 		ID:    req.UserID,
 		Email: req.Email,
 	})
@@ -78,33 +84,42 @@ func (s *AuthService) InitialRegistration(req *models.InitialRegistrationRequest
 		return err
 	}
 
-	// // Delete temp user model
-	// err = s.UserRepo.DeleteTempUser(req.UserID, nil)
-	// if err != nil {
-	// 	slog.Error("error deleting temp user", "error", err, "user_id", req.UserID)
-	// }
-	// slog.Debug("User temp profile deleted")
+	// Delete temp user model
+	err = s.UserRepo.DeletePasscode(req.UserID, tx)
+	if err != nil {
+		slog.Error("error deleting temp user", "error", err, "user_id", req.UserID)
+	}
+	slog.Debug("User temp profile deleted")
 
 	// Start registration counter
-	data := []byte(fmt.Sprintf("%s|%d|%s", req.Email, req.UserID, time.Now()))
+	data := fmt.Appendf(nil, "%s|%d|%s", req.Email, req.UserID, time.Now())
 	hash := sha256.Sum256(data)
-	err = s.AuthRepository.StartRegistration(&models.RegistrationStepModel{
+	err = s.AuthRepository.StartRegistration(tx, &authmodels.RegistrationStepModel{
 		RegCode: fmt.Sprintf("%x", hash),
 		UserID:  req.UserID,
 		Step:    1,
 	})
+	if err != nil {
+		return err
+	}
 	slog.Debug("Registration process started")
 
 	// Send email
 	link := fmt.Sprintf("%s/%x", config.Links.Register, hash)
 	slog.Debug("Sending email")
-	return s.MailService.SendRegistrationMail(string(req.Email), link, req.Lang)
+	err = s.MailService.SendRegistrationMail(string(req.Email), link, req.Lang)
+	if err != nil {
+		return err
+	}
+
+	// Apply transactions
+	return tx.Commit()
 }
 
 // # Second Step
 // Also acts as a password reset function
-func (s *AuthService) CredentialsRegistration(req *models.PasswordRegistrationRequest) error {
-	state, userID, err := s.CheckRegistration(&models.CheckRegistrationRequest{RegCode: req.RegCode})
+func (s *AuthService) CredentialsRegistration(req *authmodels.PasswordRegistrationRequest) error {
+	state, userID, err := s.CheckRegistration(&authmodels.CheckRegistrationRequest{RegCode: req.RegCode})
 	if err != nil {
 		return err
 	}
@@ -132,8 +147,8 @@ func (s *AuthService) CredentialsRegistration(req *models.PasswordRegistrationRe
 }
 
 // # Third step
-func (s *AuthService) DetailsRegistration(req *models.DetailsRegistrationRequest) error {
-	state, userID, err := s.CheckRegistration(&models.CheckRegistrationRequest{RegCode: req.RegCode})
+func (s *AuthService) DetailsRegistration(req *authmodels.DetailsRegistrationRequest) error {
+	state, userID, err := s.CheckRegistration(&authmodels.CheckRegistrationRequest{RegCode: req.RegCode})
 	if err != nil {
 		return err
 	}
@@ -146,7 +161,7 @@ func (s *AuthService) DetailsRegistration(req *models.DetailsRegistrationRequest
 		return err
 	}
 
-	err = s.UserRepo.UpdateDetails(&models.RegDetailsUpdate{
+	err = s.UserRepo.UpdateDetails(&authmodels.RegDetailsUpdate{
 		UserID:     userID,
 		NameAr:     req.NameAr,
 		NameEn:     req.NameEn,
@@ -163,8 +178,8 @@ func (s *AuthService) DetailsRegistration(req *models.DetailsRegistrationRequest
 }
 
 // # Fourth and final step
-func (s *AuthService) UsernameRegistration(req *models.UsernameRegistrationRequest) error {
-	state, userID, err := s.CheckRegistration(&models.CheckRegistrationRequest{RegCode: req.RegCode})
+func (s *AuthService) UsernameRegistration(req *authmodels.UsernameRegistrationRequest) error {
+	state, userID, err := s.CheckRegistration(&authmodels.CheckRegistrationRequest{RegCode: req.RegCode})
 	if err != nil {
 		return err
 	}

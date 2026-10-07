@@ -5,6 +5,7 @@ import (
 	"net/smtp"
 	"sea-api/internal/config"
 	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/services/userservice"
 	"sea-api/internal/utils"
 	"strings"
@@ -30,7 +31,7 @@ func NewMailService(userService *userservice.UserService) *MailService {
 	}
 }
 
-func (m *MailService) SendVerificationCode(to string, data models.VerifyEmail) error {
+func (m *MailService) SendVerificationCode(to string, data authmodels.VerifyEmail) error {
 	tem, err := utils.GetEmailTemplate(models.EmailAccCode, models.Arabic, data)
 	if err != nil {
 		return err

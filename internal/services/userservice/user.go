@@ -2,12 +2,12 @@ package userservice
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/usermodels"
 	"sea-api/internal/repositories"
+	"sea-api/internal/repositories/userrepo"
 	"sea-api/internal/services/storage"
 	"sea-api/internal/utils"
 	"sea-api/internal/utils/valid"
@@ -16,19 +16,19 @@ import (
 )
 
 type UserService struct {
-	repo            *repositories.UserRepository
+	repo            *userrepo.UserRepository
 	suspensionsRepo *repositories.SuspensionsRepo
 	S3              *storage.S3
 }
 
-func NewUserService(repo *repositories.UserRepository, suspensionsRepo *repositories.SuspensionsRepo, S3 *storage.S3) *UserService {
+func NewUserService(repo *userrepo.UserRepository, suspensionsRepo *repositories.SuspensionsRepo, S3 *storage.S3) *UserService {
 	return &UserService{repo: repo, suspensionsRepo: suspensionsRepo, S3: S3}
 }
 
 // ======== GET ALL ========
 
-func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse, error) {
-	total, err := s.repo.GetTotal(false)
+func (s *UserService) GetAll(req *models.ListRequest) (*usermodels.UserListResponse, error) {
+	total, err := s.repo.GetTotal()
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse,
 	if err != nil {
 		return nil, errs.New(errs.InternalServerError, "Error getting users: "+err.Error(), nil)
 	}
-	ids := utils.ExtractField(users, func(u models.UserModel) int64 { return u.ID })
+	ids := utils.ExtractField(users, func(u usermodels.UserModel) int64 { return u.ID })
 
 	roles, err := s.repo.GetAllRolesByUserIDs(ids)
 	if err != nil {
@@ -46,30 +46,30 @@ func (s *UserService) GetAll(req *models.ListRequest) (*models.UserListResponse,
 	}
 	rolesMap := extractRoles(roles)
 
-	var userResponses []models.UserListItemResponse
+	var userResponses []usermodels.UserListItemResponse
 	for _, u := range users {
 		user := parseUserListResponse(&u, rolesMap[u.ID])
 		userResponses = append(userResponses, *user)
 	}
 
-	return &models.UserListResponse{
+	return &usermodels.UserListResponse{
 		Users:   userResponses,
 		Current: req.Page,
 		Pages:   pages,
 	}, nil
 }
 
-func (s *UserService) GetAllUserDetailsByIndices(indices []int64) ([]models.UserDetails, error) {
+func (s *UserService) GetAllUserDetailsByIndices(indices []int64) ([]usermodels.UserDetails, error) {
 	users, err := s.repo.GetAllByIndices(indices)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(users) == 0 {
-		return []models.UserDetails{}, nil
+		return []usermodels.UserDetails{}, nil
 	}
 
-	var userResponses []models.UserDetails
+	var userResponses []usermodels.UserDetails
 	for _, user := range users {
 		url := ""
 		if user.ProfileImageID.Valid {
@@ -78,8 +78,8 @@ func (s *UserService) GetAllUserDetailsByIndices(indices []int64) ([]models.User
 				url = link
 			}
 		}
-		userResponses = append(userResponses, models.UserDetails{
-			UserProfileResponse: models.UserProfileResponse{
+		userResponses = append(userResponses, usermodels.UserDetails{
+			UserProfileResponse: usermodels.UserProfileResponse{
 				ID:         user.ID,
 				UniID:      *user.UniID,
 				Username:   *user.Username,
@@ -97,7 +97,7 @@ func (s *UserService) GetAllUserDetailsByIndices(indices []int64) ([]models.User
 	return userResponses, nil
 }
 
-func (s *UserService) GetAllByIndices(indices []int64) ([]models.UserListItemResponse, error) {
+func (s *UserService) GetAllByIndices(indices []int64) ([]usermodels.UserListItemResponse, error) {
 	users, err := s.repo.GetAllByIndices(indices)
 	if err != nil {
 		return nil, err
@@ -108,12 +108,12 @@ func (s *UserService) GetAllByIndices(indices []int64) ([]models.UserListItemRes
 	}
 
 	if len(users) == 0 {
-		return []models.UserListItemResponse{}, nil
+		return []usermodels.UserListItemResponse{}, nil
 	}
 
 	rolesMap := extractRoles(roles)
 
-	var userResponse []models.UserListItemResponse
+	var userResponse []usermodels.UserListItemResponse
 	for _, u := range users {
 		user := parseUserListResponse(&u, rolesMap[u.ID])
 		userResponse = append(userResponse, *user)
@@ -124,7 +124,7 @@ func (s *UserService) GetAllByIndices(indices []int64) ([]models.UserListItemRes
 
 // ======== GET ========
 
-func (s *UserService) GetUserDetails(id int64) (*models.UserDetails, error) {
+func (s *UserService) GetUserDetails(id int64) (*usermodels.UserDetails, error) {
 	user, err := s.repo.GetByUserID(id)
 	if err != nil {
 		return nil, err
@@ -139,8 +139,8 @@ func (s *UserService) GetUserDetails(id int64) (*models.UserDetails, error) {
 		url = link
 	}
 
-	return &models.UserDetails{
-		UserProfileResponse: models.UserProfileResponse{
+	return &usermodels.UserDetails{
+		UserProfileResponse: usermodels.UserProfileResponse{
 			ID:         user.ID,
 			UniID:      *user.UniID,
 			Username:   *user.Username,
@@ -155,7 +155,7 @@ func (s *UserService) GetUserDetails(id int64) (*models.UserDetails, error) {
 	}, nil
 }
 
-func (s *UserService) GetByUserID(ctx context.Context, userID int64) (*models.UserResponse, error) {
+func (s *UserService) GetByUserID(ctx context.Context, userID int64) (*usermodels.UserResponse, error) {
 	user, err := s.repo.GetByUserID(userID)
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (s *UserService) GetByUserID(ctx context.Context, userID int64) (*models.Us
 	if err != nil {
 		return nil, err
 	}
-	roles := utils.ExtractField(rolesModels, func(r models.UserRole) models.Role { return r.Role })
+	roles := utils.ExtractField(rolesModels, func(r usermodels.UserRole) usermodels.Role { return r.Role })
 
 	url := ""
 	if user.ProfileImageID.Valid {
@@ -178,7 +178,7 @@ func (s *UserService) GetByUserID(ctx context.Context, userID int64) (*models.Us
 	return parseUserResponse(user, roles, url), nil
 }
 
-func (s *UserService) GetByUsername(ctx context.Context, username string) (*models.UserResponse, error) {
+func (s *UserService) GetByUsername(ctx context.Context, username string) (*usermodels.UserResponse, error) {
 	user, err := s.repo.GetByUsername(username)
 	if err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func (s *UserService) GetByUsername(ctx context.Context, username string) (*mode
 	if err != nil {
 		return nil, err
 	}
-	roles := utils.ExtractField(rolesModels, func(r models.UserRole) models.Role { return r.Role })
+	roles := utils.ExtractField(rolesModels, func(r usermodels.UserRole) usermodels.Role { return r.Role })
 
 	url := ""
 	if user.ProfileImageID.Valid {
@@ -201,15 +201,15 @@ func (s *UserService) GetByUsername(ctx context.Context, username string) (*mode
 	return parseUserResponse(user, roles, url), nil
 }
 
-func (s *UserService) GetRolesByUserID(userID int64) ([]models.Role, error) {
+func (s *UserService) GetRolesByUserID(userID int64) ([]usermodels.Role, error) {
 	rolesModels, err := s.repo.GetRolesByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 	if len(rolesModels) == 0 {
-		return []models.Role{}, nil
+		return []usermodels.Role{}, nil
 	}
-	var roles []models.Role
+	var roles []usermodels.Role
 	for _, r := range rolesModels {
 		roles = append(roles, r.Role)
 	}
@@ -218,7 +218,7 @@ func (s *UserService) GetRolesByUserID(userID int64) ([]models.Role, error) {
 
 // ======== UPDATE ========
 
-func (s *UserService) Update(req *models.UpdateProfileRequest) error {
+func (s *UserService) Update(req *usermodels.UpdateProfileRequest) error {
 	user, err := s.repo.GetByUserID(req.ID)
 	if err != nil {
 		return err
@@ -228,7 +228,7 @@ func (s *UserService) Update(req *models.UpdateProfileRequest) error {
 		return err
 	}
 	// Check is user is Super Admin to abort changes
-	if slices.Contains(roles, models.RoleSystemSuperAdmin) {
+	if slices.Contains(roles, usermodels.RoleSystemSuperAdmin) {
 		return errs.New(errs.Forbidden, "Cannot update a Super Admin profile", nil)
 	}
 	user.UniID = &[]string{req.UniID}[0]
@@ -236,7 +236,7 @@ func (s *UserService) Update(req *models.UpdateProfileRequest) error {
 	user.NameEn = &[]string{string(req.NameEn)}[0]
 	user.Phone = &[]string{string(req.Phone)}[0]
 	user.Department = &[]models.Department{req.Department}[0]
-	user.Gender = &[]models.Gender{req.Gender}[0]
+	user.Gender = &[]usermodels.Gender{req.Gender}[0]
 	if err := s.repo.Update(user, nil); err != nil {
 		return err
 	}
@@ -254,8 +254,8 @@ func (s *UserService) Suspend(req *models.SuspensionRequest, adminId int64) erro
 		)
 	}
 	if rolesModels, err := s.repo.GetRolesByUserID(req.UserID); err == nil {
-		roles := utils.ExtractField(rolesModels, func(r models.UserRole) models.Role { return r.Role })
-		if slices.Contains(roles, models.RoleSystemSuperAdmin) {
+		roles := utils.ExtractField(rolesModels, func(r usermodels.UserRole) usermodels.Role { return r.Role })
+		if slices.Contains(roles, usermodels.RoleSystemSuperAdmin) {
 			return errs.New(errs.Forbidden, "Cannot suspend a Super Admin", nil)
 		}
 	}
@@ -290,19 +290,19 @@ func (s *UserService) Suspend(req *models.SuspensionRequest, adminId int64) erro
 
 // ======== Helpers ========
 
-func extractRoles(roles []models.UserRole) map[int64][]models.Role {
-	rolesMap := make(map[int64][]models.Role)
+func extractRoles(roles []usermodels.UserRole) map[int64][]usermodels.Role {
+	rolesMap := make(map[int64][]usermodels.Role)
 	for _, r := range roles {
 		if _, ok := rolesMap[r.UserID]; !ok {
-			rolesMap[r.UserID] = []models.Role{}
+			rolesMap[r.UserID] = []usermodels.Role{}
 		}
 		rolesMap[r.UserID] = append(rolesMap[r.UserID], r.Role)
 	}
 	return rolesMap
 }
 
-func parseUserListResponse(user *models.UserModel, roles []models.Role) *models.UserListItemResponse {
-	return &models.UserListItemResponse{
+func parseUserListResponse(user *usermodels.UserModel, roles []usermodels.Role) *usermodels.UserListItemResponse {
+	return &usermodels.UserListItemResponse{
 		ID:         user.ID,
 		UniID:      *user.UniID,
 		Username:   *user.Username,
@@ -315,8 +315,8 @@ func parseUserListResponse(user *models.UserModel, roles []models.Role) *models.
 	}
 }
 
-func parseUserResponse(user *models.UserModel, roles []models.Role, url string) *models.UserResponse {
-	return &models.UserResponse{
+func parseUserResponse(user *usermodels.UserModel, roles []usermodels.Role, url string) *usermodels.UserResponse {
+	return &usermodels.UserResponse{
 		ID:         user.ID,
 		UniID:      *user.UniID,
 		Username:   *user.Username,
@@ -331,13 +331,4 @@ func parseUserResponse(user *models.UserModel, roles []models.Role, url string) 
 		Status:     user.Status,
 		Roles:      roles,
 	}
-}
-
-func generatePasscode(length int) (string, error) {
-	bytes := make([]byte, length)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }

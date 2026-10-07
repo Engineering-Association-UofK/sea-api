@@ -11,6 +11,7 @@ import (
 	"sea-api/internal/config"
 	"sea-api/internal/handlers/middleware"
 	"sea-api/internal/models"
+	"sea-api/internal/models/usermodels"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
 	"sea-api/internal/services/userservice"
@@ -172,7 +173,7 @@ func SetupRouter(
 
 	{ // ###### Administration Endpoints ######
 		admin := apiV1.Group("/admin")
-		admin.Use(middleware.AuthMiddleware(u), middleware.RequireRole(models.RoleSystemAdmin))
+		admin.Use(middleware.AuthMiddleware(u), middleware.RequireRole(usermodels.RoleSystemAdmin))
 
 		{ // ==== Analysis
 			analysis := admin.Group("/analysis")
@@ -187,33 +188,28 @@ func SetupRouter(
 
 		{ // ==== USERS
 			user := admin.Group("/user")
-			user.Use(middleware.RequireAnyRole(models.RoleSystemUserMgr, models.RoleSystemSuperAdmin))
+			user.Use(middleware.RequireAnyRole(usermodels.RoleSystemUserMgr))
 			user.GET("/:id", h.User.GetByID)
 			user.GET("/all", h.User.GetAll)
-			user.POST("/temp-users", h.User.GetAllTempUsers)
 			user.GET("/username/:username", h.User.GetByUsername)
-			user.POST("/passcode/create/:id", h.User.CreateTempUser)
-			user.GET("/passcode/:id", h.User.GetTempUserPasscode)
+			user.GET("/passcode/:id", h.User.GetPasscode)
 			user.PUT("", h.User.Update)
 			user.POST("/suspend", h.User.Suspend)
-			user.POST("/assign-passcodes", h.User.AssignPasscodes)
-			user.POST("/import-users-with-emails", h.User.UpdateUsersImport)
-			user.POST("/import-users/:id", h.User.ImportUsers)
 		}
 
 		{ // ==== ADMIN
-			admin.Use(middleware.RequireAnyRole(models.RoleSystemAdminManager, models.RoleSystemSuperAdmin))
+			admin.Use(middleware.RequireAnyRole(usermodels.RoleSystemAdminManager))
 			admin.GET("", h.User.GetAdmins)
 			admin.POST("/:id", h.User.MakeAdmin)
 			admin.PUT("", h.User.UpdateAdmin)
 			admin.DELETE("/:id", h.User.DeleteAdmin)
-			admin.POST("/add-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), h.User.MakeAdminManager)
-			admin.DELETE("/remove-manager/:id", middleware.RequireRole(models.RoleSystemSuperAdmin), h.User.RemoveAdminManager)
+			admin.POST("/add-manager/:id", middleware.RequireRole(usermodels.RoleSystemSuperAdmin), h.User.MakeAdminManager)
+			admin.DELETE("/remove-manager/:id", middleware.RequireRole(usermodels.RoleSystemSuperAdmin), h.User.RemoveAdminManager)
 		}
 
 		{ // ==== BLOG POSTS
 			posts := admin.Group("/blog")
-			posts.Use(middleware.RequireAnyRole(models.RoleContentBlogMgr, models.RoleSystemSuperAdmin))
+			posts.Use(middleware.RequireAnyRole(usermodels.RoleContentBlogMgr))
 			posts.GET("", h.Cms.GetAllPosts)
 			posts.GET("/:id", h.Cms.GetPostById)
 			posts.POST("", h.Cms.CreatePost)
@@ -223,7 +219,7 @@ func SetupRouter(
 
 		{ // ==== BOT
 			bot := admin.Group("/bot")
-			bot.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
+			bot.Use(middleware.RequireAnyRole(usermodels.RoleContentEditor))
 			bot.GET("/graph", h.Bot.GetBotGraph)
 			bot.PUT("/graph", h.Bot.UpdateBotGraph)
 			bot.POST("/reset", h.Bot.ResetDefault)
@@ -231,7 +227,7 @@ func SetupRouter(
 
 		{ // ==== GALLERY
 			gallery := admin.Group("/gallery")
-			gallery.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
+			gallery.Use(middleware.RequireAnyRole(usermodels.RoleContentEditor))
 			gallery.POST("", h.Gallery.Upload)
 			gallery.GET("", h.Gallery.GetAll)
 			gallery.GET("/:id", h.Gallery.GetByID)
@@ -240,7 +236,7 @@ func SetupRouter(
 
 		{ // ==== FORMS
 			form := admin.Group("/form")
-			form.Use(middleware.RequireAnyRole(models.RoleContentFormMgr, models.RoleSystemSuperAdmin))
+			form.Use(middleware.RequireAnyRole(usermodels.RoleContentFormMgr))
 
 			form.GET("", h.Form.GetAllForms)
 			form.POST("", h.Form.CreateForm)
@@ -277,7 +273,7 @@ func SetupRouter(
 
 		{ // ==== TEAM MEMBERS
 			team := admin.Group("/team")
-			team.Use(middleware.RequireAnyRole(models.RoleContentEditor, models.RoleSystemSuperAdmin))
+			team.Use(middleware.RequireAnyRole(usermodels.RoleContentEditor))
 			team.POST("", h.Cms.CreateTeamMember)
 			team.GET("", h.Cms.GetAllTeamMembers)
 			team.GET("/:id", h.Cms.GetTeamMemberByID)
@@ -287,7 +283,7 @@ func SetupRouter(
 
 		{ // ==== EVENTS
 			event := admin.Group("/event")
-			event.Use(middleware.RequireAnyRole(models.RoleContentEventMgr, models.RoleSystemSuperAdmin))
+			event.Use(middleware.RequireAnyRole(usermodels.RoleContentEventMgr))
 			event.GET(":id", h.Event.GetEvent)
 			event.GET("", h.Event.GetEventList)
 			event.POST("", h.Event.CreateEvent)
@@ -312,7 +308,7 @@ func SetupRouter(
 
 		{ // ==== Elections
 			election := admin.Group("/election")
-			election.Use(middleware.RequireRole(models.RoleSystemAdminManager))
+			election.Use(middleware.RequireRole(usermodels.RoleSystemAdminManager))
 			election.POST("/candidate", h.Election.CreateCandidate)
 			election.PUT("/candidate/:id", h.Election.UpdateCandidate)
 			election.DELETE("/candidate/:id", h.Election.RemoveCandidate)
@@ -323,7 +319,7 @@ func SetupRouter(
 
 		{ // ==== CERTIFICATES
 			certificate := admin.Group("/certificate")
-			certificate.Use(middleware.RequireAnyRole(models.RoleCertifier, models.RoleSystemSuperAdmin))
+			certificate.Use(middleware.RequireAnyRole(usermodels.RoleCertifier))
 
 			// New API
 

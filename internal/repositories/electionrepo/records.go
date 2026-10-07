@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sea-api/internal/models"
 	"sea-api/internal/models/electionsmodels"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -15,7 +15,7 @@ func (r *ElectionRepo) AddRecord(tx *sqlx.Tx, userID int64, cycle int64) error {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (user_id, cycle)
 		VALUES (?, ?)
-	`, models.TableTicketRecords)
+	`, tables.TicketRecords)
 
 	_, err := tx.Exec(query, userID, cycle)
 	return err
@@ -30,7 +30,7 @@ func (r *ElectionRepo) HasRecord(userID int64, cycle int64) (bool, error) {
 			FROM %s 
 			WHERE user_id = ? AND cycle = ?
 		)
-	`, models.TableTicketRecords)
+	`, tables.TicketRecords)
 
 	err := r.db.Get(&exists, query, userID, cycle)
 	if err != nil {
@@ -47,7 +47,7 @@ func (r *ElectionRepo) GetRecordByUserIDAndCycle(userID int64, cycle int64) (*el
 		SELECT id, user_id, cycle, created_at 
 		FROM %s 
 		WHERE user_id = ? AND cycle = ?
-	`, models.TableTicketRecords)
+	`, tables.TicketRecords)
 
 	err := r.db.Get(&record, query, userID, cycle)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/repositories"
 	"sea-api/internal/services"
 )
@@ -21,7 +22,7 @@ func NewBotService(repo *repositories.BotRepository, feedbackService *services.F
 	}
 }
 
-func (s *BotService) HandleSession(req models.BotRequest, claims *models.ManagedClaims) (*models.BotResponse, error) {
+func (s *BotService) HandleSession(req models.BotRequest, claims *authmodels.ManagedClaims) (*models.BotResponse, error) {
 	// Check for existing session
 	state, err := s.repo.GetSession(req.SessionID)
 	if err != nil {

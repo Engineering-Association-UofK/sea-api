@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sea-api/internal/models"
+	"sea-api/internal/models/tables"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -14,7 +14,7 @@ import (
 // GetConfig returns the JSON global config state
 func GetConfig(name string, db *sqlx.DB) (*json.RawMessage, error) {
 	var raw json.RawMessage
-	query := fmt.Sprintf("SELECT value FROM %s WHERE `key` = ?", models.TableConfig)
+	query := fmt.Sprintf("SELECT value FROM %s WHERE `key` = ?", tables.Config)
 
 	err := db.Get(&raw, query, name)
 	if err != nil {
@@ -30,7 +30,7 @@ func UpdateConfig(name string, tx *sqlx.Tx, cfg any) error {
 		return err
 	}
 
-	query := fmt.Sprintf("UPDATE %s SET value = ? WHERE `key` = ?", models.TableConfig)
+	query := fmt.Sprintf("UPDATE %s SET value = ? WHERE `key` = ?", tables.Config)
 	_, err = tx.Exec(query, val, name)
 	return err
 }
@@ -38,7 +38,7 @@ func UpdateConfig(name string, tx *sqlx.Tx, cfg any) error {
 // ConfigExists checks if a config key exists and has a non-empty JSON value
 func ConfigExists(name string, db *sqlx.DB) (bool, error) {
 	var raw *json.RawMessage
-	query := fmt.Sprintf("SELECT value FROM %s WHERE `key` = ?", models.TableConfig)
+	query := fmt.Sprintf("SELECT value FROM %s WHERE `key` = ?", tables.Config)
 
 	err := db.Get(&raw, query, name)
 	if err != nil {

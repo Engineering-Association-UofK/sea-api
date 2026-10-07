@@ -4,12 +4,13 @@ import (
 	"log/slog"
 	"sea-api/internal/handlers/middleware"
 	"sea-api/internal/repositories"
+	"sea-api/internal/repositories/userrepo"
 	"sea-api/internal/services"
 	"time"
 )
 
 type SchedularService struct {
-	UserRepo         *repositories.UserRepository
+	UserRepo         *userrepo.UserRepository
 	VerificationRepo *repositories.VerificationRepo
 	SuspensionsRepo  *repositories.SuspensionsRepo
 	BotRepo          *repositories.BotRepository
@@ -18,7 +19,7 @@ type SchedularService struct {
 }
 
 func NewSchedularService(
-	userRepo *repositories.UserRepository,
+	userRepo *userrepo.UserRepository,
 	verificationRepo *repositories.VerificationRepo,
 	suspensionsRepo *repositories.SuspensionsRepo,
 	botRepo *repositories.BotRepository,

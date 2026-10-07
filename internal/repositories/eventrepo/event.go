@@ -2,8 +2,8 @@ package eventrepo
 
 import (
 	"fmt"
-	"sea-api/internal/models"
 	"sea-api/internal/models/eventmodels"
+	"sea-api/internal/models/tables"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -25,7 +25,7 @@ func (r *EventRepository) Create(req *eventmodels.Event) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (name, description, background_id, belonging, require_applying, form_id, max_applications, created_at, start_date, end_date)
 	VALUES (:name, :description, :background_id, :belonging, :require_applying, :form_id, :max_applications, :created_at, :start_date, :end_date)
-	`, models.TableNewEvents)
+	`, tables.NewEvents)
 	res, err := r.db.NamedExec(query, &req)
 	if err != nil {
 		return 0, err
@@ -47,7 +47,7 @@ func (r *EventRepository) Update(event *eventmodels.Event) error {
 		created_at = :created_at,
 		end_date = :end_date
 	WHERE id = :id
-	`, models.TableNewEvents)
+	`, tables.NewEvents)
 	_, err := r.db.NamedExec(query, event)
 	return err
 }
@@ -58,7 +58,7 @@ func (r *EventRepository) GetCount(req *eventmodels.EventListRequest) (int64, er
 	var args []interface{}
 
 	// Base query
-	baseQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", models.TableNewEvents)
+	baseQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", tables.NewEvents)
 
 	if req.Search != "" {
 		conditions = append(conditions, "(name LIKE ? OR description LIKE ?)")
@@ -82,7 +82,7 @@ func (r *EventRepository) GetCount(req *eventmodels.EventListRequest) (int64, er
 
 func (r *EventRepository) Get(id int64) (*eventmodels.Event, error) {
 	var model eventmodels.Event
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableNewEvents)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.NewEvents)
 
 	err := r.db.Get(&model, query, id)
 	if err != nil {
@@ -111,7 +111,7 @@ func (r *EventRepository) GetView(id int64) (*eventmodels.EventsRow, error) {
 	LEFT JOIN %s g ON e.background_id = g.id
 	LEFT JOIN %s f ON g.file_id = f.id
 	WHERE e.id = ?
-	`, models.TableNewEvents, models.TableGalleryAssets, models.TableFiles)
+	`, tables.NewEvents, tables.GalleryAssets, tables.Files)
 
 	err := r.db.Get(&model, query, id)
 	if err != nil {
@@ -141,7 +141,7 @@ func (r *EventRepository) GetList(req *eventmodels.EventListRequest) (*[]eventmo
 	FROM %s e
 	LEFT JOIN %s g ON e.background_id = g.id
 	LEFT JOIN %s f ON g.file_id = f.id
-	`, models.TableNewEvents, models.TableGalleryAssets, models.TableFiles)
+	`, tables.NewEvents, tables.GalleryAssets, tables.Files)
 
 	var conditions []string
 	var args []interface{}
@@ -178,7 +178,7 @@ func (r *EventRepository) GetList(req *eventmodels.EventListRequest) (*[]eventmo
 }
 
 func (r *EventRepository) Delete(id int64) error {
-	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableNewEvents)
+	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.NewEvents)
 	_, err := r.db.Exec(query, id)
 	return err
 }

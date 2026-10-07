@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"sea-api/internal/models"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -21,7 +22,7 @@ func (r *FeedbackRepository) Create(feedback *models.Feedback) (int64, error) {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (message, user_id, type, created_at)
 		VALUES (:message, :user_id, :type, :created_at)
-	`, models.TableFeedback)
+	`, tables.Feedback)
 	res, err := r.db.NamedExec(query, feedback)
 	if err != nil {
 		return 0, err
@@ -31,7 +32,7 @@ func (r *FeedbackRepository) Create(feedback *models.Feedback) (int64, error) {
 
 func (r *FeedbackRepository) GetByID(id int64) (*models.Feedback, error) {
 	var feedback models.Feedback
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableFeedback)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.Feedback)
 	err := r.db.Get(&feedback, query, id)
 	if err != nil {
 		return nil, err
@@ -42,7 +43,7 @@ func (r *FeedbackRepository) GetByID(id int64) (*models.Feedback, error) {
 func (r *FeedbackRepository) GetAll(req *models.ListRequest) ([]models.Feedback, error) {
 	var feedbacks []models.Feedback
 	offset := (req.Page - 1) * req.Limit
-	query := fmt.Sprintf(`SELECT * FROM %s ORDER BY created_at DESC LIMIT ? OFFSET ?`, models.TableFeedback)
+	query := fmt.Sprintf(`SELECT * FROM %s ORDER BY created_at DESC LIMIT ? OFFSET ?`, tables.Feedback)
 	err := r.db.Select(&feedbacks, query, req.Limit, offset)
 	if err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func (r *FeedbackRepository) GetAll(req *models.ListRequest) ([]models.Feedback,
 func (r *FeedbackRepository) GetByType(fType models.FeedbackType, req *models.ListRequest) ([]models.Feedback, error) {
 	var feedbacks []models.Feedback
 	offset := (req.Page - 1) * req.Limit
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE type = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`, models.TableFeedback)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE type = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`, tables.Feedback)
 	err := r.db.Select(&feedbacks, query, fType, req.Limit, offset)
 	if err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func (r *FeedbackRepository) GetByType(fType models.FeedbackType, req *models.Li
 }
 
 func (r *FeedbackRepository) Delete(id int64) error {
-	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableFeedback)
+	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.Feedback)
 	_, err := r.db.Exec(query, id)
 	return err
 }

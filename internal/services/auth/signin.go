@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"sea-api/internal/config"
 	"sea-api/internal/errs"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
+	"sea-api/internal/models/usermodels"
 	"sea-api/internal/utils"
 	"strconv"
 	"strings"
@@ -14,8 +15,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, error) {
-	var user *models.UserModel = nil
+func (s *AuthService) Login(req authmodels.LoginRequest) (*authmodels.LoginResponse, error) {
+	var user *usermodels.UserModel = nil
 	var userID int64 = 0
 	var err error = nil
 
@@ -38,7 +39,7 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 	// The number of the registration step is 4 in code
 	//   4 means all registration steps are done
 	if State.Step != 4 && user.Password == nil {
-		return &models.LoginResponse{
+		return &authmodels.LoginResponse{
 			Token:       "",
 			UserID:      user.ID,
 			IsVerified:  false,
@@ -59,10 +60,10 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 	if err != nil {
 		return nil, err
 	}
-	roles := []models.Role{}
-	roles = utils.ExtractField(rolesModels, func(r models.UserRole) models.Role { return r.Role })
+	roles := []usermodels.Role{}
+	roles = utils.ExtractField(rolesModels, func(r usermodels.UserRole) usermodels.Role { return r.Role })
 
-	claims := &models.ManagedClaims{
+	claims := &authmodels.ManagedClaims{
 		UserID:   user.ID,
 		Username: *user.Username,
 		Email:    *user.Email,
@@ -78,7 +79,7 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 	if err != nil {
 		return nil, err
 	}
-	return &models.LoginResponse{
+	return &authmodels.LoginResponse{
 		Token:      tokenString,
 		UserID:     user.ID,
 		Roles:      roles,
@@ -88,8 +89,8 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 
 // Checks the user details and sends them a link to complete the registration process if
 // it was not done yet, or take them to the extra step for resetting password.
-func (s *AuthService) ForgotPassword(req *models.ForgotPasswordRequest) error {
-	var user *models.UserModel = nil
+func (s *AuthService) ForgotPassword(req *authmodels.ForgotPasswordRequest) error {
+	var user *usermodels.UserModel = nil
 	var err error = nil
 
 	if req.UserID != nil {

@@ -2,8 +2,8 @@ package eventrepo
 
 import (
 	"fmt"
-	"sea-api/internal/models"
 	"sea-api/internal/models/eventmodels"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -12,7 +12,7 @@ func (r *EventRepository) CreateCoord(req *eventmodels.Coordinator) (int64, erro
 	query := fmt.Sprintf(`
 	INSERT INTO %s (event_id, name, role)
 	VALUES (:event_id, :name, :role)
-	`, models.TableEventCoords)
+	`, tables.EventCoords)
 	res, err := r.db.NamedExec(query, req)
 	if err != nil {
 		return 0, err
@@ -26,7 +26,7 @@ func (r *EventRepository) UpdateCoord(coord *eventmodels.Coordinator) error {
 		name = :name,
 		role = :role
 	WHERE id = :id AND event_id = :event_id
-	`, models.TableEventCoords)
+	`, tables.EventCoords)
 	_, err := r.db.NamedExec(query, coord)
 	return err
 }
@@ -35,14 +35,14 @@ func (r *EventRepository) CreateBatchCoords(coords []eventmodels.Coordinator) er
 	query := fmt.Sprintf(`
 	INSERT INTO %s (event_id, name, role)
 	VALUES (:event_id, :name, :role)
-	`, models.TableEventCoords)
+	`, tables.EventCoords)
 	_, err := r.db.NamedExec(query, coords)
 	return err
 }
 
 func (r *EventRepository) GetCoordsByEventID(eventID int64) ([]eventmodels.Coordinator, error) {
 	var list = []eventmodels.Coordinator{}
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE event_id = ?`, models.TableEventCoords)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE event_id = ?`, tables.EventCoords)
 	err := r.db.Select(&list, query, eventID)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (r *EventRepository) GetCoordsByEventIDs(eventIDs []int64) ([]eventmodels.C
 	}
 
 	query, args, err := sqlx.In(
-		fmt.Sprintf(`SELECT * FROM %s WHERE event_id IN (?) ORDER BY id`, models.TableEventCoords),
+		fmt.Sprintf(`SELECT * FROM %s WHERE event_id IN (?) ORDER BY id`, tables.EventCoords),
 		eventIDs,
 	)
 	if err != nil {
@@ -71,13 +71,13 @@ func (r *EventRepository) GetCoordsByEventIDs(eventIDs []int64) ([]eventmodels.C
 }
 
 func (r *EventRepository) DeleteCoord(id int64) error {
-	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableEventCoords)
+	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.EventCoords)
 	_, err := r.db.Exec(query, id)
 	return err
 }
 
 func (r *EventRepository) DeleteCoordsByEventID(eventID int64) error {
-	query := fmt.Sprintf(`DELETE FROM %s WHERE event_id = ?`, models.TableEventCoords)
+	query := fmt.Sprintf(`DELETE FROM %s WHERE event_id = ?`, tables.EventCoords)
 	_, err := r.db.Exec(query, eventID)
 	return err
 }

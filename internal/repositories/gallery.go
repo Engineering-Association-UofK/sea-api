@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"sea-api/internal/models"
+	"sea-api/internal/models/tables"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -19,7 +20,7 @@ func (r *GalleryRepository) CreateAsset(asset *models.GalleryAssetModel) (int64,
 	query := fmt.Sprintf(`
 	INSERT INTO %s (file_id, file_name, alt_text, uploaded_by, showcase, created_at)
 	VALUES (:file_id, :file_name, :alt_text, :uploaded_by, :showcase, :created_at)
-	`, models.TableGalleryAssets)
+	`, tables.GalleryAssets)
 	res, err := r.db.NamedExec(query, asset)
 	if err != nil {
 		return 0, err
@@ -29,7 +30,7 @@ func (r *GalleryRepository) CreateAsset(asset *models.GalleryAssetModel) (int64,
 
 func (r *GalleryRepository) GetAssetByID(id int64) (*models.GalleryAssetModel, error) {
 	var asset models.GalleryAssetModel
-	err := r.db.Get(&asset, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableGalleryAssets), id)
+	err := r.db.Get(&asset, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.GalleryAssets), id)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +39,7 @@ func (r *GalleryRepository) GetAssetByID(id int64) (*models.GalleryAssetModel, e
 
 func (r *GalleryRepository) GetAllAssets() ([]models.GalleryAssetModel, error) {
 	var assets []models.GalleryAssetModel
-	err := r.db.Select(&assets, fmt.Sprintf(`SELECT * FROM %s ORDER BY created_at DESC`, models.TableGalleryAssets))
+	err := r.db.Select(&assets, fmt.Sprintf(`SELECT * FROM %s ORDER BY created_at DESC`, tables.GalleryAssets))
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +48,7 @@ func (r *GalleryRepository) GetAllAssets() ([]models.GalleryAssetModel, error) {
 
 func (r *GalleryRepository) GetTotal(limit int64, page int64) (int64, error) {
 	var count int64
-	err := r.db.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, models.TableGalleryAssets))
+	err := r.db.Get(&count, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, tables.GalleryAssets))
 	if err != nil {
 		return 0, err
 	}
@@ -72,7 +73,7 @@ func (r *GalleryRepository) GetAllGallery(req *models.ListRequest) ([]models.Gal
 	GROUP BY a.id, a.file_id, a.file_name, a.alt_text, a.uploaded_by, a.created_at
 	ORDER BY a.created_at DESC
 	LIMIT ? OFFSET ?
-	`, models.TableGalleryAssets, models.TableGalleryReferences, models.TableFiles)
+	`, tables.GalleryAssets, tables.GalleryReferences, tables.Files)
 
 	err := r.db.Select(&assets, query, req.Limit, offset)
 	if err != nil {
@@ -88,7 +89,7 @@ func (r *GalleryRepository) GetUnreferencedAssetIDs() ([]models.GalleryAssetMode
 	FROM %s a
 	LEFT JOIN %s r ON a.id = r.asset_id
 	WHERE r.asset_id IS NULL
-	`, models.TableGalleryAssets, models.TableGalleryReferences)
+	`, tables.GalleryAssets, tables.GalleryReferences)
 	err := r.db.Select(&assets, query)
 	if err != nil {
 		return nil, err
@@ -101,13 +102,13 @@ func (r *GalleryRepository) UpdateAsset(asset *models.GalleryAssetModel) error {
 	UPDATE %s
 	SET alt_text = :alt_text, file_name = :file_name
 	WHERE id = :id
-	`, models.TableGalleryAssets)
+	`, tables.GalleryAssets)
 	_, err := r.db.NamedExec(query, asset)
 	return err
 }
 
 func (r *GalleryRepository) DeleteAsset(id int64) error {
-	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableGalleryAssets), id)
+	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.GalleryAssets), id)
 	return err
 }
 
@@ -117,7 +118,7 @@ func (r *GalleryRepository) CreateReference(ref *models.GalleryReferenceModel) (
 	query := fmt.Sprintf(`
 	INSERT INTO %s (asset_id, object_type, object_id)
 	VALUES (:asset_id, :object_type, :object_id)
-	`, models.TableGalleryReferences)
+	`, tables.GalleryReferences)
 	res, err := r.db.NamedExec(query, ref)
 	if err != nil {
 		return 0, err
@@ -127,7 +128,7 @@ func (r *GalleryRepository) CreateReference(ref *models.GalleryReferenceModel) (
 
 func (r *GalleryRepository) GetReferenceByID(id int64) (*models.GalleryReferenceModel, error) {
 	var ref models.GalleryReferenceModel
-	err := r.db.Get(&ref, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableGalleryReferences), id)
+	err := r.db.Get(&ref, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.GalleryReferences), id)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +137,7 @@ func (r *GalleryRepository) GetReferenceByID(id int64) (*models.GalleryReference
 
 func (r *GalleryRepository) GetReferencesByAssetID(assetID int64) ([]models.GalleryReferenceModel, error) {
 	var refs []models.GalleryReferenceModel
-	err := r.db.Select(&refs, fmt.Sprintf(`SELECT * FROM %s WHERE asset_id = ?`, models.TableGalleryReferences), assetID)
+	err := r.db.Select(&refs, fmt.Sprintf(`SELECT * FROM %s WHERE asset_id = ?`, tables.GalleryReferences), assetID)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +146,7 @@ func (r *GalleryRepository) GetReferencesByAssetID(assetID int64) ([]models.Gall
 
 func (r *GalleryRepository) GetReferencesByObjectType(objectType models.ObjectType) ([]models.GalleryReferenceModel, error) {
 	var refs []models.GalleryReferenceModel
-	err := r.db.Select(&refs, fmt.Sprintf(`SELECT * FROM %s WHERE object_type = ?`, models.TableGalleryReferences), objectType)
+	err := r.db.Select(&refs, fmt.Sprintf(`SELECT * FROM %s WHERE object_type = ?`, tables.GalleryReferences), objectType)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +155,7 @@ func (r *GalleryRepository) GetReferencesByObjectType(objectType models.ObjectTy
 
 func (r *GalleryRepository) GetReferenceByObject(objectType models.ObjectType, objectID int64) (*models.GalleryReferenceModel, error) {
 	var ref models.GalleryReferenceModel
-	err := r.db.Get(&ref, fmt.Sprintf(`SELECT * FROM %s WHERE object_type = ? AND object_id = ?`, models.TableGalleryReferences), objectType, objectID)
+	err := r.db.Get(&ref, fmt.Sprintf(`SELECT * FROM %s WHERE object_type = ? AND object_id = ?`, tables.GalleryReferences), objectType, objectID)
 	if err != nil {
 		return nil, err
 	}
@@ -162,16 +163,16 @@ func (r *GalleryRepository) GetReferenceByObject(objectType models.ObjectType, o
 }
 
 func (r *GalleryRepository) DeleteReferencesByAsset(assetID int64) error {
-	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE asset_id = ?`, models.TableGalleryReferences), assetID)
+	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE asset_id = ?`, tables.GalleryReferences), assetID)
 	return err
 }
 
 func (r *GalleryRepository) DeleteReferencesByObject(objectType models.ObjectType, objectID int64) error {
-	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE object_type = ? AND object_id = ?`, models.TableGalleryReferences), objectType, objectID)
+	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE object_type = ? AND object_id = ?`, tables.GalleryReferences), objectType, objectID)
 	return err
 }
 
 func (r *GalleryRepository) DeleteReference(id int64) error {
-	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableGalleryReferences), id)
+	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.GalleryReferences), id)
 	return err
 }

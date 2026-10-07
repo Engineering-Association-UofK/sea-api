@@ -5,8 +5,9 @@ import (
 	"io"
 	"net/http"
 	"sea-api/internal/errs"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/certmodels"
+	"sea-api/internal/models/usermodels"
 	"sea-api/internal/response"
 	"sea-api/internal/services"
 	"strconv"
@@ -32,7 +33,7 @@ func NewAccountHandler(accountService *services.AccountService) *AccountHandler 
 //	@Description	Get profile summary of requesting user
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Success		200	{object}	models.UserProfileSummaryResponse
+//	@Success		200	{object}	usermodels.UserProfileSummaryResponse
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/account/summary [get]
@@ -40,7 +41,7 @@ func NewAccountHandler(accountService *services.AccountService) *AccountHandler 
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) GetProfileSummary(c *gin.Context) {
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -61,7 +62,7 @@ func (a *AccountHandler) GetProfileSummary(c *gin.Context) {
 //	@Description	Get all profile details of requesting user
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Success		200	{object}	models.UserProfileResponse
+//	@Success		200	{object}	usermodels.UserProfileResponse
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/account [get]
@@ -69,7 +70,7 @@ func (a *AccountHandler) GetProfileSummary(c *gin.Context) {
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) GetProfile(c *gin.Context) {
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -113,7 +114,7 @@ func (a *AccountHandler) GetCertificates(c *gin.Context) {
 	}
 
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -150,7 +151,7 @@ func (h *CertificatesHandler) GetCertificate(c *gin.Context) {
 	}
 
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -180,7 +181,7 @@ func (h *CertificatesHandler) GetCertificate(c *gin.Context) {
 //	@Description	Update profile text details
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdateProfileRequest 	true	"Request body"
+//	@Param			body	body	usermodels.UpdateProfileRequest 	true	"Request body"
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		400	{object}	response.ErrorResponse
@@ -190,14 +191,14 @@ func (h *CertificatesHandler) GetCertificate(c *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdateProfile(c *gin.Context) {
-	var req models.UpdateProfileRequest
+	var req usermodels.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -237,7 +238,7 @@ func (a *AccountHandler) UpdatePicture(c *gin.Context) {
 	defer file.Close()
 
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -258,7 +259,7 @@ func (a *AccountHandler) UpdatePicture(c *gin.Context) {
 //	@Description	Update user password
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdatePasswordRequest 	true	"Request body"
+//	@Param			body	body	usermodels.UpdatePasswordRequest 	true	"Request body"
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
@@ -267,13 +268,13 @@ func (a *AccountHandler) UpdatePicture(c *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdatePassword(c *gin.Context) {
-	var req models.UpdatePasswordRequest
+	var req usermodels.UpdatePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -292,7 +293,7 @@ func (a *AccountHandler) UpdatePassword(c *gin.Context) {
 //	@Description	Update user email address
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdateEmailRequest 	true	"Request body"
+//	@Param			body	body	usermodels.UpdateEmailRequest 	true	"Request body"
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
@@ -301,13 +302,13 @@ func (a *AccountHandler) UpdatePassword(c *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdateEmail(c *gin.Context) {
-	var req models.UpdateEmailRequest
+	var req usermodels.UpdateEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -327,7 +328,7 @@ func (a *AccountHandler) UpdateEmail(c *gin.Context) {
 //	@Description	Update username
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdateUsernameRequest 	true	"Request body"
+//	@Param			body	body	usermodels.UpdateUsernameRequest 	true	"Request body"
 //	@Success		200	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
@@ -336,13 +337,13 @@ func (a *AccountHandler) UpdateEmail(c *gin.Context) {
 //
 //	@Security		ApiKeyAuth
 func (a *AccountHandler) UpdateUsername(c *gin.Context) {
-	var req models.UpdateUsernameRequest
+	var req usermodels.UpdateUsernameRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
 	}
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -361,14 +362,14 @@ func (a *AccountHandler) UpdateUsername(c *gin.Context) {
 //	@Description	Check if username is free
 //	@Tags			Account:profile
 //	@Produce		json
-//	@Param			body	body	models.UpdateUsernameRequest 	true	"Request body"
-//	@Success		200	{object}	models.CheckUsername
+//	@Param			body	body	usermodels.UpdateUsernameRequest 	true	"Request body"
+//	@Success		200	{object}	usermodels.CheckUsername
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		401	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/auth/check-username [post]
 func (a *AccountHandler) CheckUsernameAvailability(c *gin.Context) {
-	var req models.UpdateUsernameRequest
+	var req usermodels.UpdateUsernameRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -379,5 +380,5 @@ func (a *AccountHandler) CheckUsernameAvailability(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, models.CheckUsername{Available: available})
+	c.JSON(http.StatusOK, usermodels.CheckUsername{Available: available})
 }

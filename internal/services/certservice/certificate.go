@@ -9,7 +9,9 @@ import (
 	"log/slog"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/certmodels"
+	"sea-api/internal/models/usermodels"
 	"sea-api/internal/repositories/certrepo"
 	"sea-api/internal/repositories/eventrepo"
 	"sea-api/internal/services/storage"
@@ -175,14 +177,14 @@ func (s *CertService) Verify(hash string) (*certmodels.VerifyResponse, error) {
 	}, nil
 }
 
-func (s *CertService) Download(zw *zip.Writer, ctx context.Context, id int64, claims *models.ManagedClaims) error {
+func (s *CertService) Download(zw *zip.Writer, ctx context.Context, id int64, claims *authmodels.ManagedClaims) error {
 	cert, err := s.repo.GetCertWithID(id)
 	if err != nil {
 		return err
 	}
 
 	if (cert.RecipientUserID.Valid && cert.RecipientUserID.Int64 == claims.UserID) ||
-		(!slices.Contains(claims.Roles, models.RoleCertMgr) && !slices.Contains(claims.Roles, models.RoleSystemSuperAdmin)) {
+		(!slices.Contains(claims.Roles, usermodels.RoleCertMgr) && !slices.Contains(claims.Roles, usermodels.RoleSystemSuperAdmin)) {
 		return errs.New(errs.Forbidden, "Forbidden", nil)
 	}
 

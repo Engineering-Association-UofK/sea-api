@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"sea-api/internal/errs"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/response"
 	"sea-api/internal/services/auth"
 
@@ -25,14 +25,14 @@ func NewAuthHandler(authService *auth.AuthService) *AuthHandler {
 //	@Description	Login user
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.LoginRequest	true	"Request body"
+//	@Param			body	body	authmodels.LoginRequest	true	"Request body"
 //
-//	@Success		200	{object}	models.LoginResponse
+//	@Success		200	{object}	authmodels.LoginResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
-	var req models.LoginRequest
+	var req authmodels.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -53,14 +53,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
 //	@Description	Check which registration step the user is in right now.
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.CheckRegistrationRequest	true	"Request body"
+//	@Param			body	body	authmodels.CheckRegistrationRequest	true	"Request body"
 //
-//	@Success		201	{object}	models.CheckRegistrationResponse
+//	@Success		201	{object}	authmodels.CheckRegistrationResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/auth/register/check [post]
 func (h *AuthHandler) CheckState(c *gin.Context) {
-	var req models.CheckRegistrationRequest
+	var req authmodels.CheckRegistrationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -81,13 +81,13 @@ func (h *AuthHandler) CheckState(c *gin.Context) {
 //	@Description	Do registration step with it's data and step number
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.RegistrationRequest	true	"Request body"
+//	@Param			body	body	authmodels.RegistrationRequest	true	"Request body"
 //	@Success		201	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/auth/register/step [post]
 func (h *AuthHandler) DoRegistrationStep(c *gin.Context) {
-	var req models.RegistrationRequest
+	var req authmodels.RegistrationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -98,27 +98,27 @@ func (h *AuthHandler) DoRegistrationStep(c *gin.Context) {
 
 	switch req.Step {
 	case 0:
-		var data models.InitialRegistrationRequest
+		var data authmodels.InitialRegistrationRequest
 		if err = json.Unmarshal(req.Data, &data); err == nil {
 			err = h.AuthService.InitialRegistration(&data)
 		}
 	case 1:
-		var data models.PasswordRegistrationRequest
+		var data authmodels.PasswordRegistrationRequest
 		if err = json.Unmarshal(req.Data, &data); err == nil {
 			err = h.AuthService.CredentialsRegistration(&data)
 		}
 	case 2:
-		var data models.DetailsRegistrationRequest
+		var data authmodels.DetailsRegistrationRequest
 		if err = json.Unmarshal(req.Data, &data); err == nil {
 			err = h.AuthService.DetailsRegistration(&data)
 		}
 	case 3:
-		var data models.UsernameRegistrationRequest
+		var data authmodels.UsernameRegistrationRequest
 		if err = json.Unmarshal(req.Data, &data); err == nil {
 			err = h.AuthService.UsernameRegistration(&data)
 		}
 	case 5:
-		var data models.PasswordRegistrationRequest
+		var data authmodels.PasswordRegistrationRequest
 		if err = json.Unmarshal(req.Data, &data); err == nil {
 			err = h.AuthService.CredentialsRegistration(&data)
 		}
@@ -141,14 +141,14 @@ func (h *AuthHandler) DoRegistrationStep(c *gin.Context) {
 //	@Description	Forgot password endpoint to send a password reset email
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.ForgotPasswordRequest	true	"Request body"
+//	@Param			body	body	authmodels.ForgotPasswordRequest	true	"Request body"
 //
 //	@Success		201	{object}	response.TransactionResponse
 //	@Failure		400	{object}	response.BaseError
 //	@Failure		500	{object}	response.BaseError
 //	@Router			/auth/forgot-password [post]
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
-	var req models.ForgotPasswordRequest
+	var req authmodels.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -169,7 +169,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 //		@Description	Verify user
 //		@Tags			Auth
 //		@Produce		json
-//		@Param			body	body	models.VerifyRequest	true	"Request body"
+//		@Param			body	body	authmodels.VerifyRequest	true	"Request body"
 //
 //		@Success		200	{object}	response.TransactionResponse
 //		@Failure		400	{object}	response.BaseError
@@ -177,7 +177,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 //
 // Deprecated: No longer needed with new registration system as of v1.0.1
 func (h *AuthHandler) Verify(c *gin.Context) {
-	var req models.VerifyRequest
+	var req authmodels.VerifyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return
@@ -198,7 +198,7 @@ func (h *AuthHandler) Verify(c *gin.Context) {
 //	@Description	Send verification code to user email
 //	@Tags			Auth
 //	@Produce		json
-//	@Param			body	body	models.VerifyEmailRequest	true	"Request body"
+//	@Param			body	body	authmodels.VerifyEmailRequest	true	"Request body"
 //	@Success		200		{object}	response.TransactionResponse
 //	@Failure		400		{object}	response.BaseError
 //	@Failure		500		{object}	response.BaseError
@@ -206,7 +206,7 @@ func (h *AuthHandler) Verify(c *gin.Context) {
 //
 // Deprecated: No longer needed with new registration system as of v1.0.1
 func (h *AuthHandler) SendVerificationCode(c *gin.Context) {
-	var req models.VerifyEmailRequest
+	var req authmodels.VerifyEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(errs.New(errs.BadRequest, "Bad Request", nil))
 		return

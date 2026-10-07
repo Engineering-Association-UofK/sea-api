@@ -10,9 +10,11 @@ import (
 	"sea-api/internal/config"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/certmodels"
-	"sea-api/internal/repositories"
+	"sea-api/internal/models/usermodels"
 	"sea-api/internal/repositories/certrepo"
+	"sea-api/internal/repositories/userrepo"
 	"sea-api/internal/services/storage"
 	"sea-api/internal/utils"
 	"sea-api/internal/utils/valid"
@@ -23,14 +25,14 @@ import (
 )
 
 type AccountService struct {
-	UserRepo              *repositories.UserRepository
+	UserRepo              *userrepo.UserRepository
 	store                 *storage.S3
 	certificateRepository *certrepo.CertRepository
 
 	profilePath string
 }
 
-func NewAccountService(UserRepo *repositories.UserRepository, store *storage.S3, certificateRepository *certrepo.CertRepository) *AccountService {
+func NewAccountService(UserRepo *userrepo.UserRepository, store *storage.S3, certificateRepository *certrepo.CertRepository) *AccountService {
 	return &AccountService{
 		UserRepo:              UserRepo,
 		store:                 store,
@@ -39,7 +41,7 @@ func NewAccountService(UserRepo *repositories.UserRepository, store *storage.S3,
 	}
 }
 
-func (s *AccountService) GetProfileSummary(ctx context.Context, claims *models.ManagedClaims) (*models.UserProfileSummaryResponse, error) {
+func (s *AccountService) GetProfileSummary(ctx context.Context, claims *authmodels.ManagedClaims) (*usermodels.UserProfileSummaryResponse, error) {
 	user, err := s.UserRepo.GetUserRow(claims.UserID)
 	if err != nil {
 		return nil, err
@@ -53,7 +55,7 @@ func (s *AccountService) GetProfileSummary(ctx context.Context, claims *models.M
 		}
 	}
 
-	return &models.UserProfileSummaryResponse{
+	return &usermodels.UserProfileSummaryResponse{
 		ID:         user.ID,
 		Username:   user.Username,
 		Email:      user.Email,
@@ -65,7 +67,7 @@ func (s *AccountService) GetProfileSummary(ctx context.Context, claims *models.M
 	}, nil
 }
 
-func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedClaims) (*models.UserProfileResponse, error) {
+func (s *AccountService) GetProfile(ctx context.Context, claims *authmodels.ManagedClaims) (*usermodels.UserProfileResponse, error) {
 	user, err := s.UserRepo.GetByUserID(claims.UserID)
 	if err != nil {
 		return nil, err
@@ -78,7 +80,7 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 		}
 	}
 
-	return &models.UserProfileResponse{
+	return &usermodels.UserProfileResponse{
 		ID:         user.ID,
 		UniID:      *user.UniID,
 		Username:   *user.Username,
@@ -92,7 +94,7 @@ func (s *AccountService) GetProfile(ctx context.Context, claims *models.ManagedC
 	}, nil
 }
 
-func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *certmodels.CertListRequest) (*certmodels.CertListResponse, error) {
+func (s *AccountService) GetCertificates(claims *authmodels.ManagedClaims, req *certmodels.CertListRequest) (*certmodels.CertListResponse, error) {
 	total, err := s.certificateRepository.GetCertsCount(req)
 	if err != nil {
 		return nil, err
@@ -128,7 +130,7 @@ func (s *AccountService) GetCertificates(claims *models.ManagedClaims, req *cert
 	}, nil
 }
 
-func (s *AccountService) UpdateProfile(claims *models.ManagedClaims, req models.UpdateProfileRequest) error {
+func (s *AccountService) UpdateProfile(claims *authmodels.ManagedClaims, req usermodels.UpdateProfileRequest) error {
 	user, err := s.UserRepo.GetByUserID(req.ID)
 	if err != nil {
 		return err
@@ -151,13 +153,13 @@ func (s *AccountService) UpdateProfile(claims *models.ManagedClaims, req models.
 	user.UniID = &req.UniID
 	user.NameAr = &[]string{string(req.NameAr)}[0]
 	user.NameEn = &[]string{string(req.NameEn)}[0]
-	user.Gender = &[]models.Gender{req.Gender}[0]
+	user.Gender = &[]usermodels.Gender{req.Gender}[0]
 	user.Department = &[]models.Department{req.Department}[0]
 	user.Phone = &[]string{string(req.Phone)}[0]
 	return s.UserRepo.Update(user, nil)
 }
 
-func (s *AccountService) UpdateProfilePicture(ctx context.Context, claims *models.ManagedClaims, file io.Reader) error {
+func (s *AccountService) UpdateProfilePicture(ctx context.Context, claims *authmodels.ManagedClaims, file io.Reader) error {
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		return err
@@ -194,7 +196,7 @@ func (s *AccountService) UpdateProfilePicture(ctx context.Context, claims *model
 	return s.UserRepo.Update(user, nil)
 }
 
-func (s *AccountService) UpdatePassword(claims *models.ManagedClaims, req models.UpdatePasswordRequest) error {
+func (s *AccountService) UpdatePassword(claims *authmodels.ManagedClaims, req usermodels.UpdatePasswordRequest) error {
 	user, err := s.UserRepo.GetByUserID(claims.UserID)
 	if err != nil {
 		return err
@@ -220,7 +222,7 @@ func (s *AccountService) UpdatePassword(claims *models.ManagedClaims, req models
 	return s.UserRepo.Update(user, nil)
 }
 
-func (s *AccountService) UpdateEmail(claims *models.ManagedClaims, req models.UpdateEmailRequest) error {
+func (s *AccountService) UpdateEmail(claims *authmodels.ManagedClaims, req usermodels.UpdateEmailRequest) error {
 	user, err := s.UserRepo.GetByUserID(claims.UserID)
 	if err != nil {
 		return err
@@ -236,7 +238,7 @@ func (s *AccountService) UpdateEmail(claims *models.ManagedClaims, req models.Up
 	return s.UserRepo.Update(user, nil)
 }
 
-func (s *AccountService) UpdateUsername(claims *models.ManagedClaims, req models.UpdateUsernameRequest) error {
+func (s *AccountService) UpdateUsername(claims *authmodels.ManagedClaims, req usermodels.UpdateUsernameRequest) error {
 	if err := ValidateUsername(string(req.Username)); err != nil {
 		return err
 	}
@@ -254,7 +256,7 @@ func (s *AccountService) UpdateUsername(claims *models.ManagedClaims, req models
 	return s.UserRepo.Update(user, nil)
 }
 
-func (s *AccountService) IsUsernameAvailable(req models.UpdateUsernameRequest) (bool, error) {
+func (s *AccountService) IsUsernameAvailable(req usermodels.UpdateUsernameRequest) (bool, error) {
 	available, err := s.UserRepo.IsUsernameAvailable(string(req.Username))
 	if err != nil {
 		return false, err

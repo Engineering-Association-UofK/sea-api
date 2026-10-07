@@ -3,6 +3,7 @@ package handlers
 import (
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/response"
 	_ "sea-api/internal/response"
 	"sea-api/internal/services/bot"
@@ -90,9 +91,9 @@ func (h *BotHandler) GetNodeView(ctx *gin.Context) {
 		return
 	}
 
-	var claims *models.ManagedClaims
+	var claims *authmodels.ManagedClaims
 	if value, exists := ctx.Get("user"); exists {
-		if c, ok := value.(*models.ManagedClaims); ok {
+		if c, ok := value.(*authmodels.ManagedClaims); ok {
 			claims = c
 		}
 	}

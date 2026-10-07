@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sea-api/internal/models"
 	"sea-api/internal/models/electionsmodels"
+	"sea-api/internal/models/tables"
 )
 
 // CreateCandidate inserts a new candidate for a given cycle
@@ -11,7 +12,7 @@ func (r *ElectionRepo) CreateCandidate(req electionsmodels.Candidate) (int64, er
 	query := fmt.Sprintf(`
 		INSERT INTO %s (user_id, cycle, belonging)
 		VALUES (:user_id, :cycle, :belonging)
-	`, models.TableCandidates)
+	`, tables.Candidates)
 
 	res, err := r.db.NamedExec(query, req)
 	if err != nil {
@@ -22,7 +23,7 @@ func (r *ElectionRepo) CreateCandidate(req electionsmodels.Candidate) (int64, er
 
 // UpdateCandidate updates belonging or assigned cycle of a candidate
 func (r *ElectionRepo) UpdateCandidateBelonging(id int64, b models.Department) error {
-	query := fmt.Sprintf(`UPDATE %s SET belonging = ? WHERE id = ?`, models.TableCandidates)
+	query := fmt.Sprintf(`UPDATE %s SET belonging = ? WHERE id = ?`, tables.Candidates)
 	_, err := r.db.Exec(query, b, id)
 	return err
 }
@@ -43,7 +44,7 @@ func (r *ElectionRepo) GetCandidateList(cycle int64) ([]electionsmodels.Candidat
 		LEFT JOIN %s f ON u.profile_image_id = f.id
 		WHERE c.cycle = ?
 		ORDER BY c.id ASC
-	`, models.TableCandidates, models.TableUsers, models.TableFiles)
+	`, tables.Candidates, tables.Users, tables.Files)
 
 	err := r.db.Select(&candidates, query, cycle)
 	if err != nil {
@@ -70,7 +71,7 @@ func (r *ElectionRepo) GetCandidateListForActiveCycle() ([]electionsmodels.Candi
 		JOIN %s cfg ON cfg.key = 'election_config'
 		WHERE c.cycle = CAST(JSON_EXTRACT(cfg.value, '$.active_cycle') AS UNSIGNED)
 		ORDER BY c.created_at ASC
-	`, models.TableCandidates, models.TableUsers, models.TableFiles, models.TableConfig)
+	`, tables.Candidates, tables.Users, tables.Files, tables.Config)
 
 	err := r.db.Select(&candidates, query)
 	if err != nil {
@@ -90,7 +91,7 @@ func (r *ElectionRepo) GetCandidateIDsForActiveCycle() ([]int64, error) {
 		JOIN %s cfg ON cfg.key = 'election_config'
 		WHERE c.cycle = CAST(JSON_EXTRACT(cfg.value, '$.active_cycle') AS UNSIGNED)
 		ORDER BY c.created_at ASC
-	`, models.TableCandidates, models.TableConfig)
+	`, tables.Candidates, tables.Config)
 
 	err := r.db.Select(&candidateIDs, query)
 	if err != nil {
@@ -101,7 +102,7 @@ func (r *ElectionRepo) GetCandidateIDsForActiveCycle() ([]int64, error) {
 
 // RemoveCandidate deletes a candidate by ID
 func (r *ElectionRepo) RemoveCandidate(id int64) error {
-	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableCandidates)
+	query := fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.Candidates)
 	_, err := r.db.Exec(query, id)
 	return err
 }

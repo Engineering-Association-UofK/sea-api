@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sea-api/internal/models"
+	"sea-api/internal/models/tables"
 	"strings"
 	"time"
 
@@ -24,7 +25,7 @@ func (r *CmsRepository) CreatePost(post *models.PostModel) (int64, error) {
 	query := fmt.Sprintf(`
 	INSERT INTO %s (cover_image_id, title, slug, summary, content, post_type, author_id, is_published, created_at, updated_at)
 	VALUES (:cover_image_id, :title, :slug, :summary, :content, :post_type, :author_id, :is_published, :created_at, :updated_at)
-	`, models.TablePosts)
+	`, tables.Posts)
 	res, err := r.db.NamedExec(query, post)
 	if err != nil {
 		return 0, err
@@ -38,7 +39,7 @@ func (r *CmsRepository) CreatePost(post *models.PostModel) (int64, error) {
 
 func (r *CmsRepository) GetPostModelByID(id int64) (*models.PostModel, error) {
 	var post models.PostModel
-	err := r.db.Get(&post, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TablePosts), id)
+	err := r.db.Get(&post, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.Posts), id)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +68,7 @@ func (r *CmsRepository) GetPostByID(id int64) (*models.PostAdminViewRow, error) 
 	LEFT JOIN %s f ON g.file_id = f.id
 	LEFT JOIN %s u ON p.author_id = u.id
 	WHERE p.id = ?
-	`, models.TablePosts, models.TableGalleryAssets, models.TableFiles, models.TableUsers)
+	`, tables.Posts, tables.GalleryAssets, tables.Files, tables.Users)
 
 	err := r.db.Get(&post, query, id)
 	if err != nil {
@@ -93,7 +94,7 @@ func (r *CmsRepository) GetPostDetailsBySlug(slug string) (*models.PostViewRow, 
 	LEFT JOIN %s f ON g.file_id = f.id
 	LEFT JOIN %s u ON p.author_id = u.id
 	WHERE p.slug = ? AND p.is_published = TRUE
-	`, models.TablePosts, models.TableGalleryAssets, models.TableFiles, models.TableUsers)
+	`, tables.Posts, tables.GalleryAssets, tables.Files, tables.Users)
 
 	err := r.db.Get(&post, query, slug)
 	if err != nil {
@@ -108,7 +109,7 @@ func (r *CmsRepository) GetPostDetailsBySlug(slug string) (*models.PostViewRow, 
 
 func (r *CmsRepository) GetAllPostModels(req *models.ListRequest, publishedOnly bool) ([]models.PostModel, error) {
 	var posts []models.PostModel
-	query := fmt.Sprintf(`SELECT * FROM %s`, models.TablePosts)
+	query := fmt.Sprintf(`SELECT * FROM %s`, tables.Posts)
 	if publishedOnly {
 		query += ` WHERE is_published = TRUE`
 	}
@@ -146,7 +147,7 @@ func (r *CmsRepository) GetPostsAdminListByType(req *models.PostListRequest) ([]
 	LEFT JOIN %s g ON p.cover_image_id = g.id
 	LEFT JOIN %s f ON g.file_id = f.id
 	LEFT JOIN %s u ON p.author_id = u.id
-	`, models.TablePosts, models.TableGalleryAssets, models.TableFiles, models.TableUsers)
+	`, tables.Posts, tables.GalleryAssets, tables.Files, tables.Users)
 
 	var args []interface{}
 	if req.Type != "" {
@@ -182,7 +183,7 @@ func (r *CmsRepository) GetPostsViewListByType(req *models.ListRequest, postType
 	LEFT JOIN %s f ON g.file_id = f.id
 	LEFT JOIN %s u ON p.author_id = u.id
 	WHERE p.is_published = TRUE
-	`, models.TablePosts, models.TableGalleryAssets, models.TableFiles, models.TableUsers)
+	`, tables.Posts, tables.GalleryAssets, tables.Files, tables.Users)
 	if postType != "" {
 		query += ` AND p.post_type = ?`
 		args = append(args, postType)
@@ -211,7 +212,7 @@ func (r *CmsRepository) GetFilteredPosts(req *models.PostsFilteredRequest) ([]mo
     LEFT JOIN %s g ON p.cover_image_id = g.id
     LEFT JOIN %s f ON g.file_id = f.id
     LEFT JOIN %s u ON p.author_id = u.id`,
-		models.TablePosts, models.TableGalleryAssets, models.TableFiles, models.TableUsers)
+		tables.Posts, tables.GalleryAssets, tables.Files, tables.Users)
 
 	if req.Type != "" {
 		conditions = append(conditions, "p.post_type = ?")
@@ -258,7 +259,7 @@ func (r *CmsRepository) GetTotalPosts(postType models.PostType, published bool) 
 	var conditions []string
 	var args []interface{}
 
-	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s p`, models.TablePosts)
+	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s p`, tables.Posts)
 
 	if postType != "" {
 		conditions = append(conditions, "p.post_type = ?")
@@ -293,13 +294,13 @@ func (r *CmsRepository) UpdatePost(post *models.PostModel) error {
 	SET cover_image_id = :cover_image_id, title = :title, slug = :slug, summary = :summary, content = :content, 
 	    post_type = :post_type, author_id = :author_id, is_published = :is_published, updated_at = :updated_at
 	WHERE id = :id
-	`, models.TablePosts)
+	`, tables.Posts)
 	_, err := r.db.NamedExec(query, post)
 	return err
 }
 
 func (r *CmsRepository) DeletePost(id int64) error {
-	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TablePosts), id)
+	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.Posts), id)
 	return err
 }
 
@@ -309,7 +310,7 @@ func (r *CmsRepository) CreateTeamMember(member *models.TeamMemberModel) (int64,
 	query := fmt.Sprintf(`
 	INSERT INTO %s (user_id, role, bio, link, display_order, is_active, created_at)
 	VALUES (:user_id, :role, :bio, :link, :display_order, :is_active, :created_at)
-	`, models.TableTeamMembers)
+	`, tables.TeamMembers)
 	res, err := r.db.NamedExec(query, member)
 	if err != nil {
 		return 0, err
@@ -319,7 +320,7 @@ func (r *CmsRepository) CreateTeamMember(member *models.TeamMemberModel) (int64,
 
 func (r *CmsRepository) GetTeamMemberByID(id int64) (*models.TeamMemberModel, error) {
 	var member models.TeamMemberModel
-	err := r.db.Get(&member, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, models.TableTeamMembers), id)
+	err := r.db.Get(&member, fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, tables.TeamMembers), id)
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +329,7 @@ func (r *CmsRepository) GetTeamMemberByID(id int64) (*models.TeamMemberModel, er
 
 func (r *CmsRepository) GetTeamMemberByUserID(userID int64) (*models.TeamMemberModel, error) {
 	var member models.TeamMemberModel
-	err := r.db.Get(&member, fmt.Sprintf(`SELECT * FROM %s WHERE user_id = ?`, models.TableTeamMembers), userID)
+	err := r.db.Get(&member, fmt.Sprintf(`SELECT * FROM %s WHERE user_id = ?`, tables.TeamMembers), userID)
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +354,7 @@ func (r *CmsRepository) GetAllTeamMembers(activeOnly bool) ([]models.TeamMemberR
 	FROM %s tm
 	JOIN %s u ON tm.user_id = u.id
 	LEFT JOIN %s f ON u.profile_image_id = f.id
-	`, models.TableTeamMembers, models.TableUsers, models.TableFiles)
+	`, tables.TeamMembers, tables.Users, tables.Files)
 
 	if activeOnly {
 		query += ` WHERE tm.is_active = 1`
@@ -372,13 +373,13 @@ func (r *CmsRepository) UpdateTeamMember(member *models.TeamMemberModel) error {
 	UPDATE %s
 	SET user_id = :user_id, role = :role, bio = :bio, link = :link, display_order = :display_order, is_active = :is_active
 	WHERE id = :id
-	`, models.TableTeamMembers)
+	`, tables.TeamMembers)
 	_, err := r.db.NamedExec(query, member)
 	return err
 }
 
 func (r *CmsRepository) DeleteTeamMember(id int64) error {
-	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, models.TableTeamMembers), id)
+	_, err := r.db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, tables.TeamMembers), id)
 	return err
 }
 
@@ -388,7 +389,7 @@ func (r *CmsRepository) DeleteTeamMember(id int64) error {
 // and populates it with the provided slice.
 func (r *CmsRepository) ReplaceTeamMembers(tx *sqlx.Tx, members []models.TeamMemberModel) error {
 	// Clear current team members table
-	deleteQuery := fmt.Sprintf(`DELETE FROM %s`, models.TableTeamMembers)
+	deleteQuery := fmt.Sprintf(`DELETE FROM %s`, tables.TeamMembers)
 	if _, err := tx.Exec(deleteQuery); err != nil {
 		return fmt.Errorf("failed to clear existing team members: %w", err)
 	}
@@ -398,7 +399,7 @@ func (r *CmsRepository) ReplaceTeamMembers(tx *sqlx.Tx, members []models.TeamMem
 		insertQuery := fmt.Sprintf(`
 		INSERT INTO %s (user_id, role, bio, link, display_order, is_active, created_at)
 		VALUES (:user_id, :role, :bio, :link, :display_order, :is_active, :created_at)
-		`, models.TableTeamMembers)
+		`, tables.TeamMembers)
 
 		if _, err := tx.NamedExec(insertQuery, members); err != nil {
 			return fmt.Errorf("failed to insert new team members: %w", err)

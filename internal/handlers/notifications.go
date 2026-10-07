@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"sea-api/internal/errs"
-	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/notificationsmodels"
 	"sea-api/internal/response"
 	"sea-api/internal/services/notificationservice"
@@ -103,7 +103,7 @@ func (h *NotificationHandler) GetNotifications(c *gin.Context) {
 	}
 
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -141,7 +141,7 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 	}
 
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -170,7 +170,7 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 //	@Security		ApiKeyAuth
 func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return
@@ -208,7 +208,7 @@ func (h *NotificationHandler) DeleteNotification(c *gin.Context) {
 	}
 
 	value, exists := c.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		c.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
 		return

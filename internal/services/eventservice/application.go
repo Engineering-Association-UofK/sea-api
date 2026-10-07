@@ -6,6 +6,7 @@ import (
 	"errors"
 	"sea-api/internal/errs"
 	"sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/eventmodels"
 	"sea-api/internal/utils/valid"
 	"time"
@@ -36,7 +37,7 @@ func (s *EventService) CheckStatus(eventID, userID int64) (*eventmodels.Applicat
 	return &res, nil
 }
 
-func (s *EventService) Apply(EventID int64, claims models.ManagedClaims) (*eventmodels.ApplyResponse, error) {
+func (s *EventService) Apply(EventID int64, claims authmodels.ManagedClaims) (*eventmodels.ApplyResponse, error) {
 	// Start by checking if the application state already started before
 	application, err := s.repo.GetApplicationByUserAndEvent(EventID, claims.UserID)
 	if err == nil {

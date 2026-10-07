@@ -4,7 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 	"sea-api/internal/errs"
-	"sea-api/internal/models"
+	_ "sea-api/internal/models"
+	"sea-api/internal/models/authmodels"
 	"sea-api/internal/models/eventmodels"
 	"sea-api/internal/response"
 	"sea-api/internal/services/eventservice"
@@ -47,7 +48,7 @@ func (h *EventHandler) CheckStatus(ctx *gin.Context) {
 	}
 
 	value, exists := ctx.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		slog.Debug("NoN", "Claims", claims, "Value", value)
 		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
@@ -87,7 +88,7 @@ func (h *EventHandler) ApplyForEvent(ctx *gin.Context) {
 	}
 
 	value, exists := ctx.Get("user")
-	claims, ok := value.(*models.ManagedClaims)
+	claims, ok := value.(*authmodels.ManagedClaims)
 	if !exists || !ok {
 		slog.Debug("NoN", "Claims", claims, "Value", value)
 		ctx.Error(errs.New(errs.Unauthorized, "Unauthorized", nil))
